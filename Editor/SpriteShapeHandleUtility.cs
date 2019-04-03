@@ -33,7 +33,7 @@ namespace UnityEditor.U2D
             get
             {
                 if (!s_HandleWireMaterial)
-                    s_HandleWireMaterial = (Material)EditorGUIUtility.LoadRequired("SceneView/HandleLines.mat");
+                    s_HandleWireMaterial = (Material)EditorGUIUtility.LoadRequired("SceneView/2DHandleLines.mat");
 
                 return s_HandleWireMaterial;
             }
@@ -306,7 +306,7 @@ namespace UnityEditor.U2D
 
         public static float DistanceToRectangle(Vector3 position, Quaternion rotation, Vector2 size)
         {
-            Vector3[] points = {Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero};
+            Vector3[] points = { Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
             Vector3 sideways = rotation * new Vector3(size.x, 0, 0);
             Vector3 up = rotation * new Vector3(0, size.y, 0);
             points[0] = HandleUtility.WorldToGUIPoint(position + sideways + up);

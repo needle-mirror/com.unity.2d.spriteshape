@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor;
+using UnityEngine.Experimental.U2D;
 
 namespace UnityEditor.U2D
 {
@@ -22,38 +23,47 @@ namespace UnityEditor.U2D
             ProjectWindowUtil.CreateAsset(spriteShape, "New SpriteShapeProfile.asset");
             Selection.activeObject = spriteShape;
 
+            SplineEditorCache.instance.events.spriteShapeEvent.Invoke(spriteShape);
             return spriteShape;
         }
 
-        public static SpriteShapeController CreateSpriteShapeController()
+        public static SpriteShapeController CreateSpriteShapeController(SpriteShape shape)
         {
-            GameObject gameObject = new GameObject("New SpriteShapeController", typeof(SpriteShapeController));
+            var objName = "New SpriteShapeController";
+            GameObject gameObject = new GameObject(objName, typeof(SpriteShapeController));
             SpriteShapeController spriteShapeController = gameObject.GetComponent<SpriteShapeController>();
             spriteShapeController.spline.Clear();
+            if (shape != null)
+                objName = shape.name;
+            gameObject.name = GameObjectUtility.GetUniqueNameForSibling(gameObject.transform.parent, objName);
+            SplineEditorCache.instance.events.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
             return spriteShapeController;
         }
 
         public static SpriteShapeController CreateSpriteShapeControllerFromSelection()
         {
-            GameObject gameObject = new GameObject("New SpriteShapeController", typeof(SpriteShapeController));
+            var objName = "New SpriteShapeController";
+            GameObject gameObject = new GameObject(objName, typeof(SpriteShapeController));
             SpriteShapeController spriteShapeController = gameObject.GetComponent<SpriteShapeController>();
             if (Selection.activeObject is SpriteShape)
             {
                 spriteShapeController.spriteShape = (SpriteShape)Selection.activeObject;
+                objName = spriteShapeController.spriteShape.name;
             }
             else if (Selection.activeObject is GameObject)
             {
                 var activeGO = (GameObject)Selection.activeObject;
-                var prefabType = PrefabUtility.GetPrefabType(activeGO);
-                if (prefabType != PrefabType.Prefab && prefabType != PrefabType.ModelPrefab)
+                var prefabType = PrefabUtility.GetPrefabAssetType(activeGO);
+                if (prefabType != PrefabAssetType.Regular && prefabType != PrefabAssetType.Model)
                 {
                     GameObjectUtility.SetParentAndAlign(gameObject, activeGO);
                 }
             }
-            gameObject.name = GameObjectUtility.GetUniqueNameForSibling(gameObject.transform.parent, Contents.newSpriteShapeString);
+            gameObject.name = GameObjectUtility.GetUniqueNameForSibling(gameObject.transform.parent, objName);
             Undo.RegisterCreatedObjectUndo(gameObject, Contents.createSpriteShapeString);
             Selection.activeGameObject = gameObject;
             spriteShapeController.spline.Clear();
+            SplineEditorCache.instance.events.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
             return spriteShapeController;
         }
 
