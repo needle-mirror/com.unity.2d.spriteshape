@@ -1,8 +1,0 @@
-{
-    "name": "com.unity.2d.spriteshape.Runtime",
-    "references": [
-        "com.unity.2d.common.Runtime"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": []
-}

@@ -1,5 +1,5 @@
 {
-    "name": "com.unity.2d.spriteshape.RuntimeTests",
+    "name": "Unity.2D.SpriteShape.RuntimeTests",
     "references": [],
     "optionalUnityReferences": [
         "TestAssemblies"
