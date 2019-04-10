@@ -44,8 +44,8 @@ namespace UnityEditor.U2D
             else if (Selection.activeObject is GameObject)
             {
                 var activeGO = (GameObject)Selection.activeObject;
-                var prefabType = PrefabUtility.GetPrefabType(activeGO);
-                if (prefabType != PrefabType.Prefab && prefabType != PrefabType.ModelPrefab)
+                var prefabType = PrefabUtility.GetPrefabAssetType(activeGO);
+                if (prefabType != PrefabAssetType.Regular && prefabType != PrefabAssetType.Model)
                 {
                     GameObjectUtility.SetParentAndAlign(gameObject, activeGO);
                 }

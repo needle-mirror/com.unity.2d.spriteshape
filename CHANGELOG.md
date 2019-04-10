@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [1.0.14-preview.2] - 2018-8-03
+### Fixed
+- Update common package.
+- Added ability to force generate Spriteshape by script.
+
+## [1.0.14-preview.1] - 2018-8-03
+### Fixed
+- Creating a new Strip/Shape Sprite Shape Profile throws a NullReferenceException
+
 ## [1.0.12-preview.1] - 2018-8-03
 ### Added
 - Fix issue where Point Positions do not update visually at runtime for Builds

@@ -13,6 +13,7 @@ namespace UnityEngine.U2D
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(SpriteShapeRenderer))]
+    [DisallowMultipleComponent]
     public class SpriteShapeController : MonoBehaviour
     {
         const float s_ClipperScale = 100000.0f;
@@ -46,7 +47,7 @@ namespace UnityEngine.U2D
         bool m_AdaptiveUV;
 
         [SerializeField]
-        bool m_UpdateCollider;
+        bool m_UpdateCollider = true;
         [SerializeField]
         int m_ColliderDetail;
         [SerializeField, Range(-1, 1)]
@@ -187,7 +188,14 @@ namespace UnityEngine.U2D
                     return true;
 
                 if (m_CurrentCornerSprites.Count != spriteShape.cornerSprites.Count)
-                    return true;
+                {
+                    for (int i = 0; i < spriteShape.cornerSprites.Count; ++i)
+                    {
+                        var cornerSprite = spriteShape.cornerSprites[i].sprites[0];
+                        if (cornerSprite != null)
+                            return true;
+                    }
+                }
 
                 for (int i = 0; i < m_CurrentAngleRanges.Count; i++)
                 {
@@ -234,6 +242,11 @@ namespace UnityEngine.U2D
                 BakeMesh(needUpdateSpriteArrays);
 
             m_CurrentSpriteShape = spriteShape;
+        }
+
+        public void RefreshSpriteShape()
+        {
+            m_CurrentSplineHashCode = 0;
         }
 
         public void BakeMesh()
@@ -464,32 +477,52 @@ namespace UnityEngine.U2D
 
                 for (int i = 0; i < sortedAngleRanges.Count; i++)
                 {
-                    AngleRange angleRange = sortedAngleRanges[i];
-                    AngleRangeInfo angleRangeInfo = new AngleRangeInfo();
-                    angleRangeInfo.start = angleRange.start;
-                    angleRangeInfo.end = angleRange.end;
-                    angleRangeInfo.order = (uint)angleRange.order;
-                    List<int> spriteIndices = new List<int>();
                     bool validSpritesFound = false;
+                    AngleRange angleRange = sortedAngleRanges[i];
                     foreach (Sprite edgeSprite in angleRange.sprites)
                     {
-                        edgeSpriteList.Add(edgeSprite);
-                        spriteIndices.Add(edgeSpriteList.Count - 1);
                         if (edgeSprite != null)
+                        {
                             validSpritesFound = true;
+                            break;
+                        }
                     }
+
                     if (validSpritesFound)
                     {
+                        AngleRangeInfo angleRangeInfo = new AngleRangeInfo();
+                        angleRangeInfo.start = angleRange.start;
+                        angleRangeInfo.end = angleRange.end;
+                        angleRangeInfo.order = (uint)angleRange.order;
+                        List<int> spriteIndices = new List<int>();
+                        foreach (Sprite edgeSprite in angleRange.sprites)
+                        {
+                            edgeSpriteList.Add(edgeSprite);
+                            spriteIndices.Add(edgeSpriteList.Count - 1);
+                        }
                         angleRangeInfo.sprites = spriteIndices.ToArray();
                         angleRangeInfoList.Add(angleRangeInfo);
                     }
                 }
 
-                for (int i = 0; i < spriteShape.cornerSprites.Count; i++)
+                bool validCornerSpritesFound = false;
+                foreach (CornerSprite cornerSprite in spriteShape.cornerSprites)
                 {
-                    CornerSprite cornerSprite = spriteShape.cornerSprites[i];
-                    cornerSpriteList.Add(cornerSprite.sprites[0]);
-                    m_CurrentCornerSprites.Add(cornerSprite.Clone() as CornerSprite);
+                    if (cornerSprite.sprites[0] != null)
+                    {
+                        validCornerSpritesFound = true;
+                        break;
+                    }
+                }
+
+                if (validCornerSpritesFound)
+                {
+                    for (int i = 0; i < spriteShape.cornerSprites.Count; i++)
+                    {
+                        CornerSprite cornerSprite = spriteShape.cornerSprites[i];
+                        cornerSpriteList.Add(cornerSprite.sprites[0]);
+                        m_CurrentCornerSprites.Add(cornerSprite.Clone() as CornerSprite);
+                    }
                 }
 
                 for (int i = 0; i < spriteShape.angleRanges.Count; i++)

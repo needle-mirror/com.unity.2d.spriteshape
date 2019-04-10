@@ -65,6 +65,7 @@ namespace UnityEditor.U2D
         private int m_OldNearestControl;
         private AngleRangeController controller;
         private AngleRange m_CurrentAngleRange;
+        private Dictionary<int, int> m_SpriteSelection = new Dictionary<int, int>();
 
 
         private Sprite m_PreviewSprite;
@@ -102,7 +103,11 @@ namespace UnityEditor.U2D
         public float previewAngle
         {
             get { return m_PreviewAngle; }
-            set { m_PreviewAngle = value; }
+            set
+            {
+                m_PreviewAngle = value;
+                SessionState.SetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), value);
+            }
         }
 
         public void RegisterUndo(string name)
@@ -114,6 +119,8 @@ namespace UnityEditor.U2D
 
         public void OnEnable()
         {
+            m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), m_PreviewAngle);
+
             m_SpriteShape = target as SpriteShape;
 
             m_FillTextureProp = this.serializedObject.FindProperty("m_FillTexture");
@@ -161,7 +168,7 @@ namespace UnityEditor.U2D
             controller.gradientMid = color2;
             controller.gradientMax = color1;
             controller.snap = true;
-            controller.OnSelectionChange += OnSelectionChange;
+            controller.selectionChanged += OnSelectionChange;
 
             OnSelectionChange();
         }
@@ -199,8 +206,13 @@ namespace UnityEditor.U2D
         {
             if (selectedIndex >= 0)
             {
-                SetPreviewSpriteIndexToSessionState(selectedIndex, list.index);
+                SetPreviewSpriteIndex(selectedIndex, list.index);
             }
+        }
+
+        private bool OnCanAddCallback(ReorderableList list)
+        {
+            return (list.count < 64);
         }
 
         private void OnRemoveSprite(ReorderableList list)
@@ -210,7 +222,7 @@ namespace UnityEditor.U2D
 
             ReorderableList.defaultBehaviours.DoRemoveButton(list);
 
-            if(list.count < count && list.count > 0)
+            if (list.count < count && list.count > 0)
             {
                 list.index = Mathf.Clamp(index, 0, list.count - 1);
                 OnSelelectSpriteCallback(list);
@@ -230,7 +242,7 @@ namespace UnityEditor.U2D
             var sprite = m_AngleRangesProp.GetArrayElementAtIndex(selectedIndex).FindPropertyRelative("m_Sprites").GetArrayElementAtIndex(index);
             EditorGUI.BeginChangeCheck();
             EditorGUI.PropertyField(rect, sprite, GUIContent.none);
-            if(EditorGUI.EndChangeCheck())
+            if (EditorGUI.EndChangeCheck())
             {
                 m_AngleRangeSpriteList.index = index;
                 OnSelelectSpriteCallback(m_AngleRangeSpriteList);
@@ -242,14 +254,17 @@ namespace UnityEditor.U2D
             EditorGUILayout.LabelField(content, EditorStyles.boldLabel);
         }
 
-        private void SetPreviewSpriteIndexToSessionState(int rangeIndex, int index)
+        private void SetPreviewSpriteIndex(int rangeIndex, int index)
         {
-            SessionState.SetInt(m_CurrentInspectorWindow.GetInstanceID() + "/" + target.GetInstanceID() + "/" + rangeIndex, index);
+            m_SpriteSelection[rangeIndex] = index;
         }
 
-        private int GetPreviewSpriteIndexFromSessionState(int rangeIndex)
+        private int GetPreviewSpriteIndex(int rangeIndex)
         {
-            return SessionState.GetInt(m_CurrentInspectorWindow.GetInstanceID() + "/" + target.GetInstanceID() + "/" + rangeIndex, 0);
+            int index;
+            m_SpriteSelection.TryGetValue(rangeIndex, out index);
+
+            return index;
         }
 
         public override void OnInspectorGUI()
@@ -416,14 +431,18 @@ namespace UnityEditor.U2D
                         {
                             if (obj is Sprite)
                             {
-                                DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
-                                if (currentEvent.type == EventType.DragPerform)
+                                Sprite spr = obj as Sprite;
+                                if (spr.texture != null)
                                 {
-                                    sprites.InsertArrayElementAtIndex(sprites.arraySize);
-                                    var spriteProp = sprites.GetArrayElementAtIndex(sprites.arraySize - 1);
-                                    spriteProp.objectReferenceValue = obj;
-                                    didAcceptDrag = true;
-                                    DragAndDrop.activeControlID = 0;
+                                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                                    if (currentEvent.type == EventType.DragPerform && sprites.arraySize < 64)
+                                    {
+                                        sprites.InsertArrayElementAtIndex(sprites.arraySize);
+                                        var spriteProp = sprites.GetArrayElementAtIndex(sprites.arraySize - 1);
+                                        spriteProp.objectReferenceValue = obj;
+                                        didAcceptDrag = true;
+                                        DragAndDrop.activeControlID = 0;
+                                    }
                                 }
                             }
                         }
@@ -527,6 +546,7 @@ namespace UnityEditor.U2D
                     drawHeaderCallback = DrawSpriteListHeader,
                     onSelectCallback = OnSelelectSpriteCallback,
                     onRemoveCallback = OnRemoveSprite,
+                    onCanAddCallback = OnCanAddCallback,
                     elementHeight = EditorGUIUtility.singleLineHeight + 6f
                 };
             }
@@ -545,7 +565,7 @@ namespace UnityEditor.U2D
             if (sprites.Count == 0)
                 return;
 
-            var selectedSpriteIndex = GetPreviewSpriteIndexFromSessionState(selectedIndex);
+            var selectedSpriteIndex = GetPreviewSpriteIndex(selectedIndex);
 
             if (selectedSpriteIndex == kInvalidMinimum)
                 return;
@@ -576,7 +596,7 @@ namespace UnityEditor.U2D
 
             Debug.Assert(m_AngleRangeSpriteList != null);
 
-            var spriteIndex = GetPreviewSpriteIndexFromSessionState(selectedIndex);
+            var spriteIndex = GetPreviewSpriteIndex(selectedIndex);
             var sprites = angleRanges[selectedIndex].sprites;
 
             var ev = Event.current;
@@ -584,7 +604,7 @@ namespace UnityEditor.U2D
                 ContainsPosition(rect, ev.mousePosition, m_PreviewAngle) && spriteIndex != kInvalidMinimum && sprites.Count > 0)
             {
                 spriteIndex = Mathf.RoundToInt(Mathf.Repeat(spriteIndex + 1f, sprites.Count));
-                SetPreviewSpriteIndexToSessionState(selectedIndex, spriteIndex);
+                SetPreviewSpriteIndex(selectedIndex, spriteIndex);
 
                 m_AngleRangeSpriteList.GrabKeyboardFocus();
                 m_AngleRangeSpriteList.index = spriteIndex;

@@ -82,7 +82,8 @@ namespace UnityEditor.U2D
 
                     if (s_SceneDragObjects != null)
                     {
-                        PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
+                        if (sceneView != null)
+                            PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
 
                         DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
                         evt.Use();
@@ -99,7 +100,8 @@ namespace UnityEditor.U2D
                         if (s_SceneDragObjects.Count == 0)
                         {
                             CreateSceneDragObjects(assets);
-                            PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
+                            if (sceneView != null)
+                                PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
                         }
 
                         foreach (GameObject dragGO in s_SceneDragObjects)
