@@ -2,17 +2,19 @@ using System;
 using System.Linq;
 using UnityEngine.Experimental.U2D;
 using Unity.Jobs;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.SpriteShape.External.LibTessDotNet;
 using ShapeControlPointExperimental = UnityEngine.Experimental.U2D.ShapeControlPoint;
 
+// We will enable this once Burst gets a verified final version as this attribute keeps changing.
+// using Unity.Burst;
+
 namespace UnityEngine.U2D
 {
-
-    // [BurstCompile(FloatPrecision.Standard, FloatMode.Fast)] We will enable this once Burst gets a verified final version as this attribute keeps changing.
+    
+    // [BurstCompile(FloatPrecision.Standard, FloatMode.Fast)]
     public struct SpriteShapeGenerator : IJob
     {
 
@@ -44,7 +46,7 @@ namespace UnityEngine.U2D
         struct JobControlPoint
         {
             public int4 cpData;                 // x : Sprite Index y : Corner Type z : Mode w : Internal Sprite Index.
-            public int4 cornerData;             // x : Corner Type. y: Corner Sprite
+            public int4 exData;                 // x : Corner Type y: Corner Sprite
             public float4 cpInfo;               // x : Height y : Bevel Cutoff z : Bevel Size. w : Render Order.
             public float2 position;
             public float2 tangentLt;
@@ -619,7 +621,7 @@ namespace UnityEngine.U2D
                 shapePoint.tangentRt = (sp.mode == kModeLinear) ? zero : new float2(sp.rightTangent.x, sp.rightTangent.y);
                 shapePoint.cpInfo = new float4(md.height, md.bevelCutoff, md.bevelSize, 0);
                 shapePoint.cpData = new int4((int)md.spriteIndex, md.corner ? 1 : 0, sp.mode, 0);
-                shapePoint.cornerData = new int4(-1, 0, 0, 0);
+                shapePoint.exData = new int4(-1, 0, 0, 0);
                 m_ControlPoints[i] = shapePoint;
             }
             m_ControlPointCount = shapePoints.Length;
@@ -703,7 +705,8 @@ namespace UnityEngine.U2D
         #region Segments.
         void GenerateSegments()
         {
-            int activeSpriteIndex = 0, activeSegment = 0, firstSpriteIndex = -1;
+            int activeSpriteIndex = 0, activeSegmentIndex = 0, firstSpriteIndex = -1;
+            JobSegmentInfo activeSegment = m_Segments[0];
 
             // Generate Segments.
             for (int i = 0; i < controlPointCount; ++i)
@@ -724,7 +727,7 @@ namespace UnityEngine.U2D
                 JobControlPoint iscpNext = GetControlPoint(next);
 
                 // If this segment is corner, continue.
-                if (iscp.cornerData.x > 0 && iscp.cornerData.x == iscpNext.cornerData.x)
+                if (iscp.exData.x > 0 && iscp.exData.x == iscpNext.exData.x)
                     continue;
 
                 // Resolve Angle and Order.
@@ -745,12 +748,12 @@ namespace UnityEngine.U2D
                     m_ControlPoints[i] = iscp;
 
                     // Insert Dummy Segment.
-                    JobSegmentInfo sg = m_Segments[activeSegment];
-                    sg.spInfo.x = mn;
-                    sg.spInfo.y = mx;
-                    sg.spInfo.z = -1;
-                    m_Segments[activeSegment] = sg;
-                    activeSegment++;
+                    activeSegment = m_Segments[activeSegmentIndex];
+                    activeSegment.spInfo.x = mn;
+                    activeSegment.spInfo.y = mx;
+                    activeSegment.spInfo.z = -1;
+                    m_Segments[activeSegmentIndex] = activeSegment;
+                    activeSegmentIndex++;
                     continue;
                 }
 
@@ -762,43 +765,31 @@ namespace UnityEngine.U2D
                 iscp.cpData = pointData;
                 m_ControlPoints[i] = iscp;
 
-                // Check for Segments.
-                bool continueStrip = (iscp.cpData.z == kModeContinous), edgeUpdated = false;
-                if (continueStrip)
-                {
-                    // Check if Internal Index are same.
-                    if (iscp.cpData.w != iscpPrev.cpData.w)
-                    {
-                        continueStrip = false;
-                        JobSpriteInfo sprLt = GetSpriteInfo(iscp.cpData.w);
-                        JobSpriteInfo sprRt = GetSpriteInfo(iscpPrev.cpData.w);
-
-                        if (sprLt.texRect.z != sprRt.texRect.z || sprLt.texRect.w != sprRt.texRect.w || sprLt.metaInfo.x != sprRt.metaInfo.x)
-                        {
-                            pointData.z = kModeBroken;
-                        }
-                    }
-                }
                 if (skipSegmenting)
                     continue;
 
+                // Check for Segments. Also check if the Segment Start has been resolved. Otherwise simply start with the next one.
+                bool continueStrip = (iscp.cpData.z == kModeContinous), edgeUpdated = false;
+                if (activeSegmentIndex != 0)
+                    continueStrip = continueStrip && (m_SpriteIndices[activeSegment.spInfo.x].y != 0);
+
                 if (continueStrip && i != (controlPointCount - 1))
                 {
-                    for (int s = 0; s < activeSegment; ++s)
+                    for (int s = 0; s < activeSegmentIndex; ++s)
                     {
-                        JobSegmentInfo sg = m_Segments[s];
-                        if (sg.spInfo.x - mn == 1)
+                        activeSegment = m_Segments[s];
+                        if (activeSegment.spInfo.x - mn == 1)
                         {
                             edgeUpdated = true;
-                            sg.spInfo.x = mn;
-                            m_Segments[s] = sg;
+                            activeSegment.spInfo.x = mn;
+                            m_Segments[s] = activeSegment;
                             break;
                         }
-                        if (mx - sg.spInfo.y == 1)
+                        if (mx - activeSegment.spInfo.y == 1)
                         {
                             edgeUpdated = true;
-                            sg.spInfo.y = mx;
-                            m_Segments[s] = sg;
+                            activeSegment.spInfo.y = mx;
+                            m_Segments[s] = activeSegment;
                             break;
                         }
                     }
@@ -806,21 +797,21 @@ namespace UnityEngine.U2D
 
                 if (!edgeUpdated)
                 {
-                    JobSegmentInfo sg = m_Segments[activeSegment];
+                    activeSegment = m_Segments[activeSegmentIndex];
                     JobSpriteInfo sprLt = GetSpriteInfo(iscp.cpData.w);
-                    sg.spInfo.x = mn;
-                    sg.spInfo.y = mx;
-                    sg.spInfo.z = activeSpriteIndex;
-                    sg.spInfo.w = firstSpriteIndex;
-                    sg.spriteInfo.x = sprLt.texRect.z;
-                    sg.spriteInfo.y = sprLt.texRect.w;
-                    sg.spriteInfo.z = pointInfo.w;
-                    m_Segments[activeSegment] = sg;
-                    activeSegment++;
+                    activeSegment.spInfo.x = mn;
+                    activeSegment.spInfo.y = mx;
+                    activeSegment.spInfo.z = activeSpriteIndex;
+                    activeSegment.spInfo.w = firstSpriteIndex;
+                    activeSegment.spriteInfo.x = sprLt.texRect.z;
+                    activeSegment.spriteInfo.y = sprLt.texRect.w;
+                    activeSegment.spriteInfo.z = pointInfo.w;
+                    m_Segments[activeSegmentIndex] = activeSegment;
+                    activeSegmentIndex++;
                 }
             }
 
-            m_SegmentCount = activeSegment;
+            m_SegmentCount = activeSegmentIndex;
 
         }
 
@@ -887,6 +878,16 @@ namespace UnityEngine.U2D
             for (int i = 0; i < activePoint; ++i)
                 m_ControlPoints[i] = m_GeneratedControlPoints[i];
             m_ControlPointCount = activePoint;
+
+            // Calc and calculate Indices.
+            for (int i = 0; i < controlPointCount; ++i)
+            {
+                var resolved = 0;
+                int spriteIndex = GetSpriteIndex(i, activeIndex, ref resolved);
+                sprData.x = activeIndex = spriteIndex;
+                sprData.y = resolved;
+                m_SpriteIndices[i] = sprData;
+            }
 
             // End
             return useSlice;
@@ -1056,8 +1057,7 @@ namespace UnityEngine.U2D
                     Vector3 pos = m_PosArray[i];
                     bounds.Encapsulate(pos);
                 }
-            }
-            else
+            }            
             {
                 for (int i = 0; i < contourPointCount; ++i)
                 {
@@ -1470,7 +1470,8 @@ namespace UnityEngine.U2D
                 TessellateSegment(ispr, isi, whsize, border, pxlWidth, useClosure, validHead, validTail, m_VertexData, vertexCount, ref m_OutputVertexData, ref outputCount);
                 if (outputCount == 0)
                     continue;
-                CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, m_OutputVertexData, outputCount, (0.1f + isi.spInfo.z) * kEpsilonRelaxed);
+                var z = -0.01f + ((float)isi.spInfo.z * kEpsilonRelaxed) + ((float)-i * kEpsilon);
+                CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, m_OutputVertexData, outputCount, z);
 
                 if (hasCollider)
                 {
@@ -1587,11 +1588,11 @@ namespace UnityEngine.U2D
             float2 la = pt + (math.normalize(lt) * lrd);
             float2 ra = pt + (math.normalize(rt) * rrd);
 
-            ccp.cornerData.x = ct;
+            ccp.exData.x = ct;
             ccp.position = la;
             newPoints[activePoint++] = ccp;
 
-            ccp.cornerData.x = ct;
+            ccp.exData.x = ct;
             ccp.position = ra;
             newPoints[activePoint++] = ccp;
 
@@ -2004,7 +2005,7 @@ namespace UnityEngine.U2D
         }
 
         // Only needed if Burst is disabled.
-        [BurstDiscard]
+        // [BurstDiscard]
         public void Cleanup()
         {
             SafeDispose(m_Corners);
