@@ -149,6 +149,11 @@ namespace UnityEditor.U2D
             get { return SpriteShapeEditorTool.instance.targetController; }
         }
 
+        public SplineEditor splineEditor
+        {
+            get { return m_SplineEditor; }
+        }
+
         public SpriteShapeTool()
         {
             instance = this;
@@ -341,6 +346,11 @@ namespace UnityEditor.U2D
             return GetTransform().InverseTransformPoint(position);
         }
 
+        private int GetSplineDetail()
+        {
+            return (target.GetComponent<SpriteShapeController>() != null) ? target.GetComponent<SpriteShapeController>().splineDetail : 40;
+        }
+
         private void SetupSpriteShapeEditor(Spline spline)
         {
             m_Spline = spline;
@@ -359,6 +369,7 @@ namespace UnityEditor.U2D
                 InsertPointAt = (i, p) => spline.InsertPointAt(i, WorldToLocal(p)),
                 RemovePointAt = i => spline.RemovePointAt(i),
                 GetPointCount = () => spline.GetPointCount(),
+                GetSubDivisionCount = () => GetSplineDetail(),
                 // Transforms
                 ScreenToWorld = (p) => ScreenToWorld(p),
                 LocalToWorldMatrix = () => Matrix4x4.identity,

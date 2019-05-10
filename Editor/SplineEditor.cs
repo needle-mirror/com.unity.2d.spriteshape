@@ -92,6 +92,8 @@ namespace UnityEditor.U2D
         public Action<int, Vector3> InsertPointAt = (i, p) => { };
         public Action<int> RemovePointAt = i => { };
         public Func<int> GetPointCount = () => 0;
+        public Func<int> GetSubDivisionCount = () => 40;
+        public Func<int, int> GetAngleRange = (i) => i;
         // --- Transforms
         public Func<Vector2, Vector3> ScreenToWorld = i => i;
         public Func<Vector3, Vector2> WorldToScreen = i => i;
@@ -142,7 +144,6 @@ namespace UnityEditor.U2D
         private static readonly Color kTangentColorAlternative = Handles.selectedColor;
         private const float kEdgeWidth = 2f;
         private const float kActiveEdgeWidth = 6f;
-        private const int kBezierPatch = 40;
 
         private Event currentEvent { get; set; }
         private bool m_SliderChanged = false;
@@ -159,6 +160,7 @@ namespace UnityEditor.U2D
             GetTangentCapNormal = TangentCapNormal;
             GetTangentCapHovered = TangentCapHovered;
             GetTangentCapActive = TangentCapHovered;
+            GetAngleRange = GetAngleRangeLocal;
         }
 
         public void SetDirty()
@@ -255,7 +257,7 @@ namespace UnityEditor.U2D
                 {
                     var tangent0 = GetRightTangent(index) + position0;
                     var tangent1 = GetLeftTangent(nextIndex) + position1;
-                    m_EdgePoints.Add(Handles.MakeBezierPoints(position0, position1, tangent0, tangent1, kBezierPatch));
+                    m_EdgePoints.Add(Handles.MakeBezierPoints(position0, position1, tangent0, tangent1, GetSubDivisionCount()));
                 }
             }
 
@@ -581,7 +583,10 @@ namespace UnityEditor.U2D
 
             int selectedPoint = selection.single;
 
-            if (selectedPoint == -1 || GetTangentMode(selectedPoint) == TangentMode.Linear)
+            if (selectedPoint == -1 || selectedPoint >= GetPointCount())
+                return;
+
+            if (GetTangentMode(selectedPoint) == TangentMode.Linear)
                 return;
 
             int tangentId = GUIUtility.GetControlID(m_TangentHashCode, FocusType.Passive);
@@ -1039,23 +1044,16 @@ namespace UnityEditor.U2D
             return (TangentMode)((((int)current) + 1) % Enum.GetValues(typeof(TangentMode)).Length);
         }
 
-        static float SlopeAngle(Vector2 start, Vector2 end)
+        private int GetAngleRangeLocal(int index)
         {
-            Vector2 dir = start - end;
-            dir.Normalize();
-            Vector2 dvup = new Vector2(0, 1f);
-            Vector2 dvrt = new Vector2(1f, 0);
-
-            float dr = Vector2.Dot(dir, dvrt);
-            float du = Vector2.Dot(dir, dvup);
-            float cu = Mathf.Acos(du);
-            float sn = dr >= 0 ? 1.0f : -1.0f;
-            float an = cu * Mathf.Rad2Deg * sn;
-
-            // Adjust angles when direction is parallel to Up Axis.
-            an = (du != 1f) ? an : 0;
-            an = (du != -1f) ? an : -180f;
-            return an;
+            var selection = SplineEditorCache.GetSelection();
+            var spriteShape = SplineEditorCache.GetTarget().spriteShape;
+            var nextIndex = SplineUtility.NextIndex(selection.single, GetPointCount());
+            var pos1 = GetLocalPosition(selection.single);
+            var pos2 = GetLocalPosition(nextIndex);
+            var angle = SplineUtility.SlopeAngle(pos1, pos2) + 90;
+            var angleRangeIndex = SpriteShapeEditorUtility.GetRangeIndexFromAngle(spriteShape, angle);
+            return angleRangeIndex;
         }
 
         public void CycleSpriteIndex()
@@ -1067,24 +1065,18 @@ namespace UnityEditor.U2D
 
             Debug.Assert(SplineEditorCache.GetTarget() != null);
 
-            var nextIndex = SplineUtility.NextIndex(selection.single, GetPointCount());
-            var pos1 = GetLocalPosition(selection.single);
-            var pos2 = GetLocalPosition(nextIndex);
-            var angle = SlopeAngle(pos1, pos2) + 90;
-            var angleRangeIndex = SpriteShapeEditorUtility.GetRangeIndexFromAngle(spriteShape, angle);
-            if (angleRangeIndex == -1)
-                return;
+            var angleRangeIndex = GetAngleRange(selection.single);
+            if (angleRangeIndex != -1)
+            { 
+                var angleRange = spriteShape.angleRanges[angleRangeIndex];
+                var spriteIndex = 0;
+                if (angleRange.sprites.Count > 0)
+                    spriteIndex = (GetSpriteIndex(selection.single) + 1) % angleRange.sprites.Count;
 
-            var angleRange = spriteShape.angleRanges[angleRangeIndex];
-            var spriteIndex = 0;
-            if (angleRange.sprites.Count > 0)
-                spriteIndex = (GetSpriteIndex(selection.single) + 1) % angleRange.sprites.Count;
-
-            RegisterUndo();
-
-            SetSpriteIndex(selection.single, spriteIndex);
-
-            SetDirty();
+                RegisterUndo();
+                SetSpriteIndex(selection.single, spriteIndex);
+                SetDirty();
+            }
         }
 
         public void SetTangentModeUseThisOne(int pointIndex, TangentMode mode)

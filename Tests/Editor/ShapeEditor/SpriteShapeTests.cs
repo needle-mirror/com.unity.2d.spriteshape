@@ -55,10 +55,10 @@ namespace UnityEditor.U2D.SpriteShapeTest
         {
             for (int i = 0; i < segments.Length; ++i)
             { 
-                Assert.AreEqual(sa[i].geomIndex, segments[i].geomIndex);
-                Assert.AreEqual(sa[i].indexCount, segments[i].indexCount);
-                Assert.AreEqual(sa[i].vertexCount, segments[i].vertexCount);
-                Assert.AreEqual(sa[i].spriteIndex, segments[i].spriteIndex);
+                Assert.AreEqual(segments[i].geomIndex, sa[i].geomIndex);
+                Assert.AreEqual(segments[i].indexCount, sa[i].indexCount);
+                Assert.AreEqual(segments[i].vertexCount, sa[i].vertexCount);
+                Assert.AreEqual(segments[i].spriteIndex, sa[i].spriteIndex);
             }
         }
 
@@ -248,7 +248,7 @@ namespace UnityEditor.U2D.SpriteShapeTest
             jobHandle.Complete();
             spriteShapeController.BakeCollider();
 
-            Assert.AreEqual(go.GetComponent<PolygonCollider2D>().points.Length, 7);
+            Assert.AreEqual(go.GetComponent<PolygonCollider2D>().points.Length, 10);
         }
 
         static void ResetTangents(SpriteShapeController controller, int index)

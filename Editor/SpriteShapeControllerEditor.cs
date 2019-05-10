@@ -20,11 +20,11 @@ namespace UnityEditor.U2D
             public static readonly string editSplineLabel = "Edit Spline";
             public static readonly GUIContent fillLabel = new GUIContent("Fill");
             public static readonly GUIContent colliderLabel = new GUIContent("Collider");
-            public static readonly GUIContent fillPixelPerUnitLabel = new GUIContent("Pixel Per Unit", "Pixel Per Unit for Fill Texture.");
+            public static readonly GUIContent fillPixelPerUnitLabel = new GUIContent("Pixel Per Unit", "Pixel Per Unit for fill texture.");
             public static readonly GUIContent spriteShapeProfile = new GUIContent("Profile", "The SpriteShape Profile to render");
             public static readonly GUIContent materialLabel = new GUIContent("Material", "Material to be used by SpriteRenderer");
             public static readonly GUIContent colorLabel = new GUIContent("Color", "Rendering color for the Sprite graphic");
-            public static readonly GUIContent metaDataLabel = new GUIContent("Meta Data", "SpriteShape Specific Control Point Data");
+            public static readonly GUIContent metaDataLabel = new GUIContent("Meta Data", "SpriteShape specific controlpoint data");
             public static readonly GUIContent showComponentsLabel = new GUIContent("Show Render Stuff", "Show Renderer Components.");
             public static readonly GUIContent[] splineDetailOptions = { new GUIContent("High Quality"), new GUIContent("Medium Quality"), new GUIContent("Low Quality") };
             public static readonly GUIContent splineDetail = new GUIContent("Detail", "Tessellation Quality for rendering.");
@@ -35,8 +35,9 @@ namespace UnityEditor.U2D
             public static readonly GUIContent stretchTilingLabel = new GUIContent("Stretch Tiling", "Stretch Tiling Count.");
             public static readonly GUIContent colliderDetail = new GUIContent("Detail", "Tessellation Quality on the collider.");
             public static readonly GUIContent colliderOffset = new GUIContent("Offset", "Extrude collider distance.");
-            public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider", "Update Collider as you Edit SpriteShape");
-            public static readonly GUIContent optimizeColliderLabel = new GUIContent("Optimize Collider", "Cleanup planar self-Intersections and Optimize Collider Points");
+            public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider", "Update Collider as you edit SpriteShape");
+            public static readonly GUIContent optimizeColliderLabel = new GUIContent("Optimize Collider", "Cleanup planar self-intersections and optimize collider points");
+            public static readonly GUIContent optimizeGeometryLabel = new GUIContent("Optimize Geometry", "Simplify geometry");
         }
         
         SpriteShapeToolEditor m_SplineEditor;
@@ -57,6 +58,7 @@ namespace UnityEditor.U2D
         private SerializedProperty m_ColliderOffsetProp;
 
         private SerializedProperty m_OptimizeColliderProp;
+        private SerializedProperty m_OptimizeGeometryProp;
         private SerializedObject m_MeshRendererSO;
         private int m_CollidersCount = 0;
 
@@ -69,7 +71,15 @@ namespace UnityEditor.U2D
             get { return target; }
         }
 
-        private SpriteShapeController m_SpriteShapeController { get { return target as SpriteShapeController; } }
+        private SpriteShapeController m_SpriteShapeController 
+        {
+            get { return target as SpriteShapeController; } 
+        }
+
+        public SpriteShapeToolEditor splinEditor
+        {
+            get { return m_SplineEditor; }
+        }
 
         private void OnEnable()
         {
@@ -86,6 +96,7 @@ namespace UnityEditor.U2D
             m_ColliderDetailProp = serializedObject.FindProperty("m_ColliderDetail");
             m_ColliderOffsetProp = serializedObject.FindProperty("m_ColliderOffset");
             m_OptimizeColliderProp = serializedObject.FindProperty("m_OptimizeCollider");
+            m_OptimizeGeometryProp = serializedObject.FindProperty("m_OptimizeGeometry");
 
             if (m_SpriteShapeController.spriteShapeRenderer)
             {
@@ -159,6 +170,8 @@ namespace UnityEditor.U2D
             EditorGUILayout.IntPopup(m_SplineDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.splineDetail);
             EditorGUILayout.PropertyField(m_IsOpenEndedProp, Contents.openEndedLabel);
             EditorGUILayout.PropertyField(m_AdaptiveUVProp, Contents.adaptiveUVLabel);
+            if (!m_IsOpenEndedProp.boolValue)
+                EditorGUILayout.PropertyField(m_OptimizeGeometryProp, Contents.optimizeGeometryLabel);
 
             EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);
@@ -179,12 +192,24 @@ namespace UnityEditor.U2D
                 EditorGUILayout.Space();
                 DrawHeader(Contents.colliderLabel);
                 EditorGUILayout.PropertyField(m_ColliderAutoUpdate, Contents.updateColliderLabel);
-                EditorGUILayout.IntPopup(m_ColliderDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.colliderDetail);
-                EditorGUILayout.PropertyField(m_ColliderOffsetProp, Contents.colliderOffset);
-                EditorGUILayout.PropertyField(m_OptimizeColliderProp, Contents.optimizeColliderLabel);
+                if (m_ColliderAutoUpdate.boolValue)
+                { 
+                    EditorGUILayout.PropertyField(m_ColliderOffsetProp, Contents.colliderOffset);
+                    EditorGUILayout.PropertyField(m_OptimizeColliderProp, Contents.optimizeColliderLabel);
+                    if (m_OptimizeColliderProp.boolValue)
+                        EditorGUILayout.IntPopup(m_ColliderDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.colliderDetail);
+                }
             }
             if (EditorGUI.EndChangeCheck())
+            { 
                 updateCollider = true;
+                if (SpriteShapeTool.instance != null && SpriteShapeTool.instance.splineEditor != null)
+                {
+                    m_SpriteShapeController.RefreshSpriteShape();
+                    SpriteShapeTool.instance.splineEditor.SetDirty();
+                    SpriteShapeTool.instance.splineEditor.Repaint();
+                }
+            }
 
             serializedObject.ApplyModifiedProperties();
 
@@ -289,7 +314,9 @@ namespace UnityEditor.U2D
         {
             Spline m_Spline = m_SpriteShapeController.spline;
             Matrix4x4 oldMatrix = Handles.matrix;
+            Color oldColor = Handles.color;
             Handles.matrix = m_SpriteShapeController.transform.localToWorldMatrix;
+            Handles.color = Color.grey;
             int points = m_Spline.GetPointCount();
             for (int i = 0; i < (m_Spline.isOpenEnded ? points - 1 : points); i++)
             {
@@ -297,9 +324,11 @@ namespace UnityEditor.U2D
                 Vector3 p2 = m_Spline.GetPosition((i + 1) % points);
                 var t1 = p1 + m_Spline.GetRightTangent(i);
                 var t2 = p2 + m_Spline.GetLeftTangent((i + 1) % points);
-                Handles.DrawBezier(p1, p2, t1, t2, Color.gray, null, 2f);
+                Vector3[] bezierPoints = Handles.MakeBezierPoints(p1, p2, t1, t2, m_SpriteShapeController.splineDetail);
+                Handles.DrawAAPolyLine(bezierPoints);
             }
             Handles.matrix = oldMatrix;
+            Handles.color = oldColor;
         }
     }
 }

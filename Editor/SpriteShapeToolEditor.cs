@@ -8,6 +8,21 @@ namespace UnityEditor.U2D
 {
     public class SpriteShapeToolEditor
     {
+        private struct ShapeSegment
+        {
+            public int start;
+            public int end;
+            public int angleRange;
+        };
+
+        private struct ShapeAngleRange
+        {
+            public float start;
+            public float end;
+            public int order;
+            public int index;
+        };
+
         private static class Contents
         {
             public static readonly GUIContent tangentStraightIcon = SpriteShapeEditorGUI.IconContent("TangentStraight", "Straight line from point to point.");
@@ -21,6 +36,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent rightTangentLabel = new GUIContent("Right Tangent", "Right Tangent end point.");
             public static readonly GUIContent enableSnapLabel = new GUIContent("Snapping", "Snap points using the snap settings");
             public static readonly GUIContent pointModeLabel = new GUIContent("Mode");
+            public static readonly GUIContent invalidSpriteLabel = new GUIContent("No sprite defined");
 
             public static readonly GUIContent heightLabel = new GUIContent("Height", "Height override for control point.");
             public static readonly GUIContent spriteIndexLabel = new GUIContent("Sprite Variant", "Index of the sprite variant at this control point");
@@ -29,19 +45,17 @@ namespace UnityEditor.U2D
 
             public static readonly int[] cornerValues = { 0, 1 };
             public static readonly GUIContent[] cornerOptions = { new GUIContent("Disabled"), new GUIContent("Automatic") };
-
-            public static readonly int[] variantValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 };
-            public static readonly GUIContent[] variantOptions = { new GUIContent("0"), new GUIContent("1"), new GUIContent("2"), new GUIContent("3"), new GUIContent("4"), new GUIContent("5"), new GUIContent("6"),
-                new GUIContent("7"), new GUIContent("8"), new GUIContent("9"), new GUIContent("10"), new GUIContent("11"), new GUIContent("12"), new GUIContent("13"), new GUIContent("14"), new GUIContent("15"),
-                new GUIContent("16"), new GUIContent("17"), new GUIContent("18"), new GUIContent("19"), new GUIContent("20"), new GUIContent("21"), new GUIContent("22"), new GUIContent("23"), new GUIContent("24"),
-                new GUIContent("25"), new GUIContent("26"), new GUIContent("27"), new GUIContent("28"), new GUIContent("29"), new GUIContent("30"), new GUIContent("31") };
-
             public static readonly GUIContent xLabel = new GUIContent("X");
             public static readonly GUIContent yLabel = new GUIContent("Y");
             public static readonly GUIContent zLabel = new GUIContent("Z");
         }
 
         Spline m_Spline;
+        int m_SelectedPoint = -1;
+        int m_SelectedAngleRange = -1;
+        int m_SpriteShapeHashCode = 0;
+        List<ShapeSegment> m_ShapeSegments = new List<ShapeSegment>();
+        SpriteSelector spriteSelector = new SpriteSelector();
 
         public Spline spline
         {
@@ -91,10 +105,15 @@ namespace UnityEditor.U2D
         {
             m_Spline = spline;
 
+            if (SpriteShapeTool.instance != null)
+                if (SpriteShapeTool.instance.splineEditor != null)
+                    SpriteShapeTool.instance.splineEditor.GetAngleRange = GetAngleRange;
+
             EditorGUI.BeginChangeCheck();
            
             if (GUI.enabled && SplineEditorCache.GetSelection().Count > 0)
             {
+                
                 EditorGUILayout.LabelField(Contents.pointLabel, EditorStyles.boldLabel);
 
                 DoTangentGUI();
@@ -194,6 +213,183 @@ namespace UnityEditor.U2D
             EditorGUILayout.EndHorizontal();
         }
 
+        static bool WithinRange(ShapeAngleRange angleRange, float inputAngle)
+        {
+            float range = angleRange.end - angleRange.start;
+            float angle = Mathf.Repeat(inputAngle - angleRange.start, 360f);
+            angle = (angle == 360.0f) ? 0 : angle;
+            return (angle >= 0f && angle <= range);
+        }
+
+        static int RangeFromAngle(List<ShapeAngleRange> angleRanges, float angle)
+        {
+            foreach (var range in angleRanges)
+            {
+                if (WithinRange(range, angle))
+                    return range.index;
+            }
+
+            return -1;
+        }
+
+        private void GenerateSegments(SpriteShapeController sc, List<ShapeAngleRange> angleRanges)
+        {
+            var controlPointCount = sc.spline.GetPointCount();
+            var angleRangeIndices = new int[controlPointCount];
+            ShapeSegment activeSegment = new ShapeSegment() { start = -1, end = -1, angleRange = -1 };
+            m_ShapeSegments.Clear();
+
+            for (int i = 0; i < controlPointCount; ++i)
+            {
+                var actv = i;
+                var next = SplineUtility.NextIndex(actv, controlPointCount);
+                var pos1 = sc.spline.GetPosition(actv);
+                var pos2 = sc.spline.GetPosition(next);
+                bool continueStrip = (sc.spline.GetTangentMode(actv) == ShapeTangentMode.Continuous), edgeUpdated = false;
+                float angle = 0;
+                if (false == continueStrip || activeSegment.start == -1)
+                    angle = SplineUtility.SlopeAngle(pos1, pos2) + 90.0f;
+
+                next = (!sc.spline.isOpenEnded && next == 0) ? (actv + 1) : next;
+                int mn = (actv < next) ? actv : next;
+                int mx = (actv > next) ? actv : next;
+
+                var anglerange = RangeFromAngle(angleRanges, angle);
+                angleRangeIndices[actv] = anglerange;
+                if (anglerange == -1)
+                {
+                    activeSegment = new ShapeSegment() { start = mn, end = mx, angleRange = anglerange };
+                    m_ShapeSegments.Add(activeSegment);
+                    continue;
+                }
+
+                // Check for Segments. Also check if the Segment Start has been resolved. Otherwise simply start with the next one
+                if (activeSegment.start != -1)
+                    continueStrip = continueStrip && (angleRangeIndices[activeSegment.start] != -1);
+
+                bool canContinue = (actv != (controlPointCount - 1)) || (!sc.spline.isOpenEnded && (actv == (controlPointCount - 1)));
+                if (continueStrip && canContinue)
+                {
+                    for (int s = 0; s < m_ShapeSegments.Count; ++s)
+                    {
+                        activeSegment = m_ShapeSegments[s];
+                        if (activeSegment.start - mn == 1)
+                        {
+                            edgeUpdated = true;
+                            activeSegment.start = mn;
+                            m_ShapeSegments[s] = activeSegment;
+                            break;
+                        }
+                        if (mx - activeSegment.end == 1)
+                        {
+                            edgeUpdated = true;
+                            activeSegment.end = mx;
+                            m_ShapeSegments[s] = activeSegment;
+                            break;
+                        }
+                    }
+                }
+
+                if (!edgeUpdated)
+                {
+                    activeSegment.start = mn;
+                    activeSegment.end = mx;
+                    activeSegment.angleRange = anglerange;
+                    m_ShapeSegments.Add(activeSegment);
+                }
+
+            }        
+        }
+
+        private int GetAngleRange(SpriteShapeController sc, int point, ref int startPoint)
+        {
+            int angleRange = -1;
+            startPoint = point;
+            for (int i = 0; i < m_ShapeSegments.Count; ++i)
+            {
+                if (point >= m_ShapeSegments[i].start && point < m_ShapeSegments[i].end)
+                {
+                    angleRange = m_ShapeSegments[i].angleRange;
+                    // startPoint = m_ShapeSegments[i].start;   // As variants inside a continous segment is allowed, we just set each points as it is.
+                    if (angleRange >= sc.spriteShape.angleRanges.Count)
+                        angleRange = 0;
+                    break;
+                }
+            }
+            return angleRange;
+        }
+
+        private List<ShapeAngleRange> GetAngleRangeSorted(SpriteShape ss)
+        {
+            List <ShapeAngleRange> angleRanges = new List<ShapeAngleRange>();
+            int i = 0;
+            foreach ( var angleRange in ss.angleRanges)
+            {
+                ShapeAngleRange sar = new ShapeAngleRange() { start = angleRange.start, end = angleRange.end, order = angleRange.order, index = i };
+                angleRanges.Add(sar);
+                i++;
+            }
+            angleRanges.Sort((a, b) => a.order.CompareTo(b.order));
+            return angleRanges;
+        }
+
+        private int ResolveSpriteIndex(List<int> spriteIndices, ISelection selection, ref List<int> startPoints)
+        {
+            var spriteIndexValue = spriteIndices.FirstOrDefault();
+            SpriteShapeController sc = SplineEditorCache.GetTarget();
+
+            if (sc == null || sc.spriteShape == null)
+                return -1;
+
+            // Either SpriteShape Asset or SpriteShape Data has changed. 
+            List<ShapeAngleRange> angleRanges = GetAngleRangeSorted(sc.spriteShape);
+            if (m_SpriteShapeHashCode != sc.spriteShapeHashCode)
+            {
+                GenerateSegments(sc, angleRanges);
+                m_SpriteShapeHashCode = sc.spriteShapeHashCode;
+                m_SelectedPoint = -1;
+            }
+
+            if (sc.spriteShape != null)
+            { 
+                if (selection.single != -1)
+                {
+                    m_SelectedAngleRange = GetAngleRange(sc, selection.single, ref m_SelectedPoint);
+                    startPoints.Add(m_SelectedPoint);
+                    spriteIndexValue = m_Spline.GetSpriteIndex(m_SelectedPoint);
+                }
+                else
+                {
+                    m_SelectedAngleRange = -1;
+                    foreach (var index in selection)
+                    {
+                        int startPoint = index;
+                        int angleRange = GetAngleRange(sc, index, ref startPoint);
+                        if (m_SelectedAngleRange != -1 && angleRange != m_SelectedAngleRange)
+                        {
+                            m_SelectedAngleRange = -1;
+                            break;
+                        }
+                        startPoints.Add(startPoint);
+                        m_SelectedAngleRange = angleRange;
+                    }
+                }
+            }
+
+            if (m_SelectedAngleRange != -1)
+                spriteSelector.UpdateSprites(sc.spriteShape.angleRanges[m_SelectedAngleRange].sprites.ToArray());
+            else
+                spriteIndexValue = -1;
+            return spriteIndexValue;
+        }
+
+        private int GetAngleRange(int index)
+        {
+            int startPoint = 0;
+            SpriteShapeController sc = SplineEditorCache.GetTarget();
+            return GetAngleRange(sc, index, ref startPoint);
+        }
+
         private void DoPointInspector()
         {
             var selection = SplineEditorCache.GetSelection();
@@ -244,20 +440,23 @@ namespace UnityEditor.U2D
                     m_Spline.SetHeight(index, heightValue);
             }
 
-            EditorGUI.BeginChangeCheck();
+            List<int> startPoints = new List<int>();
+            var spriteIndexValue = ResolveSpriteIndex(spriteIndices, selection, ref startPoints);
 
-            var spriteIndexValue = spriteIndices.FirstOrDefault();
-            EditorGUI.showMixedValue = spriteIndices.All( i => Mathf.Approximately(i, spriteIndexValue) ) == false;
+            if (spriteIndexValue != -1)
+            { 
+                EditorGUI.BeginChangeCheck();
 
-            spriteIndexValue = EditorGUILayout.IntPopup(Contents.spriteIndexLabel, spriteIndexValue, Contents.variantOptions, Contents.variantValues);
+                spriteSelector.ShowGUI(spriteIndexValue);
 
-            if (EditorGUI.EndChangeCheck())
-            {
-                RegisterUndo("Inspector");
-
-                foreach (var index in selection)
-                    m_Spline.SetSpriteIndex(index, spriteIndexValue);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    RegisterUndo("Inspector");
+                    foreach (var index in startPoints)
+                        m_Spline.SetSpriteIndex(index, spriteSelector.selectedIndex);
+                }
             }
+            EditorGUILayout.Space();
 
             EditorGUI.BeginChangeCheck();
 

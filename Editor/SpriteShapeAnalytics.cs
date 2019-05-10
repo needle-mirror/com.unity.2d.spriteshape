@@ -154,7 +154,7 @@ namespace UnityEditor.U2D
         const string k_VendorKey = "unity.2d.spriteshape";
         const int k_Version = 1;
 
-        static SpriteShapeUnityAnalyticsStorage()
+        public SpriteShapeUnityAnalyticsStorage()
         {
             EditorAnalytics.RegisterEventWithLimit("u2dSpriteShapeToolUsage", SpriteShapeAnalyticConstant.k_MaxEventsPerHour, SpriteShapeAnalyticConstant.k_MaxNumberOfElements, k_VendorKey, k_Version);
         }

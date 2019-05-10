@@ -17,26 +17,26 @@ namespace UnityEngine.U2D
     public class SpriteShapeController : MonoBehaviour
     {
         const float s_DistanceTolerance = 0.001f;
-
-        PolygonCollider2D m_PolygonCollider2D;
         EdgeCollider2D m_EdgeCollider2D;
+        PolygonCollider2D m_PolygonCollider2D;
 
+        Sprite[] m_SpriteArray;
         Sprite[] m_EdgeSpriteArray;
         Sprite[] m_CornerSpriteArray;
         AngleRangeInfo[] m_AngleRangeInfoArray;
 
-        private bool m_DynamicOcclusionLocal;
-        private bool m_DynamicOcclusionOverriden;
-
-        SpriteShape m_CurrentSpriteShape;
+        bool m_DynamicOcclusionLocal;
+        bool m_DynamicOcclusionOverriden;
+        bool m_LegacyGenerator = false;
         SpriteShapeRenderer m_SpriteShapeRenderer;
-        SpriteShapeParameters m_CurrentShapeParameters;
-        List<AngleRange> m_CurrentAngleRanges = new List<AngleRange>();
-        List<CornerSprite> m_CurrentCornerSprites = new List<CornerSprite>();
+
+        SpriteShape m_ActiveSpriteShape;
+        SpriteShapeParameters m_ActiveShapeParameters;
         NativeArray<float2> m_ColliderData;
 
-        int m_CurrentSplineHashCode = 0;
-        public bool m_LegacyGenerator = false;
+        int m_AngleRangeHash = 0;
+        int m_ActiveCornerSpritesHash = 0;
+        int m_ActiveSplineHash = 0;
 
         [SerializeField]
         Spline m_Spline = new Spline();
@@ -65,7 +65,13 @@ namespace UnityEngine.U2D
         bool m_UpdateCollider = true;
         [SerializeField]
         bool m_OptimizeCollider = true;
+        [SerializeField]
+        bool m_OptimizeGeometry = true;
 
+        public int spriteShapeHashCode
+        {
+            get { return m_ActiveSplineHash; }
+        }
         public bool worldSpaceUVs
         {
             get { return m_WorldSpaceUV; }
@@ -85,7 +91,6 @@ namespace UnityEngine.U2D
         {
             get { return m_Spline; }
         }
-
         public SpriteShape spriteShape
         {
             get { return m_SpriteShape; }
@@ -143,18 +148,24 @@ namespace UnityEngine.U2D
             set { m_ColliderOffset = value; }
         }
 
+        public bool hasCollider
+        {
+            get { return (edgeCollider != null) || (polygonCollider != null); }
+        }
+
         public bool autoUpdateCollider
         {
-            get
-            {
-                bool hasCollider = (edgeCollider != null) || (polygonCollider != null);
-                return hasCollider && m_UpdateCollider;
-            }
+            get { return m_UpdateCollider; }
             set { m_UpdateCollider = value; }
         }
+
         public bool optimizeCollider
         {
             get { return m_OptimizeCollider; }
+        }
+        public bool optimizeGeometry
+        {
+            get { return m_OptimizeGeometry; }
         }
 
         private void DisposeNativeArrays()
@@ -225,60 +236,87 @@ namespace UnityEngine.U2D
                     m_CornerSpriteArray = null;
                 if (m_AngleRangeInfoArray != null)
                     m_AngleRangeInfoArray = null;
-                m_CurrentAngleRanges.Clear();
-                m_CurrentCornerSprites.Clear();
+                if (m_SpriteArray != null)
+                    m_SpriteArray = null;
+            }
+        }
+
+        int GetAngleRangeHashCode()
+        {
+            unchecked
+            {
+                int hashCode = (int)2166136261;
+
+                hashCode = hashCode * 16777619 ^ spriteShape.angleRanges.Count;
+
+                for (int i = 0; i < spriteShape.angleRanges.Count; ++i)
+                {
+                    hashCode = hashCode * 16777619 ^ spriteShape.angleRanges[i].GetHashCode();
+                }
+
+                return hashCode;
+            }
+        }
+
+        int GetCornerSpritesHashCode()
+        {
+            unchecked
+            {
+                int hashCode = (int)2166136261;
+
+                hashCode = hashCode * 16777619 ^ spriteShape.cornerSprites.Count;
+
+                for (int i = 0; i < spriteShape.cornerSprites.Count; ++i)
+                {
+                    hashCode = hashCode * 16777619 ^ spriteShape.cornerSprites[i].GetHashCode();
+                }
+
+                return hashCode;
             }
         }
 
         bool SpriteShapeChanged()
         {
-            return m_CurrentSpriteShape != spriteShape;
+            return m_ActiveSpriteShape != spriteShape;
         }
 
-        bool NeedUpdateSpriteArrays()
+        bool NeedUpdateSprites()
         {
             if (m_EdgeSpriteArray == null || m_CornerSpriteArray == null || m_AngleRangeInfoArray == null)
                 return true;
 
-            if (spriteShape)
+            bool updateSprites = SpriteShapeChanged();
+            if (spriteShape && !updateSprites)
             {
-                if (m_CurrentAngleRanges.Count != spriteShape.angleRanges.Count)
-                    return true;
-
-                if (m_CurrentCornerSprites.Count != spriteShape.cornerSprites.Count)
+                var angleRangeHashCode = GetAngleRangeHashCode();
+                if (m_AngleRangeHash != angleRangeHashCode)
                 {
-                    for (int i = 0; i < spriteShape.cornerSprites.Count; ++i)
-                    {
-                        var cornerSprite = spriteShape.cornerSprites[i].sprites[0];
-                        if (cornerSprite != null)
-                            return true;
-                    }
+                    m_AngleRangeHash = angleRangeHashCode;
+                    updateSprites = true;
                 }
 
-                for (int i = 0; i < m_CurrentAngleRanges.Count; i++)
+                var cornerSpritesHashCode = GetCornerSpritesHashCode();
+                if (m_ActiveCornerSpritesHash != cornerSpritesHashCode)
                 {
-                    if (!m_CurrentAngleRanges[i].Equals(spriteShape.angleRanges[i]))
-                        return true;
-                }
-
-                for (int i = 0; i < m_CurrentCornerSprites.Count; i++)
-                {
-                    if (!m_CurrentCornerSprites[i].Equals(spriteShape.cornerSprites[i]))
-                        return true;
+                    m_ActiveCornerSpritesHash = cornerSpritesHashCode;
+                    updateSprites = true;
                 }
             }
-
-            return SpriteShapeChanged();
+            return updateSprites;
         }
 
         bool HasSplineChanged()
         {
-            int hashCode = m_Spline.GetHashCode();
-
-            if (m_CurrentSplineHashCode != hashCode)
+            unchecked
             {
-                m_CurrentSplineHashCode = hashCode;
-                return true;
+                int hashCode = (int)2166136261 ^ m_Spline.GetHashCode();
+                hashCode = hashCode * 16777619 ^ (m_OptimizeGeometry ? 1 : 0);
+
+                if (spriteShapeHashCode != hashCode)
+                {
+                    m_ActiveSplineHash = hashCode;
+                    return true;
+                }
             }
             return false;
         }
@@ -286,27 +324,25 @@ namespace UnityEngine.U2D
         void OnWillRenderObject()
         {
             ValidateSpriteShapeData();
-            bool needUpdateSpriteArrays = NeedUpdateSpriteArrays();
+            bool needUpdateSprites = NeedUpdateSprites();
             bool spriteShapeParametersChanged = UpdateSpriteShapeParameters();
             bool splineChanged = HasSplineChanged();
 
             BakeCollider();
-            if (needUpdateSpriteArrays || spriteShapeParametersChanged || splineChanged)
-                BakeMesh(needUpdateSpriteArrays);
-
-            m_CurrentSpriteShape = spriteShape;
-
+            if (needUpdateSprites || spriteShapeParametersChanged || splineChanged)
+                BakeMesh(needUpdateSprites);
+            m_ActiveSpriteShape = spriteShape;
         }
 
         public void RefreshSpriteShape()
         {
-            m_CurrentSplineHashCode = 0;
+            m_ActiveSplineHash = 0;
         }
 
         public JobHandle BakeMesh()
         {
             UpdateSpriteShapeParameters();
-            return BakeMesh(NeedUpdateSpriteArrays());
+            return BakeMesh(NeedUpdateSprites());
         }
 
         // Ensure Neighbor points are not too close to each other.
@@ -328,7 +364,7 @@ namespace UnityEngine.U2D
         {
             JobHandle jobHandle = default;
             if (needUpdateSpriteArrays)
-                UpdateSpriteArrays();
+                UpdateSprites();
 
             List<ShapeControlPointExperimental> shapePoints = new List<ShapeControlPointExperimental>();
             List<SpriteShapeMetaData> shapeMetaData = new List<SpriteShapeMetaData>();
@@ -355,14 +391,14 @@ namespace UnityEngine.U2D
             {
                 if (m_LegacyGenerator)
                 {
-                    SpriteShapeUtility.GenerateSpriteShape(spriteShapeRenderer, m_CurrentShapeParameters,
+                    SpriteShapeUtility.GenerateSpriteShape(spriteShapeRenderer, m_ActiveShapeParameters,
                         shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray,
                         m_CornerSpriteArray);
                 }
                 else
                 {
                     // Allow max quads for each segment to 128.
-                    int maxArrayCount = (int)(pointCount * 256 * m_CurrentShapeParameters.splineDetail);
+                    int maxArrayCount = (int)(pointCount * 256 * m_ActiveShapeParameters.splineDetail);
                     if (m_ColliderData.IsCreated)
                         m_ColliderData.Dispose();
                     m_ColliderData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
@@ -383,13 +419,9 @@ namespace UnityEngine.U2D
                         m_ColliderPoints = m_ColliderData,
                         m_Bounds = bounds
                     };
-                    spriteShapeJob.Prepare(this, m_CurrentShapeParameters, maxArrayCount, shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
-
-                    List<Sprite> sprites = new List<Sprite>();
-                    sprites.AddRange(m_EdgeSpriteArray);
-                    sprites.AddRange(m_CornerSpriteArray);
+                    spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
                     jobHandle = spriteShapeJob.Schedule();
-                    spriteShapeRenderer.Prepare(jobHandle, m_CurrentShapeParameters, sprites.ToArray());
+                    spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
                     JobHandle.ScheduleBatchedJobs();
                 }
             }
@@ -404,26 +436,31 @@ namespace UnityEngine.U2D
 
         public void BakeCollider()
         {
-            if (m_ColliderData.IsCreated && autoUpdateCollider)
+            if (m_ColliderData.IsCreated)
             {
-                int maxCount = short.MaxValue - 1;
-                float2 last = (float2)0;
-                List<Vector2> m_ColliderSegment = new List<Vector2>();
-                for (int i = 0; i < maxCount; ++i)
+                if (autoUpdateCollider)
                 {
-                    float2 now = m_ColliderData[i];
-                    if (!math.any(last) && !math.any(now))
-                        break;
-                    m_ColliderSegment.Add(new Vector2(now.x, now.y));
+                    if (hasCollider)
+                    {
+                        int maxCount = short.MaxValue - 1;
+                        float2 last = (float2)0;
+                        List<Vector2> m_ColliderSegment = new List<Vector2>();
+                        for (int i = 0; i < maxCount; ++i)
+                        {
+                            float2 now = m_ColliderData[i];
+                            if (!math.any(last) && !math.any(now))
+                                break;
+                            m_ColliderSegment.Add(new Vector2(now.x, now.y));
+                        }
+
+                        EdgeCollider2D edge = GetComponent<EdgeCollider2D>();
+                        if (edge != null)
+                            edge.points = m_ColliderSegment.ToArray();
+                        PolygonCollider2D poly = GetComponent<PolygonCollider2D>();
+                        if (poly != null)
+                            poly.points = m_ColliderSegment.ToArray();
+                    }
                 }
-
-                EdgeCollider2D edge = GetComponent<EdgeCollider2D>();
-                if (edge != null)
-                    edge.points = m_ColliderSegment.ToArray();
-                PolygonCollider2D poly = GetComponent<PolygonCollider2D>();
-                if (poly != null)
-                    poly.points = m_ColliderSegment.ToArray();
-
                 m_ColliderData.Dispose();
 #if UNITY_EDITOR
                 if (UnityEditor.SceneView.lastActiveSceneView != null)
@@ -468,41 +505,38 @@ namespace UnityEngine.U2D
 #endif
             }
 
-            bool changed = m_CurrentShapeParameters.adaptiveUV != adaptiveUV ||
-                m_CurrentShapeParameters.angleThreshold != angleThreshold ||
-                m_CurrentShapeParameters.borderPivot != borderPivot ||
-                m_CurrentShapeParameters.carpet != carpet ||
-                m_CurrentShapeParameters.fillScale != fillScale ||
-                m_CurrentShapeParameters.fillTexture != fillTexture ||
-                m_CurrentShapeParameters.smartSprite != smartSprite ||
-                m_CurrentShapeParameters.splineDetail != splineDetail ||
-                m_CurrentShapeParameters.spriteBorders != spriteBorders ||
-                m_CurrentShapeParameters.transform != transformMatrix ||
-                m_CurrentShapeParameters.stretchUV != stretchUV;
+            bool changed = m_ActiveShapeParameters.adaptiveUV != adaptiveUV ||
+                m_ActiveShapeParameters.angleThreshold != angleThreshold ||
+                m_ActiveShapeParameters.borderPivot != borderPivot ||
+                m_ActiveShapeParameters.carpet != carpet ||
+                m_ActiveShapeParameters.fillScale != fillScale ||
+                m_ActiveShapeParameters.fillTexture != fillTexture ||
+                m_ActiveShapeParameters.smartSprite != smartSprite ||
+                m_ActiveShapeParameters.splineDetail != splineDetail ||
+                m_ActiveShapeParameters.spriteBorders != spriteBorders ||
+                m_ActiveShapeParameters.transform != transformMatrix ||
+                m_ActiveShapeParameters.stretchUV != stretchUV;
 
-            m_CurrentShapeParameters.adaptiveUV = adaptiveUV;
-            m_CurrentShapeParameters.stretchUV = stretchUV;
-            m_CurrentShapeParameters.angleThreshold = angleThreshold;
-            m_CurrentShapeParameters.borderPivot = borderPivot;
-            m_CurrentShapeParameters.carpet = carpet;
-            m_CurrentShapeParameters.fillScale = fillScale;
-            m_CurrentShapeParameters.fillTexture = fillTexture;
-            m_CurrentShapeParameters.smartSprite = smartSprite;
-            m_CurrentShapeParameters.splineDetail = splineDetail;
-            m_CurrentShapeParameters.spriteBorders = spriteBorders;
-            m_CurrentShapeParameters.transform = transformMatrix;
+            m_ActiveShapeParameters.adaptiveUV = adaptiveUV;
+            m_ActiveShapeParameters.stretchUV = stretchUV;
+            m_ActiveShapeParameters.angleThreshold = angleThreshold;
+            m_ActiveShapeParameters.borderPivot = borderPivot;
+            m_ActiveShapeParameters.carpet = carpet;
+            m_ActiveShapeParameters.fillScale = fillScale;
+            m_ActiveShapeParameters.fillTexture = fillTexture;
+            m_ActiveShapeParameters.smartSprite = smartSprite;
+            m_ActiveShapeParameters.splineDetail = splineDetail;
+            m_ActiveShapeParameters.spriteBorders = spriteBorders;
+            m_ActiveShapeParameters.transform = transformMatrix;
 
             return changed;
         }
 
-        void UpdateSpriteArrays()
+        void UpdateSprites()
         {
             List<Sprite> edgeSpriteList = new List<Sprite>();
             List<Sprite> cornerSpriteList = new List<Sprite>();
             List<AngleRangeInfo> angleRangeInfoList = new List<AngleRangeInfo>();
-
-            m_CurrentAngleRanges.Clear();
-            m_CurrentCornerSprites.Clear();
 
             if (spriteShape)
             {
@@ -555,20 +589,18 @@ namespace UnityEngine.U2D
                     {
                         CornerSprite cornerSprite = spriteShape.cornerSprites[i];
                         cornerSpriteList.Add(cornerSprite.sprites[0]);
-                        m_CurrentCornerSprites.Add(cornerSprite.Clone() as CornerSprite);
                     }
-                }
-
-                for (int i = 0; i < spriteShape.angleRanges.Count; i++)
-                {
-                    AngleRange angleRange = spriteShape.angleRanges[i];
-                    m_CurrentAngleRanges.Add(angleRange.Clone() as AngleRange);
                 }
             }
 
             m_EdgeSpriteArray = edgeSpriteList.ToArray();
             m_CornerSpriteArray = cornerSpriteList.ToArray();
             m_AngleRangeInfoArray = angleRangeInfoList.ToArray();
+
+            List<Sprite> spriteList = new List<Sprite>();
+            spriteList.AddRange(m_EdgeSpriteArray);
+            spriteList.AddRange(m_CornerSpriteArray);
+            m_SpriteArray = spriteList.ToArray();
         }
 
         Texture2D GetTextureFromIndex(int index)

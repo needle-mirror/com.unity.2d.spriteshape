@@ -172,6 +172,9 @@ namespace UnityEngine.U2D
                 {
                     hashCode = hashCode * 16777619 ^ m_ControlPoints[i].GetHashCode();
                 }
+
+                hashCode = hashCode * 16777619 ^ m_IsOpenEnded.GetHashCode();
+
                 return hashCode;
             }
         }

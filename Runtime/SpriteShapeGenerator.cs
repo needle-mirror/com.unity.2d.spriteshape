@@ -197,8 +197,11 @@ namespace UnityEngine.U2D
         float kEpsilonRelaxed;
         float kExtendSegment;
         float kRenderQuality;
+        float kOptimizeRender;
         float kColliderQuality;
-        float kColliderCleanup;
+        float kOptimizeCollider;
+        float kLowestQualityTolerance;
+        float kHighestQualityTolerance;
 
         #region Getters.
 
@@ -465,7 +468,7 @@ namespace UnityEngine.U2D
             corners[cornerCount++] = d;
         }
 
-        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPointExperimental[] shapePoints, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
+        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPointExperimental[] shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
         {
             kModeLinear = 0;
             kModeContinous = 1;
@@ -490,17 +493,15 @@ namespace UnityEngine.U2D
             kEpsilonRelaxed = 0.001f;
             kExtendSegment = 10000.0f;
 
-            float kLowestQualityTolerance = 4.0f;
-            float kHighestQualityTolerance = 16.0f;
+            kLowestQualityTolerance = 4.0f;
+            kHighestQualityTolerance = 16.0f;
 
             kColliderQuality = math.clamp(colliderDetail, kLowestQualityTolerance, kHighestQualityTolerance);
-            kColliderCleanup = optimizeCollider ? 1 : 0;
-            if (optimizeCollider)
-                kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.01f;
-            else
-                kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.0002f;
+            kOptimizeCollider = optimizeCollider ? 1 : 0;
+            kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.002f;
             colliderPivot = (colliderPivot == 0) ? 0.001f : colliderPivot;
 
+            kOptimizeRender = optimizeGeometry ? 1 : 0;
             kRenderQuality = math.clamp(shapeParams.splineDetail, kLowestQualityTolerance, kHighestQualityTolerance);
             kRenderQuality = (kHighestQualityTolerance - kRenderQuality + 2.0f) * 0.0002f;
 
@@ -707,6 +708,9 @@ namespace UnityEngine.U2D
         {
             int activeSpriteIndex = 0, activeSegmentIndex = 0, firstSpriteIndex = -1;
             JobSegmentInfo activeSegment = m_Segments[0];
+            activeSegment.spInfo = int4.zero;
+            activeSegment.spriteInfo = int4.zero;
+            float angle = 0;
 
             // Generate Segments.
             for (int i = 0; i < controlPointCount; ++i)
@@ -737,8 +741,10 @@ namespace UnityEngine.U2D
                 // Get Min Max Segment.
                 int mn = (i < next) ? i : next;
                 int mx = (i > next) ? i : next;
+                bool continueStrip = (iscp.cpData.z == kModeContinous), edgeUpdated = false;
 
-                float angle = SlopeAngle(iscpNext.position, iscp.position);
+                if (false == continueStrip || 0 == activeSegmentIndex)
+                    angle = SlopeAngle(iscpNext.position, iscp.position);
                 bool resolved = ResolveAngle(angle, pointData.x, ref pointInfo.w, ref pointData.w, ref firstSpriteIndex);
                 if (!resolved && !skipSegmenting)
                 {
@@ -757,21 +763,16 @@ namespace UnityEngine.U2D
                     continue;
                 }
 
-                int prev = (i == 0) ? (controlPointCount - 1) : (i - 1);
-                JobControlPoint iscpPrev = GetControlPoint(prev);
-
                 // Update current Point.
                 activeSpriteIndex = pointData.w;
                 iscp.cpData = pointData;
                 m_ControlPoints[i] = iscp;
-
                 if (skipSegmenting)
                     continue;
 
                 // Check for Segments. Also check if the Segment Start has been resolved. Otherwise simply start with the next one.
-                bool continueStrip = (iscp.cpData.z == kModeContinous), edgeUpdated = false;
                 if (activeSegmentIndex != 0)
-                    continueStrip = continueStrip && (m_SpriteIndices[activeSegment.spInfo.x].y != 0);
+                    continueStrip = continueStrip && (m_SpriteIndices[activeSegment.spInfo.x].y != 0 && activeSpriteIndex == activeSegment.spInfo.z);
 
                 if (continueStrip && i != (controlPointCount - 1))
                 {
@@ -1011,7 +1012,8 @@ namespace UnityEngine.U2D
                 // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
                 if (m_TessPointCount > 0)
                 {
-                    OptimizePoints(kRenderQuality, ref m_TessPoints, ref m_TessPointCount);
+                    if (kOptimizeRender > 0)
+                        OptimizePoints(kRenderQuality, ref m_TessPoints, ref m_TessPointCount);
 
                     var inputs = new ContourVertex[m_TessPointCount];
                     for (int i = 0; i < m_TessPointCount; ++i)
@@ -1958,10 +1960,12 @@ namespace UnityEngine.U2D
             if (hasCollider)
             {
                 if (kColliderQuality > 0)
-                {
-                    OptimizePoints(kColliderQuality, ref m_ColliderPoints, ref m_ColliderPointCount);
-                    if (kColliderCleanup > 0)
+                {                    
+                    if (kOptimizeCollider > 0)
+                    { 
+                        OptimizePoints(kColliderQuality, ref m_ColliderPoints, ref m_ColliderPointCount);
                         TrimOverlaps();
+                    }
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                 }
@@ -1983,7 +1987,7 @@ namespace UnityEngine.U2D
         public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPointExperimental[] shapePoints, SpriteShapeMetaData[] metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
         {
             // Prepare Inputs.
-            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
+            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
             PrepareSprites(segmentSprites, cornerSprites);
             PrepareAngleRanges(angleRanges);
             PrepareControlPoints(shapePoints, metaData);

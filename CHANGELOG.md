@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.0.0-preview.7] - 2019-5-10
+### Fixed
+- Version Update and fixes.
+
+## [2.0.0-preview.6] - 2019-5-8
+### Fixed
+- Added Sprite Variant Selector.
+- Fix Variant Bug (https://forum.unity.com/threads/spriteshape-preview-package.522575/page-6#post-4480936)
+- Fix (Case 1146747) SpriteShape generating significant GC allocations every frame (OnWillRenderObject)
+
 ## [2.0.0-preview.5] - 2019-4-18
 ### Fixed
 - Shape angle does not show the accurate sprite on certain parts of the shape.
