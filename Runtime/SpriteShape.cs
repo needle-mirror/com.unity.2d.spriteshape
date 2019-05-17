@@ -130,10 +130,7 @@ namespace UnityEngine.U2D
                 {
                     Sprite sprite = sprites[i];
                     if (sprite)
-                    {
-                        hashCode ^= (i + 1);
-                        hashCode ^= sprite.GetHashCode();
-                    }
+                        hashCode = hashCode * 16777619 ^ (sprite.GetHashCode() + i);
                 }
             }
 
