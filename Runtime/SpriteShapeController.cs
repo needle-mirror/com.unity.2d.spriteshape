@@ -251,7 +251,7 @@ namespace UnityEngine.U2D
 
                 for (int i = 0; i < spriteShape.angleRanges.Count; ++i)
                 {
-                    hashCode = hashCode * 16777619 ^ spriteShape.angleRanges[i].GetHashCode();
+                    hashCode = hashCode * 16777619 ^ (spriteShape.angleRanges[i].GetHashCode() + i);
                 }
 
                 return hashCode;
@@ -268,7 +268,7 @@ namespace UnityEngine.U2D
 
                 for (int i = 0; i < spriteShape.cornerSprites.Count; ++i)
                 {
-                    hashCode = hashCode * 16777619 ^ spriteShape.cornerSprites[i].GetHashCode();
+                    hashCode = hashCode * 16777619 ^ (spriteShape.cornerSprites[i].GetHashCode() + i);
                 }
 
                 return hashCode;

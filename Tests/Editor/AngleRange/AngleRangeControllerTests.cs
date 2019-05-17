@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using NSubstitute;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
@@ -9,6 +8,7 @@ using UnityEngine.TestTools;
 using UnityEditor;
 using UnityEditor.U2D;
 using UnityEditor.Experimental.U2D.Common;
+using NSubstitute;
 
 namespace UnityEditor.U2D.SpriteShapeTest
 {
@@ -62,10 +62,10 @@ namespace UnityEditor.U2D.SpriteShapeTest
         {
             m_AngleRanges.Add(
                 new AngleRange()
-            {
-                start = start,
-                end = end
-            }
+                {
+                    start = start,
+                    end = end
+                }
                 );
         }
 

@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0-preview.2] - 2019-5-17
+### Changed
+- Version for 2019.2
+- Update for Common Package.
+
+## [2.0.0-preview.8] - 2019-5-16
+### Fixed
+- Fixed issue when sprites are re-ordered in Angle Range.
+- Updated Samples.
+
 ## [2.0.0-preview.7] - 2019-5-10
 ### Fixed
 - Version Update and fixes.
