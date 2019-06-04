@@ -6,7 +6,12 @@ namespace UnityEngine.U2D
     [Serializable]
     public class Spline
     {
+        private static readonly string KErrorMessage = "Internal error: Point too close to neighbor";
         private static readonly float KEpsilon = 0.01f;
+        [SerializeField]
+        private bool m_IsOpenEnded;
+        [SerializeField]
+        private List<ShapeControlPoint> m_ControlPoints = new List<ShapeControlPoint>();
 
         public bool isOpenEnded
         {
@@ -52,7 +57,7 @@ namespace UnityEngine.U2D
         public void InsertPointAt(int index, Vector3 point)
         {
             if (!IsPositionValid(index, index, point))
-                throw new ArgumentException("Internal error: Point too close to neighbor");
+                throw new ArgumentException(KErrorMessage);
             m_ControlPoints.Insert(index, new ShapeControlPoint { position = point, height = 1.0f, corner = true });
         }
 
@@ -70,7 +75,7 @@ namespace UnityEngine.U2D
         public void SetPosition(int index, Vector3 point)
         {
             if (!IsPositionValid(index, index + 1, point))
-                throw new ArgumentException("Internal error: Point too close to neighbor");
+                throw new ArgumentException(KErrorMessage);
             ShapeControlPoint newPoint = m_ControlPoints[index];
             newPoint.position = point;
             m_ControlPoints[index] = newPoint;
@@ -122,7 +127,7 @@ namespace UnityEngine.U2D
 
         public ShapeTangentMode GetTangentMode(int index)
         {
-            return (ShapeTangentMode)m_ControlPoints[index].mode;
+            return m_ControlPoints[index].mode;
         }
 
         public void SetTangentMode(int index, ShapeTangentMode mode)
@@ -178,11 +183,5 @@ namespace UnityEngine.U2D
                 return hashCode;
             }
         }
-
-        [SerializeField]
-        bool m_IsOpenEnded;
-
-        [SerializeField]
-        List<ShapeControlPoint> m_ControlPoints = new List<ShapeControlPoint>();
     }
 }

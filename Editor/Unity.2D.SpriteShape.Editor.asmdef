@@ -4,10 +4,18 @@
         "Unity.InternalAPIEditorBridge.001",
         "Unity.2D.Common.Editor",
         "Unity.2D.Common.Runtime",
-        "Unity.2D.SpriteShape.Runtime"
+        "Unity.2D.SpriteShape.Runtime",
+        "Unity.2D.Path.Editor"
     ],
+    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": []
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": []
 }

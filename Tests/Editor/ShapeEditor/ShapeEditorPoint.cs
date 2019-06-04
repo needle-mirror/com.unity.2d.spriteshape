@@ -1,3 +1,4 @@
+/*
 using UnityEditor;
 using UnityEngine;
 
@@ -19,3 +20,4 @@ namespace UnityEditor.U2D.SpriteShapeTest
         }
     }
 }
+*/

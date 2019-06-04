@@ -4,10 +4,20 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.1.0-preview.2] - 2019-5-17
+## [2.1.0-preview.6] - 2019-6-2
 ### Changed
-- Version for 2019.2
-- Update for Common Package.
+- Fix Null reference exception caused by SplineEditorCache changes.
+- Fill Inspector changes due to Path integration.
+
+## [2.1.0-preview.4] - 2019-5-28
+### Changed
+- Upgrade Mathematics package.
+- Use path editor.
+
+## [2.1.0-preview.2] - 2019-5-13
+### Changed
+- Initial version for 2019.2
+- Update for common package.
 
 ## [2.0.0-preview.8] - 2019-5-16
 ### Fixed

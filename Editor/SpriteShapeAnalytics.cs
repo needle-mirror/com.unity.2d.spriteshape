@@ -58,12 +58,14 @@ namespace UnityEditor.U2D
         const int k_SpriteShapeEventElementCount = 2;
         ISpriteShapeAnalyticsStorage m_AnalyticsStorage;
         [SerializeField]
-        SpriteShapeAnalyticsEvents m_EventBus = new SpriteShapeAnalyticsEvents();
+        SpriteShapeAnalyticsEvents m_EventBus = null;
 
-        internal SpriteShapeAnalyticsEvents events
+        internal SpriteShapeAnalyticsEvents eventBus
         {
             get
             {
+                if (m_EventBus == null)
+                    m_EventBus = new SpriteShapeAnalyticsEvents();
                 return m_EventBus;
             }
         }
@@ -71,14 +73,14 @@ namespace UnityEditor.U2D
         public SpriteShapeAnalytics(ISpriteShapeAnalyticsStorage analyticsStorage)
         {
             m_AnalyticsStorage = analyticsStorage;
-            m_EventBus.spriteShapeEvent.AddListener(OnSpriteShapeCreated);
-            m_EventBus.spriteShapeRendererEvent.AddListener(OnSpriteShapeRendererCreated);
+            eventBus.spriteShapeEvent.AddListener(OnSpriteShapeCreated);
+            eventBus.spriteShapeRendererEvent.AddListener(OnSpriteShapeRendererCreated);
         }
 
         public void Dispose()
         {
-            m_EventBus.spriteShapeEvent.RemoveListener(OnSpriteShapeCreated);
-            m_EventBus.spriteShapeRendererEvent.RemoveListener(OnSpriteShapeRendererCreated);
+            eventBus.spriteShapeEvent.RemoveListener(OnSpriteShapeCreated);
+            eventBus.spriteShapeRendererEvent.RemoveListener(OnSpriteShapeRendererCreated);
             m_AnalyticsStorage.Dispose();
         }        
 

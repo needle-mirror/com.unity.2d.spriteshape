@@ -45,7 +45,6 @@ namespace UnityEditor.U2D
         private ReorderableList m_AngleRangeSpriteList = null;
         private ReorderableList m_EmptySpriteList = null;
 
-        SpriteShape m_SpriteShape;
         [SerializeField]
         private float m_PreviewAngle = 0f;
         [SerializeField]
@@ -78,8 +77,8 @@ namespace UnityEditor.U2D
         {
             get
             {
-                Debug.Assert(m_SpriteShape != null);
-                return m_SpriteShape.angleRanges;
+                Debug.Assert(spriteShape != null);
+                return spriteShape.angleRanges;
             }
         }
 
@@ -99,18 +98,29 @@ namespace UnityEditor.U2D
             }
         }
 
+        public SpriteShape spriteShape
+        {
+            get
+            {
+                if (target == null)
+                    return null;
+                return target as SpriteShape;
+            }
+        }
+
         public void RegisterUndo(string name)
         {
-            Undo.RegisterCompleteObjectUndo(m_SpriteShape, name);
+            Undo.RegisterCompleteObjectUndo(spriteShape, name);
             Undo.RegisterCompleteObjectUndo(this, name);
-            EditorUtility.SetDirty(m_SpriteShape);
+            EditorUtility.SetDirty(spriteShape);
         }
 
         public void OnEnable()
         {
-            m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), m_PreviewAngle);
+            if (target == null)
+                return;
 
-            m_SpriteShape = target as SpriteShape;
+            m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), m_PreviewAngle);
 
             m_FillTextureProp = this.serializedObject.FindProperty("m_FillTexture");
             m_UseSpriteBordersProp = serializedObject.FindProperty("m_UseSpriteBorders");

@@ -23,7 +23,7 @@ namespace UnityEditor.U2D
             ProjectWindowUtil.CreateAsset(spriteShape, "New SpriteShapeProfile.asset");
             Selection.activeObject = spriteShape;
 
-            SplineEditorCache.instance.events.spriteShapeEvent.Invoke(spriteShape);
+            SpriteShapeEditorAnalytics.instance.eventBus.spriteShapeEvent.Invoke(spriteShape);
             return spriteShape;
         }
 
@@ -36,7 +36,7 @@ namespace UnityEditor.U2D
             if (shape != null)
                 objName = shape.name;
             gameObject.name = GameObjectUtility.GetUniqueNameForSibling(gameObject.transform.parent, objName);
-            SplineEditorCache.instance.events.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
+            SpriteShapeEditorAnalytics.instance.eventBus.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
             return spriteShapeController;
         }
 
@@ -63,7 +63,7 @@ namespace UnityEditor.U2D
             Undo.RegisterCreatedObjectUndo(gameObject, Contents.createSpriteShapeString);
             Selection.activeGameObject = gameObject;
             spriteShapeController.spline.Clear();
-            SplineEditorCache.instance.events.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
+            SpriteShapeEditorAnalytics.instance.eventBus.spriteShapeRendererEvent.Invoke(gameObject.GetComponent<SpriteShapeRenderer>());
             return spriteShapeController;
         }
 
