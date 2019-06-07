@@ -353,6 +353,7 @@ namespace UnityEditor.U2D
 
                     if (selection.Count > 0)
                     {
+
                         var spline = sc.spline;
                         var spriteIndices = new List<int>();
 
@@ -370,7 +371,12 @@ namespace UnityEditor.U2D
                             if (EditorGUI.EndChangeCheck())
                             {
                                 foreach (var index in startPoints)
-                                    spline.SetSpriteIndex(index, spriteSelector.selectedIndex);
+                                {
+                                    var data = path.GetData(index);
+                                    data.spriteIndex = spriteSelector.selectedIndex;
+                                    path.SetData(index, data);
+                                }
+                                pathTool.SetPath(target);
                             }
                         }
                         EditorGUILayout.Space();
