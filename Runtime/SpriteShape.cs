@@ -207,7 +207,7 @@ namespace UnityEngine.U2D
         }
     }
 
-    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@1.0/manual/index.html")]
+    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@latest/index.html")]
     public class SpriteShape : ScriptableObject
     {
         public List<AngleRange> angleRanges

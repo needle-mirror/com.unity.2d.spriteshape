@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [2.1.0-preview.10] - 2019-6-19
+### Changed
+- Fix (Case 1152342) The first point of the Sprite Shape does not behave correctly when using Continuous Points
+- Fix (Case 1160009) Edge and Polygon Collider does not seem to follow the spriteshape for some broken mirrored tangent points
+- Fix (Case 1157201) Edge Sprite Material changed when using a fill texture that is already an edge sprite on spriteshape
+- Fix (Case 1162134) Open ended Spriteshape renders the fill texture instead of the range sprite
+
 ## [2.1.0-preview.7] - 2019-6-2
 ### Changed
 - Fix Variant Selection.

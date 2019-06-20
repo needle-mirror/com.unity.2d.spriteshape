@@ -1302,8 +1302,34 @@ namespace UnityEngine.U2D
             outputCount = outputVertexCount;
         }
 
+        bool SkipSegment(JobSegmentInfo isi)
+        {
+            // Start the Generation.            
+            bool skip = (isi.spInfo.z < 0);
+            if (!skip)
+            {
+                JobSpriteInfo ispr = GetSpriteInfo(isi.spInfo.z);
+                skip = (math.any(ispr.uvInfo) == false);
+            }
+            if (skip)
+            {
+                int cis = GetContourIndex(isi.spInfo.x);
+                int cie = GetEndContourIndexOfSegment(isi);
+                while (cis < cie)
+                {
+                    JobContourPoint icp = GetContourPoint(cis);
+                    m_ColliderPoints[m_ColliderDataCount++] = icp.position;
+                    cis++;
+                }
+            }
+            return skip;
+        }
+
         void TessellateSegments()
         {
+
+            JobControlPoint iscp = GetControlPoint(0);
+            bool disableHead = (iscp.cpData.z == kModeContinous && isCarpet);
 
             // Determine Distance of Segment.
             for (int i = 0; i < segmentCount; ++i)
@@ -1326,36 +1352,22 @@ namespace UnityEngine.U2D
             {
                 // Tessellate the Segment.
                 JobSegmentInfo isi = GetSegmentInfo(i);
-
-                if (isi.spInfo.z < 0)
-                {
-                    // Start the Generation.
-                    int cis = GetContourIndex(isi.spInfo.x);
-                    int cie = GetEndContourIndexOfSegment(isi);
-                    while (cis < cie)
-                    {
-                        JobContourPoint icp = GetContourPoint(cis);
-                        m_ColliderPoints[m_ColliderDataCount++] = icp.position;
-                        cis++;
-                    }
+                bool skip = SkipSegment(isi);
+                if (skip)
                     continue;
-                }
 
                 // Internal Data : x, y : pos z : height w : renderIndex
-                int vertexCount = 0;
-                JobSpriteInfo ispr = GetSpriteInfo(isi.spInfo.z);
                 JobShapeVertex isv = m_VertexData[0];
+                JobSpriteInfo ispr = GetSpriteInfo(isi.spInfo.z);
 
-                if (math.any(ispr.uvInfo) == false)
-                    continue;
-
+                int vertexCount = 0;
                 int sprIx = isi.spInfo.z;
                 float rpunits = 1.0f / ispr.metaInfo.x;
                 float2 whsize = new float2(ispr.metaInfo.z, ispr.metaInfo.w) * rpunits;
                 float4 border = ispr.border * rpunits;
 
-                bool validHead = hasSpriteBorder & (border.x > 0);
-                bool validTail = hasSpriteBorder & (border.z > 0);
+                bool validHead = hasSpriteBorder && (border.x > 0);
+                bool validTail = hasSpriteBorder && (border.z > 0);
 
                 // Generate the UV Increments.
                 float extendUV = 0;
@@ -1377,6 +1389,10 @@ namespace UnityEngine.U2D
                 // Start the Generation.
                 int stIx = GetContourIndex(isi.spInfo.x);
                 int enIx = GetEndContourIndexOfSegment(isi);
+
+                // Single Segment Loop.
+                if (stIx == 0)
+                    validHead = (validHead && !disableHead);
 
                 // Do we have a Sprite Head Slice
                 if (validHead)
