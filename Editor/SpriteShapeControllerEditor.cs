@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor;
 using UnityEditor.U2D.SpriteShapeInternal;
-using UnityEditor.Experimental.U2D.Common;
+using UnityEditor.U2D.Common;
 using UnityEditor.AnimatedValues;
 using UnityEditor.U2D.Path;
 
@@ -163,7 +163,7 @@ namespace UnityEditor.U2D
             return -1;
         }
 
-        private List<ShapeAngleRange> GetAngleRangeSorted(SpriteShape ss)
+        private List<ShapeAngleRange> GetAngleRangeSorted(UnityEngine.U2D.SpriteShape ss)
         {
             List<ShapeAngleRange> angleRanges = new List<ShapeAngleRange>();
             int i = 0;

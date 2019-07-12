@@ -30,7 +30,7 @@ namespace UnityEngine.U2D
     }
 
     [System.Serializable]
-    public class ShapeControlPoint
+    public class SplineControlPoint
     {
         public Vector3 position;
         public Vector3 leftTangent;

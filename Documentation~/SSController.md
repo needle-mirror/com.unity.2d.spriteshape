@@ -6,12 +6,12 @@ The **Sprite Shape Controller** component is automatically attached to the GameO
 
 The default component settings below are displayed when no Control Point is currently selected.
 
-![Default Sprite Shape Controller settings](images\v1.1-SSControllerSettings.png)
+![Default Sprite Shape Controller settings](images/v1.1-SSControllerSettings.png)
 
 | **Property**                                                 | **Function**                                                 |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | **Profile**                                                  | Select the **Sprite Shape Profile** used by this Sprite Shape. |
-| **Edit Spline**                                              | Enable ![img](https://lh6.googleusercontent.com/vP0Zi-LM-xkJ_5Fw_G0oCij4FJsaFOSf7zOwizguROIF9mueGJVvARMAFXKkV2myydULOYnyfs9fsCY5UrpBXRWnHQhGUt-tB2QHrtmekiMTZd7iBAh2EAF9KgYaUb9-guaAdn7y) to make the Control Points of the Sprite Shape visible and editable. |
+| **Edit Spline**                                              | Enable ![](images/PropertyImage1.png) to make the Control Points of the Sprite Shape visible and editable. |
 | **Spline**                                                   | -                                                            |
 | **Detail**                                                   | Select the tessellation quality of the rendered Sprite Shape mesh. High/Medium/Low Quality options available. |
 | **Open Ended**                                               | Disable to connect both ends of the Sprite Shape together to form an enclosed Shape. Enable to leave both ends of the Sprite Shape unconnected. |
@@ -25,14 +25,14 @@ The default component settings below are displayed when no Control Point is curr
 
 Enable **Edit Spline** in the Controller settings to make Control Points on the Sprite Shape visible and editable. Selecting a Control Point enables the following additional Controller settings.
 
-![With a Control Point selected](images\v1.1-SSControllerCP.png)
+![With a Control Point selected](images/v1.1-SSControllerCP.png)
 
 | **Point**                                               | -                                                            |
 | ------------------------------------------------------- | ------------------------------------------------------------ |
 | **Mode**                                                | Select one of three **Point Modes** to change the way tangents on Control Points are edited. |
-| ![](images\2D_SpriteShape_7.png)**Linear**              | No curve is formed between the Control Point and its neighboring points. |
-| ![](images\2D_SpriteShape_8.png)**Continuous Mirrored** | Two tangents appear on opposite sides of the Control Point, and the spline between the Control Point and its neighbors becomes curved. Adjust the tangents to change the shape of the curve. The angle between the two tangents is always 180 degrees in this mode. |
-| ![](images\2D_SpriteShape_9.png)**Broken Mirrored**     | Two tangents appear on opposite sides of the Control Point, and the spline between the Control Point and its neighbors becomes curved. Adjust the tangents to change the shape of the curve. The length and angle of the tangents can be adjusted independently in this mood. |
+| ![](images/2D_SpriteShape_7.png)**Linear**              | No curve is formed between the Control Point and its neighboring points. |
+| ![](images/2D_SpriteShape_8.png)**Continuous Mirrored** | Two tangents appear on opposite sides of the Control Point, and the spline between the Control Point and its neighbors becomes curved. Adjust the tangents to change the shape of the curve. The angle between the two tangents is always 180 degrees in this mode. |
+| ![](images/2D_SpriteShape_9.png)**Broken Mirrored**     | Two tangents appear on opposite sides of the Control Point, and the spline between the Control Point and its neighbors becomes curved. Adjust the tangents to change the shape of the curve. The length and angle of the tangents can be adjusted independently in this mood. |
 | **Position**                                            | The local x and y coordinates of a selected Control Point.   |
 | **Sprite Variant**                                      | Select the **Sprite Variant** to render from number choices in the drop-down menu. Press **N** to cycle through all available Variants at that Control Point. |
 | **Corner**                                              | Sets whether Corner Sprites are rendered at Control Points. Set to **Automatic** by default. |
@@ -44,7 +44,7 @@ Enable **Edit Spline** in the Controller settings to make Control Points on the 
 
 Add either the **Polygon Collider 2D** or **Edge Collider 2D** component to the **Sprite Shape** to enable additional **Collider** settings in the **Sprite Shape Controller**. See the [Enabling Collision](SSCollision.md) page for more details about enabling Colliders with Sprite Shapes.
 
-![Collider settings](images\v1.1-SSControllerCollider.png)
+![Collider settings](images/v1.1-SSControllerCollider.png)
 
 | Collider              | -                                                            |
 | --------------------- | ------------------------------------------------------------ |
@@ -59,11 +59,11 @@ Add either the **Polygon Collider 2D** or **Edge Collider 2D** component to the 
 
 To edit the mesh outline of the **Sprite Shape**, click the **Edit Spline** button to make the Shape's spline and its **Control Points** become visible and editable.
 
-![Edit Spline enabled](images\v1.1-UpdatedEditSpline.png)
+![Edit Spline enabled](images/v1.1-UpdatedEditSpline.png)
 
 When **Edit Spline** is enabled, move the Control Points of the Sprite Shape to adjust its overall shape and size. Add additional Control Points by clicking on the spline in between Control Points. Press the **Del/Delete** key to remove the currently selected Control Point.
 
-![Control Point added to spline](images\2D_SpriteShape_032.png)
+![Control Point added to spline](images/2D_SpriteShape_032.png)
 
 With a Control Point selected, cycle through the **Point Modes **by pressing the **M** key. To change the **Mode** of multiple Control Points at once, ensure that all selected Control Points are the same **Mode** first before cycling or selecting another **Mode**.
 
@@ -83,7 +83,7 @@ In **Linear Point Mode**, there are no tangents to control the curve between the
 
 Adjust which Sprite is displayed when two or more intersect by adjusting their **Order** value in the [Sprite Shape Profile's](SSProfile.md) **Angle Range** settings.
 
-![Linear Point Mode](images\2D_SpriteShape_034.png)
+![Linear Point Mode](images/2D_SpriteShape_034.png)
 
 ### Continuous Mirrored Point Mode
 
@@ -91,7 +91,7 @@ In **Continuous Mirrored Point Mode**, tangents appear on both sides of the sele
 
 Press **B** to mirror the length of the last edited tangent onto the opposite tangent.
 
-![Mirrored Point Mode](images\2D_SpriteShape_033.png)
+![Mirrored Point Mode](images/2D_SpriteShape_033.png)
 
 ### Broken Mirrored Point Mode
 
@@ -99,4 +99,4 @@ In **Broken Mirrored Point Mode**,  tangents appear on both sides of the selecte
 
 Press **B** to mirror the length of the last edited tangent onto the opposite tangent. In this mode, pressing **B** also causes the angle of the opposite tangent to become exactly 180 degrees from the last edited tangent.
 
-![Non-Mirrored Mode](images\2D_SpriteShape_036.png)
+![Non-Mirrored Mode](images/2D_SpriteShape_036.png)

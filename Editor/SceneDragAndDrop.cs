@@ -1,9 +1,7 @@
 using UnityEngine;
 using UnityEngine.U2D;
-using UnityEditor;
-using UnityEditorInternal;
-using System.Linq;
 using System.Collections.Generic;
+using UnityEditor.U2D.SpriteShape;
 using Object = UnityEngine.Object;
 
 namespace UnityEditor.U2D
@@ -37,7 +35,7 @@ namespace UnityEditor.U2D
             HandleSceneDrag(sceneView, Event.current, DragAndDrop.objectReferences, DragAndDrop.paths);
         }
 
-        public static GameObject Create(SpriteShape shape, Vector3 position, SceneView sceneView)
+        public static GameObject Create(UnityEngine.U2D.SpriteShape shape, Vector3 position, SceneView sceneView)
         {
             string name = string.IsNullOrEmpty(shape.name) ? "New SpriteShapeController" : shape.name;
             name = GameObjectUtility.GetUniqueNameForSibling(null, name);
@@ -56,16 +54,16 @@ namespace UnityEditor.U2D
             HandleSceneDrag(null, Event.current, DragAndDrop.objectReferences, null);
         }
 
-        static List<SpriteShape> GetSpriteShapeFromPathsOrObjects(Object[] objects, string[] paths, EventType currentEventType)
+        static List<UnityEngine.U2D.SpriteShape> GetSpriteShapeFromPathsOrObjects(Object[] objects, string[] paths, EventType currentEventType)
         {
-            List<SpriteShape> result = new List<SpriteShape>();
+            List<UnityEngine.U2D.SpriteShape> result = new List<UnityEngine.U2D.SpriteShape>();
 
             foreach (Object obj in objects)
             {
                 if (AssetDatabase.Contains(obj))
                 {
-                    if (obj is SpriteShape)
-                        result.Add(obj as SpriteShape);
+                    if (obj is UnityEngine.U2D.SpriteShape)
+                        result.Add(obj as UnityEngine.U2D.SpriteShape);
                 }
             }
             return result;
@@ -87,7 +85,7 @@ namespace UnityEditor.U2D
                         {
                             if (ExistingAssets(objectReferences))     // External drag with images that are not in the project
                             {
-                                List<SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths,
+                                List<UnityEngine.U2D.SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths,
                                         evt.type);
 
                                 if (assets.Count == 0)
@@ -114,7 +112,7 @@ namespace UnityEditor.U2D
                     break;
                 case EventType.DragPerform:
                     {
-                        List<SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths, evt.type);
+                        List<UnityEngine.U2D.SpriteShape> assets = GetSpriteShapeFromPathsOrObjects(objectReferences, paths, evt.type);
 
                         if (assets.Count > 0 && s_SceneDragObjects != null)
                         {
@@ -176,14 +174,14 @@ namespace UnityEditor.U2D
             }
         }
 
-        static void CreateSceneDragObjects(List<SpriteShape> shapes)
+        static void CreateSceneDragObjects(List<UnityEngine.U2D.SpriteShape> shapes)
         {
             if (s_SceneDragObjects == null)
                 s_SceneDragObjects = new List<Object>();
 
             if (s_DragType == DragType.CreateMultiple)
             {
-                foreach (SpriteShape sprite in shapes)
+                foreach (UnityEngine.U2D.SpriteShape sprite in shapes)
                     s_SceneDragObjects.Add(CreateDragGO(sprite, Vector3.zero));
             }
             else
@@ -219,7 +217,7 @@ namespace UnityEditor.U2D
             return false;
         }
 
-        static GameObject CreateDragGO(SpriteShape spriteShape, Vector3 position)
+        static GameObject CreateDragGO(UnityEngine.U2D.SpriteShape spriteShape, Vector3 position)
         {
             SpriteShapeController spriteShapeController = SpriteShapeEditorUtility.CreateSpriteShapeController(spriteShape);
             GameObject gameObject = spriteShapeController.gameObject;

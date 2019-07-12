@@ -1,8 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.U2D;
-using UnityEditor;
+using UnityEditor.U2D.SpriteShape;
 
 namespace UnityEditor.U2D
 {
@@ -22,14 +20,14 @@ namespace UnityEditor.U2D
         [MenuItem("Assets/Create/Sprite Shape Profile/Open Shape", false, 358)]
         public static void CreateNewSpriteStrip()
         {
-            SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
+            UnityEngine.U2D.SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
             newSpriteShape.angleRanges.Add(CreateAngleRange(-180.0f, 180.0f, 0));
         }
 
         [MenuItem("Assets/Create/Sprite Shape Profile/Closed Shape", false, 359)]
         public static void CreateNewSpriteShape()
         {
-            SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
+            UnityEngine.U2D.SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
             newSpriteShape.angleRanges.Add(CreateAngleRange(-45.0f, 45.0f, 4));
             newSpriteShape.angleRanges.Add(CreateAngleRange(-135.0f, -45.0f, 3));
             newSpriteShape.angleRanges.Add(CreateAngleRange(135.0f, 225.0f, 2));

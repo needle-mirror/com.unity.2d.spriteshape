@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
 
-namespace UnityEditor.U2D
+namespace UnityEditor.U2D.SpriteShape
 {
     public interface IAngleRangeCache
     {

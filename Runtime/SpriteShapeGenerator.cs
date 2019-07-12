@@ -1,12 +1,11 @@
 using System;
 using System.Linq;
-using UnityEngine.Experimental.U2D;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine.U2D;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.SpriteShape.External.LibTessDotNet;
-using ShapeControlPointExperimental = UnityEngine.Experimental.U2D.ShapeControlPoint;
 
 // We will enable this once Burst gets a verified final version as this attribute keeps changing.
 // using Unity.Burst;
@@ -468,7 +467,7 @@ namespace UnityEngine.U2D
             corners[cornerCount++] = d;
         }
 
-        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPointExperimental[] shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
+        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPoint[] shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
         {
             kModeLinear = 0;
             kModeContinous = 1;
@@ -607,7 +606,7 @@ namespace UnityEngine.U2D
             }
         }
 
-        void PrepareControlPoints(ShapeControlPointExperimental[] shapePoints, SpriteShapeMetaData[] metaData)
+        void PrepareControlPoints(ShapeControlPoint[] shapePoints, SpriteShapeMetaData[] metaData)
         {
             float2 zero = new float2(0, 0);
             m_ControlPoints = new NativeArray<JobControlPoint>(kControlPointCount, Allocator.TempJob);
@@ -615,7 +614,7 @@ namespace UnityEngine.U2D
             for (int i = 0; i < shapePoints.Length; ++i)
             {
                 JobControlPoint shapePoint = m_ControlPoints[i];
-                ShapeControlPointExperimental sp = shapePoints[i];
+                ShapeControlPoint sp = shapePoints[i];
                 SpriteShapeMetaData md = metaData[i];
                 shapePoint.position = new float2(sp.position.x, sp.position.y);
                 shapePoint.tangentLt = (sp.mode == kModeLinear) ? zero : new float2(sp.leftTangent.x, sp.leftTangent.y);
@@ -2000,7 +1999,7 @@ namespace UnityEngine.U2D
 
         #region Entry, Exit Points.
 
-        public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPointExperimental[] shapePoints, SpriteShapeMetaData[] metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
+        public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPoint[] shapePoints, SpriteShapeMetaData[] metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
         {
             // Prepare Inputs.
             PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);

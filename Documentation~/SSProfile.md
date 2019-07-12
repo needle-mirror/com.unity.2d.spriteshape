@@ -4,7 +4,7 @@ The **Sprite Shape Profile** contains the settings that determine which Sprites 
 
 Create a **Sprite Shape Profile** from the Editor main menu (menu: **Assets > Create > Sprite Shape Profile**), and select from the two available options: **Open Shape** and **Closed Shape**.
 
-![](images\v1.1-SSProfile.png)
+![](images/v1.1-SSProfile.png)
 
 | **Property**                                                 | **Function**                                                 |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -13,7 +13,7 @@ Create a **Sprite Shape Profile** from the Editor main menu (menu: **Assets > Cr
 | **Fill**                                                     | -                                                            |
 | **Texture**                                                  | Set the Texture to be used as a Fill to this field. Has no effect if the **Open Ended** property in the **Sprite Shape Controller** settings is enabled. |
 | **Offset**                                                   | Determines the border offset at the edges of the Fill texture. |
-| ![Angle Range tool](images\v1.1-AngleRange.png)**Angle Ranges (tool)** | Use this tool to create Angle Ranges and assign Sprites to those ranges. |
+| ![Angle Range tool](images/v1.1-AngleRange.png)**Angle Ranges (tool)** | Use this tool to create Angle Ranges and assign Sprites to those ranges. |
 | **Start (degrees)**                                          | Enter the starting angle for the selected Angle Range in degrees. |
 | **End (degrees)**                                            | Enter the ending angle for the selected Angle Range in degrees. |
 | **Order**                                                    | Determines the display priority when Sprites intersect. Sprites with higher values are rendered above lower ones. |
@@ -27,17 +27,17 @@ Create a **Sprite Shape Profile** from the Editor main menu (menu: **Assets > Cr
 
 Use the **Open Shape** preset Profile to create Shapes made from a single edge outline with tiled Sprites along its edge. This preset is ideal for creating level elements such as platforms. 
 
-![Example of an Open Shape](images\2D_SpriteShape_024.png)
+![Example of an Open Shape](images/2D_SpriteShape_024.png)
 
 Drag the Open Shape Profile into the Scene view to automatically generate a Sprite Shape with **Open Ended** enabled in its **Sprite Shape Controller** settings.
 
 ## Closed Shape
 
-![Closed Shape Profile preset](images\ClosedShapeProfile.png)
+![Closed Shape Profile preset](images/ClosedShapeProfile.png)
 
 Use the **Closed Shape** preset Profile to create Shapes that encompass an enclosed area. The Closed Sprite Shape can display and tile a Fill texture in the enclosed area, if a Fill texture is set in its Profile settings. Use this preset to create large solid filled Shapes that are ideal for backgrounds or large platforms.
 
-![Closed Shape square](images\v1.1-ClosedShapeSquare.png)
+![Closed Shape square](images/v1.1-ClosedShapeSquare.png)
 
 Drag the Closed Shape Profile into the Scene view to automatically generate a Sprite Shape with **Open Ended** disabled in its **Sprite Shape Controller** settings. The Closed Shape Profile's preset Angle Ranges create a square Sprite Shape by default.
 

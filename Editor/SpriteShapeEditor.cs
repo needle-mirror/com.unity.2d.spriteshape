@@ -3,12 +3,13 @@ using UnityEngine.U2D;
 using UnityEditor;
 using UnityEditor.AnimatedValues;
 using UnityEditorInternal;
-using UnityEditor.Experimental.U2D.Common;
+using UnityEditor.U2D.Common;
 using System.Collections.Generic;
+using UnityEditor.U2D.SpriteShape;
 
 namespace UnityEditor.U2D
 {
-    [CustomEditor(typeof(SpriteShape)), CanEditMultipleObjects]
+    [CustomEditor(typeof(UnityEngine.U2D.SpriteShape)), CanEditMultipleObjects]
     public class SpriteShapeEditor : Editor, IAngleRangeCache
     {
         private static class Contents
@@ -77,6 +78,8 @@ namespace UnityEditor.U2D
         {
             get
             {
+                if (spriteShape == null)
+                    return new List<AngleRange>();
                 Debug.Assert(spriteShape != null);
                 return spriteShape.angleRanges;
             }
@@ -98,13 +101,13 @@ namespace UnityEditor.U2D
             }
         }
 
-        public SpriteShape spriteShape
+        public UnityEngine.U2D.SpriteShape spriteShape
         {
             get
             {
                 if (target == null)
                     return null;
-                return target as SpriteShape;
+                return target as UnityEngine.U2D.SpriteShape;
             }
         }
 

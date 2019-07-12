@@ -1,20 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine.Analytics;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEngine.Events;
-using UnityEngine.Experimental.U2D;
 
 namespace UnityEditor.U2D
 {
 
     internal class SpriteShapeAnalyticsEvents
     {
-        public class SpriteShapeEvent : UnityEvent<SpriteShape> { }
+        public class SpriteShapeEvent : UnityEvent<UnityEngine.U2D.SpriteShape> { }
         public class SpriteShapeRendererEvent : UnityEvent<SpriteShapeRenderer> { }
 
         private SpriteShapeEvent m_SpriteShape = new SpriteShapeEvent();
@@ -84,7 +80,7 @@ namespace UnityEditor.U2D
             m_AnalyticsStorage.Dispose();
         }        
 
-        void OnSpriteShapeCreated(SpriteShape shape)
+        void OnSpriteShapeCreated(UnityEngine.U2D.SpriteShape shape)
         {
             SendUsageEvent(new SpriteShapeAnalyticsEvent()
             {

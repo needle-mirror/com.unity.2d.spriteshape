@@ -14,7 +14,7 @@ The following are examples of Sprite Shapes used to construct different parts of
 
 
 
-Sprite Shapes comprise of two parts - the [Sprite Shape Profile](SSProfile.md) Asset, and the **[Sprite Shape Controller]()** component. The Sprite Shape Profile contains the angle settings and Sprites used by the Sprite Shape, and you edit the Sprite Shape's outline with the Sprite Shape Controller component.
+Sprite Shapes comprise of two parts - the [Sprite Shape Profile](SSProfile.md) Asset, and the [Sprite Shape Controller](SSController.md) component. The Sprite Shape Profile contains the angle settings and Sprites used by the Sprite Shape, and you edit the Sprite Shape's outline with the Sprite Shape Controller component.
 
 ## Importing Sprites for Sprite Shapes
 

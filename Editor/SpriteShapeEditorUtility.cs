@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
-using UnityEditor;
-using UnityEngine.Experimental.U2D;
 
-namespace UnityEditor.U2D
+namespace UnityEditor.U2D.SpriteShape
 {
     public class SpriteShapeEditorUtility
     {
@@ -17,9 +14,9 @@ namespace UnityEditor.U2D
 
         public const float kMaxSideSize = 2.0f;
 
-        public static SpriteShape CreateSpriteShapeAsset()
+        public static UnityEngine.U2D.SpriteShape CreateSpriteShapeAsset()
         {
-            SpriteShape spriteShape = ScriptableObject.CreateInstance<SpriteShape>();
+            UnityEngine.U2D.SpriteShape spriteShape = ScriptableObject.CreateInstance<UnityEngine.U2D.SpriteShape>();
             ProjectWindowUtil.CreateAsset(spriteShape, "New SpriteShapeProfile.asset");
             Selection.activeObject = spriteShape;
 
@@ -27,7 +24,7 @@ namespace UnityEditor.U2D
             return spriteShape;
         }
 
-        public static SpriteShapeController CreateSpriteShapeController(SpriteShape shape)
+        public static SpriteShapeController CreateSpriteShapeController(UnityEngine.U2D.SpriteShape shape)
         {
             var objName = "New SpriteShapeController";
             GameObject gameObject = new GameObject(objName, typeof(SpriteShapeController));
@@ -45,9 +42,9 @@ namespace UnityEditor.U2D
             var objName = "New SpriteShapeController";
             GameObject gameObject = new GameObject(objName, typeof(SpriteShapeController));
             SpriteShapeController spriteShapeController = gameObject.GetComponent<SpriteShapeController>();
-            if (Selection.activeObject is SpriteShape)
+            if (Selection.activeObject is UnityEngine.U2D.SpriteShape)
             {
-                spriteShapeController.spriteShape = (SpriteShape)Selection.activeObject;
+                spriteShapeController.spriteShape = (UnityEngine.U2D.SpriteShape)Selection.activeObject;
                 objName = spriteShapeController.spriteShape.name;
             }
             else if (Selection.activeObject is GameObject)
@@ -69,7 +66,7 @@ namespace UnityEditor.U2D
 
         public static void SetShapeFromAsset(SpriteShapeController spriteShapeController)
         {
-            SpriteShape spriteShape = spriteShapeController.spriteShape;
+            UnityEngine.U2D.SpriteShape spriteShape = spriteShapeController.spriteShape;
 
             if (!spriteShape)
             {
@@ -117,7 +114,7 @@ namespace UnityEditor.U2D
             spriteShapeController.spline.InsertPointAt(7, new Vector3(kMaxSideSizeHalf, -kMaxSideSize, 0));
         }
 
-        public static int GetRangeIndexFromAngle(SpriteShape spriteShape, float angle)
+        public static int GetRangeIndexFromAngle(UnityEngine.U2D.SpriteShape spriteShape, float angle)
         {
             return GetRangeIndexFromAngle(spriteShape.angleRanges, angle);
         }

@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEditor.U2D.Path;
 using UnityEditor.EditorTools;
 using UnityEditor.ShortcutManagement;
-using UnityEditor.Experimental.U2D.Common;
+using UnityEditor.U2D.Common;
 
 namespace UnityEditor.U2D.SpriteShapeInternal
 {
@@ -66,7 +66,7 @@ namespace UnityEditor.U2D.SpriteShapeInternal
     {
         public float height = 1f;
         public int spriteIndex;
-        public bool corner;
+        public bool corner = true;
     }
 
     internal class ScriptableSpriteShapeData : ScriptableData<SpriteShapeData> { }

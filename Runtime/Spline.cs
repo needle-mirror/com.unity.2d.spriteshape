@@ -11,7 +11,7 @@ namespace UnityEngine.U2D
         [SerializeField]
         private bool m_IsOpenEnded;
         [SerializeField]
-        private List<ShapeControlPoint> m_ControlPoints = new List<ShapeControlPoint>();
+        private List<SplineControlPoint> m_ControlPoints = new List<SplineControlPoint>();
 
         public bool isOpenEnded
         {
@@ -58,7 +58,7 @@ namespace UnityEngine.U2D
         {
             if (!IsPositionValid(index, index, point))
                 throw new ArgumentException(KErrorMessage);
-            m_ControlPoints.Insert(index, new ShapeControlPoint { position = point, height = 1.0f, corner = true });
+            m_ControlPoints.Insert(index, new SplineControlPoint { position = point, height = 1.0f, corner = true });
         }
 
         public void RemovePointAt(int index)
@@ -76,7 +76,7 @@ namespace UnityEngine.U2D
         {
             if (!IsPositionValid(index, index + 1, point))
                 throw new ArgumentException(KErrorMessage);
-            ShapeControlPoint newPoint = m_ControlPoints[index];
+            SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.position = point;
             m_ControlPoints[index] = newPoint;
         }
@@ -98,7 +98,7 @@ namespace UnityEngine.U2D
             if (mode == ShapeTangentMode.Linear)
                 return;
 
-            ShapeControlPoint newPoint = m_ControlPoints[index];
+            SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.leftTangent = tangent;
             m_ControlPoints[index] = newPoint;
         }
@@ -120,7 +120,7 @@ namespace UnityEngine.U2D
             if (mode == ShapeTangentMode.Linear)
                 return;
 
-            ShapeControlPoint newPoint = m_ControlPoints[index];
+            SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.rightTangent = tangent;
             m_ControlPoints[index] = newPoint;
         }
@@ -132,7 +132,7 @@ namespace UnityEngine.U2D
 
         public void SetTangentMode(int index, ShapeTangentMode mode)
         {
-            ShapeControlPoint newPoint = m_ControlPoints[index];
+            SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.mode = mode;
             m_ControlPoints[index] = newPoint;
         }

@@ -4,7 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [2.1.0-preview.10] - 2019-6-19
+## [3.0.1] - 2019-07-13
+### Changed
+- Mark package to support Unity 2019.3.0a10 onwards.
+
+## [3.0.0] - 2019-6-19
+### Changed
+- Stable Version.
+- Remove experimental namespace.
+
+## [2.1.0-preview.8] - 2019-6-12
 ### Changed
 - Fix (Case 1152342) The first point of the Sprite Shape does not behave correctly when using Continuous Points
 - Fix (Case 1160009) Edge and Polygon Collider does not seem to follow the spriteshape for some broken mirrored tangent points

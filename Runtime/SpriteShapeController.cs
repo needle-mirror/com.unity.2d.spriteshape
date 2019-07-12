@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using UnityEngine.Experimental.U2D;
-using ShapeControlPointExperimental = UnityEngine.Experimental.U2D.ShapeControlPoint;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
@@ -346,7 +344,7 @@ namespace UnityEngine.U2D
         }
 
         // Ensure Neighbor points are not too close to each other.
-        private bool ValidatePoints(List<ShapeControlPointExperimental> shapePoints)
+        private bool ValidatePoints(List<ShapeControlPoint> shapePoints)
         {
             for (int i = 0; i < shapePoints.Count - 1; ++i)
             {
@@ -366,12 +364,12 @@ namespace UnityEngine.U2D
             if (needUpdateSpriteArrays)
                 UpdateSprites();
 
-            List<ShapeControlPointExperimental> shapePoints = new List<ShapeControlPointExperimental>();
+            List<ShapeControlPoint> shapePoints = new List<ShapeControlPoint>();
             List<SpriteShapeMetaData> shapeMetaData = new List<SpriteShapeMetaData>();
             int pointCount = m_Spline.GetPointCount();
             for (int i = 0; i < pointCount; ++i)
             {
-                ShapeControlPointExperimental shapeControlPoint;
+                ShapeControlPoint shapeControlPoint;
                 shapeControlPoint.position = m_Spline.GetPosition(i);
                 shapeControlPoint.leftTangent = m_Spline.GetLeftTangent(i);
                 shapeControlPoint.rightTangent = m_Spline.GetRightTangent(i);
@@ -468,6 +466,26 @@ namespace UnityEngine.U2D
 #endif
             }
         }
+
+#if UNITY_EDITOR
+        void OnDrawGizmos()
+        {
+            var sr = GetComponent<SpriteShapeRenderer>();
+            if (sr != null)
+            {
+                var hasSplineChanged = HasSplineChanged();
+                if (!sr.isVisible && hasSplineChanged)
+                {
+                    BakeMesh();
+                    Rendering.CommandBuffer rc = new Rendering.CommandBuffer();
+                    var rt = RenderTexture.GetTemporary(256, 256, 0, RenderTextureFormat.ARGB32);
+                    Graphics.SetRenderTarget(rt);
+                    rc.DrawRenderer(sr, sr.sharedMaterial);
+                    Graphics.ExecuteCommandBuffer(rc);
+                }
+            }
+        }
+#endif
 
         public bool UpdateSpriteShapeParameters()
         {
