@@ -8,6 +8,7 @@ using System.Collections;
 using Unity.Collections;
 using UnityEngine.Experimental.U2D;
 using Unity.Jobs;
+using System;
 
 namespace UnityEditor.U2D.SpriteShapeTest
 {
@@ -17,10 +18,21 @@ namespace UnityEditor.U2D.SpriteShapeTest
         private GameObject go;
         private SpriteShape spriteShape;
         private SpriteShapeController spriteShapeController;
+        private static SceneView s_SceneView;
 
         [SetUp]
         public void Setup()
         {
+            EditorWindow.GetWindow<SceneView>();
+            s_SceneView = SceneView.sceneViews[0] as SceneView;
+            s_SceneView.position = new Rect(60f, 90f, 640f, 480f);
+            s_SceneView.in2DMode = true;
+            s_SceneView.pivot = new Vector3(0f, 0f, -10f);
+            s_SceneView.rotation = Quaternion.identity;
+            s_SceneView.size = 6.0f;
+            s_SceneView.orthographic = true;
+            s_SceneView.Focus();
+
             go = new GameObject("TestObject");
             spriteShapeController = go.AddComponent<SpriteShapeController>();
             spriteShapeController.spriteShape = Resources.Load<SpriteShape>("Goo");
@@ -32,6 +44,15 @@ namespace UnityEditor.U2D.SpriteShapeTest
             GameObject.DestroyImmediate(go);
         }
 
+        // SceneView helpers
+        private void ResetSceneViewCamera()
+        {
+            SceneView sceneView = s_SceneView;
+            sceneView.camera.transform.position = new Vector3(0f, 0f, -10f);
+            sceneView.camera.transform.forward = Vector3.forward;
+            sceneView.camera.orthographic = true;
+        }
+
         private static int GetSegmentCount(NativeArray<SpriteShapeSegment> sa, ref int indexCount, ref int vertexCount)
         {
             int segmentCount = 0, successiveZeroes = 0;
@@ -40,7 +61,7 @@ namespace UnityEditor.U2D.SpriteShapeTest
             {
                 if (sa[i].spriteIndex != -1)
                     if (sa[i].indexCount == 0)
-                        successiveZeroes++;            
+                        successiveZeroes++;
                     else
                         segmentCount++;
                 else
@@ -55,7 +76,7 @@ namespace UnityEditor.U2D.SpriteShapeTest
         {
             // Helpers.SpriteShapeTestUtilities.PrintSegments(sa, sa.Length);
             for (int i = 0; i < segments.Length; ++i)
-            { 
+            {
                 Assert.AreEqual(segments[i].geomIndex, sa[i].geomIndex);
                 Assert.AreEqual(segments[i].indexCount, sa[i].indexCount);
                 Assert.AreEqual(segments[i].vertexCount, sa[i].vertexCount);
@@ -78,7 +99,7 @@ namespace UnityEditor.U2D.SpriteShapeTest
         {
             // Helpers.SpriteShapeTestUtilities.PrintNativeSlice(naData, expectedData.Length, "Vector2", "uv0ArrayData");
             for (int i = 0; i < expectedData.Length; ++i)
-            { 
+            {
                 Assert.True(Mathf.Abs(naData[i].x - expectedData[i].x) < tolerance);
                 Assert.True(Mathf.Abs(naData[i].y - expectedData[i].y) < tolerance);
             }
@@ -113,7 +134,7 @@ namespace UnityEditor.U2D.SpriteShapeTest
             spriteShapeController.spline.InsertPointAt(1, new Vector3(-10.0f, 0, 0));
             spriteShapeController.splineDetail = 4;
 
-            SpriteShapeSegment[] segments = { new SpriteShapeSegment{ geomIndex = 0, indexCount = 0, vertexCount = 0, spriteIndex = -1 }, new SpriteShapeSegment{ geomIndex = 1, indexCount = 48, vertexCount = 32, spriteIndex = 0 } };
+            SpriteShapeSegment[] segments = { new SpriteShapeSegment { geomIndex = 0, indexCount = 0, vertexCount = 0, spriteIndex = -1 }, new SpriteShapeSegment { geomIndex = 1, indexCount = 48, vertexCount = 32, spriteIndex = 0 } };
             Vector3[] posArrayData = { new Vector3(10.0f, 0.9f, 0.0f), new Vector3(6.7f, 0.9f, 0.0f), new Vector3(10.0f, -0.9f, 0.0f), new Vector3(6.7f, -0.9f, 0.0f), new Vector3(6.7f, 0.9f, 0.0f), new Vector3(4.8f, 0.9f, 0.0f), new Vector3(6.7f, -0.9f, 0.0f), new Vector3(4.8f, -0.9f, 0.0f), new Vector3(4.8f, 0.9f, 0.0f), new Vector3(3.3f, 0.9f, 0.0f), new Vector3(4.8f, -0.9f, 0.0f), new Vector3(3.3f, -0.9f, 0.0f), new Vector3(3.3f, 0.9f, 0.0f), new Vector3(0.0f, 0.9f, 0.0f), new Vector3(3.3f, -0.9f, 0.0f), new Vector3(0.0f, -0.9f, 0.0f), new Vector3(0.0f, 0.9f, 0.0f), new Vector3(-3.3f, 0.9f, 0.0f), new Vector3(0.0f, -0.9f, 0.0f), new Vector3(-3.3f, -0.9f, 0.0f), new Vector3(-3.3f, 0.9f, 0.0f), new Vector3(-4.8f, 0.9f, 0.0f), new Vector3(-3.3f, -0.9f, 0.0f), new Vector3(-4.8f, -0.9f, 0.0f), new Vector3(-4.8f, 0.9f, 0.0f), new Vector3(-6.7f, 0.9f, 0.0f), new Vector3(-4.8f, -0.9f, 0.0f), new Vector3(-6.7f, -0.9f, 0.0f), new Vector3(-6.7f, 0.9f, 0.0f), new Vector3(-10.0f, 0.9f, 0.0f), new Vector3(-6.7f, -0.9f, 0.0f), new Vector3(-10.0f, -0.9f, 0.0f) };
             Vector2[] uv0ArrayData = { new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(0.6f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(0.6f, 1.0f), new Vector2(0.6f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.6f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(0.4f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(0.4f, 1.0f), new Vector2(0.4f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.4f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f) };
 
@@ -126,11 +147,11 @@ namespace UnityEditor.U2D.SpriteShapeTest
             spriteShapeController.spline.Clear();
             spriteShapeController.spline.InsertPointAt(0, new Vector3(-10.0f, -10.0f, 0));
             spriteShapeController.spline.SetCorner(0, false);
-            spriteShapeController.spline.InsertPointAt(1, new Vector3(-10.0f,  10.0f, 0));
+            spriteShapeController.spline.InsertPointAt(1, new Vector3(-10.0f, 10.0f, 0));
             spriteShapeController.spline.SetCorner(1, false);
-            spriteShapeController.spline.InsertPointAt(2, new Vector3( 10.0f,  10.0f, 0));
+            spriteShapeController.spline.InsertPointAt(2, new Vector3(10.0f, 10.0f, 0));
             spriteShapeController.spline.SetCorner(2, false);
-            spriteShapeController.spline.InsertPointAt(3, new Vector3( 10.0f, -10.0f, 0));
+            spriteShapeController.spline.InsertPointAt(3, new Vector3(10.0f, -10.0f, 0));
             spriteShapeController.spline.SetCorner(3, false);
             spriteShapeController.spline.isOpenEnded = false;
             spriteShapeController.splineDetail = 4;
@@ -232,8 +253,8 @@ namespace UnityEditor.U2D.SpriteShapeTest
             spriteShapeController.splineDetail = 4;
 
             SpriteShapeSegment[] segments = { new SpriteShapeSegment { geomIndex = 0, indexCount = 24, vertexCount = 10, spriteIndex = -1 }, new SpriteShapeSegment { geomIndex = 1, indexCount = 42, vertexCount = 28, spriteIndex = 0 }, new SpriteShapeSegment { geomIndex = 2, indexCount = 42, vertexCount = 28, spriteIndex = 1 }, new SpriteShapeSegment { geomIndex = 3, indexCount = 42, vertexCount = 28, spriteIndex = 1 }, new SpriteShapeSegment { geomIndex = 4, indexCount = 42, vertexCount = 28, spriteIndex = 0 }, new SpriteShapeSegment { geomIndex = 5, indexCount = 6, vertexCount = 4, spriteIndex = 2 }, new SpriteShapeSegment { geomIndex = 6, indexCount = 6, vertexCount = 4, spriteIndex = 3 }, new SpriteShapeSegment { geomIndex = 7, indexCount = 6, vertexCount = 4, spriteIndex = 4 }, new SpriteShapeSegment { geomIndex = 8, indexCount = 6, vertexCount = 4, spriteIndex = 5 } };
-            Vector3[] posArrayData = { new Vector3(9.3f,  -10.0f,  0.0f),  new Vector3(10.0f,  9.3f,  0.0f),  new Vector3(10.0f,  -9.3f,  0.0f),  new Vector3(9.3f,  10.0f,  0.0f),  new Vector3(4.5f,  -10.0f,  0.0f),  new Vector3(-4.5f,  -10.0f,  0.0f),  new Vector3(-9.3f,  -10.0f,  0.0f),  new Vector3(-9.3f,  10.0f,  0.0f),  new Vector3(-10.0f,  -9.3f,  0.0f),  new Vector3(-10.0f,  9.3f,  0.0f),  new Vector3(-9.2f,  -9.3f,  0.0f),  new Vector3(-9.1f,  -5.6f,  0.0f),  new Vector3(-10.9f,  -9.3f,  0.0f),  new Vector3(-10.9f,  -5.6f,  0.0f),  new Vector3(-9.1f,  -5.6f,  0.0f),  new Vector3(-9.1f,  -4.5f,  0.0f),  new Vector3(-10.9f,  -5.6f,  0.0f),  new Vector3(-10.9f,  -4.5f,  0.0f),  new Vector3(-9.1f,  -4.5f,  0.0f),  new Vector3(-9.1f,  -1.9f,  0.0f),  new Vector3(-10.9f,  -4.5f,  0.0f),  new Vector3(-10.9f,  -1.9f,  0.0f),  new Vector3(-9.1f,  -1.9f,  0.0f),  new Vector3(-9.2f,  1.9f,  0.0f),  new Vector3(-10.9f,  -1.9f,  0.0f),  new Vector3(-10.9f,  1.9f,  0.0f),  new Vector3(-9.2f,  1.9f,  0.0f),  new Vector3(-9.2f,  4.5f,  0.0f),  new Vector3(-10.9f,  1.9f,  0.0f),  new Vector3(-10.9f,  4.5f,  0.0f),  new Vector3(-9.2f,  4.5f,  0.0f),  new Vector3(-9.2f,  5.6f,  0.0f),  new Vector3(-10.9f,  4.5f,  0.0f),  new Vector3(-10.9f,  5.6f,  0.0f),  new Vector3(-9.2f,  5.6f,  0.0f),  new Vector3(-9.2f,  9.3f,  0.0f),  new Vector3(-10.9f,  5.6f,  0.0f),  new Vector3(-10.9f,  9.3f,  0.0f),  new Vector3(-9.3f,  9.2f,  0.0f),  new Vector3(-5.6f,  9.2f,  0.0f),  new Vector3(-9.3f,  10.8f,  0.0f),  new Vector3(-5.6f,  10.8f,  0.0f),  new Vector3(-5.6f,  9.2f,  0.0f),  new Vector3(-4.5f,  9.2f,  0.0f),  new Vector3(-5.6f,  10.8f,  0.0f),  new Vector3(-4.5f,  10.8f,  0.0f),  new Vector3(-4.5f,  9.2f,  0.0f),  new Vector3(-1.9f,  9.2f,  0.0f),  new Vector3(-4.5f,  10.8f,  0.0f),  new Vector3(-1.9f,  10.8f,  0.0f),  new Vector3(-1.9f,  9.2f,  0.0f),  new Vector3(1.9f,  9.2f,  0.0f),  new Vector3(-1.9f,  10.8f,  0.0f),  new Vector3(1.9f,  10.8f,  0.0f),  new Vector3(1.9f,  9.2f,  0.0f),  new Vector3(4.5f,  9.2f,  0.0f),  new Vector3(1.9f,  10.8f,  0.0f),  new Vector3(4.5f,  10.8f,  0.0f),  new Vector3(4.5f,  9.2f,  0.0f),  new Vector3(5.6f,  9.2f,  0.0f),  new Vector3(4.5f,  10.8f,  0.0f),  new Vector3(5.6f,  10.8f,  0.0f),  new Vector3(5.6f,  9.2f,  0.0f),  new Vector3(9.3f,  9.2f,  0.0f),  new Vector3(5.6f,  10.8f,  0.0f),  new Vector3(9.3f,  10.8f,  0.0f),  new Vector3(9.2f,  9.3f,  0.0f),  new Vector3(9.2f,  5.6f,  0.0f),  new Vector3(10.8f,  9.3f,  0.0f),  new Vector3(10.8f,  5.6f,  0.0f),  new Vector3(9.2f,  5.6f,  0.0f),  new Vector3(9.2f,  4.5f,  0.0f),  new Vector3(10.8f,  5.6f,  0.0f),  new Vector3(10.8f,  4.5f,  0.0f),  new Vector3(9.2f,  4.5f,  0.0f),  new Vector3(9.2f,  1.9f,  0.0f),  new Vector3(10.8f,  4.5f,  0.0f),  new Vector3(10.8f,  1.9f,  0.0f),  new Vector3(9.2f,  1.9f,  0.0f),  new Vector3(9.2f,  -1.9f,  0.0f),  new Vector3(10.8f,  1.9f,  0.0f),  new Vector3(10.8f,  -1.9f,  0.0f),  new Vector3(9.2f,  -1.9f,  0.0f),  new Vector3(9.2f,  -4.5f,  0.0f),  new Vector3(10.8f,  -1.9f,  0.0f),  new Vector3(10.8f,  -4.5f,  0.0f),  new Vector3(9.2f,  -4.5f,  0.0f),  new Vector3(9.2f,  -5.6f,  0.0f),  new Vector3(10.8f,  -4.5f,  0.0f),  new Vector3(10.8f,  -5.6f,  0.0f),  new Vector3(9.2f,  -5.6f,  0.0f),  new Vector3(9.2f,  -9.3f,  0.0f),  new Vector3(10.8f,  -5.6f,  0.0f),  new Vector3(10.8f,  -9.3f,  0.0f),  new Vector3(9.3f,  -9.2f,  0.0f),  new Vector3(5.6f,  -9.1f,  0.0f),  new Vector3(9.3f,  -10.9f,  0.0f),  new Vector3(5.6f,  -10.9f,  0.0f),  new Vector3(5.6f,  -9.1f,  0.0f),  new Vector3(4.5f,  -9.1f,  0.0f),  new Vector3(5.6f,  -10.9f,  0.0f),  new Vector3(4.5f,  -10.9f,  0.0f),  new Vector3(4.5f,  -9.1f,  0.0f),  new Vector3(1.9f,  -9.1f,  0.0f),  new Vector3(4.5f,  -10.9f,  0.0f),  new Vector3(1.9f,  -10.9f,  0.0f),  new Vector3(1.9f,  -9.1f,  0.0f),  new Vector3(-1.9f,  -9.2f,  0.0f),  new Vector3(1.9f,  -10.9f,  0.0f),  new Vector3(-1.9f,  -10.9f,  0.0f),  new Vector3(-1.9f,  -9.2f,  0.0f),  new Vector3(-4.5f,  -9.2f,  0.0f),  new Vector3(-1.9f,  -10.9f,  0.0f),  new Vector3(-4.5f,  -10.9f,  0.0f),  new Vector3(-4.5f,  -9.2f,  0.0f),  new Vector3(-5.6f,  -9.2f,  0.0f),  new Vector3(-4.5f,  -10.9f,  0.0f),  new Vector3(-5.6f,  -10.9f,  0.0f),  new Vector3(-5.6f,  -9.2f,  0.0f),  new Vector3(-9.3f,  -9.2f,  0.0f),  new Vector3(-5.6f,  -10.9f,  0.0f),  new Vector3(-9.3f,  -10.9f,  0.0f),  new Vector3(-10.7f,  10.7f,  0.0f),  new Vector3(-9.3f,  10.7f,  0.0f),  new Vector3(-10.7f,  9.3f,  0.0f),  new Vector3(-9.3f,  9.3f,  0.0f),  new Vector3(10.7f,  10.7f,  0.0f),  new Vector3(10.7f,  9.3f,  0.0f),  new Vector3(9.3f,  10.7f,  0.0f),  new Vector3(9.3f,  9.3f,  0.0f),  new Vector3(-10.7f,  -10.7f,  0.0f),  new Vector3(-10.7f,  -9.3f,  0.0f),  new Vector3(-9.3f,  -10.7f,  0.0f),  new Vector3(-9.3f,  -9.3f,  0.0f),  new Vector3(10.7f,  -10.7f,  0.0f),  new Vector3(9.3f,  -10.7f,  0.0f),  new Vector3(10.7f,  -9.3f,  0.0f),  new Vector3(9.3f,  -9.3f,  0.0f) };
-            Vector2[] uv0ArrayData = { new Vector2(3.6f,  -3.9f),  new Vector2(3.9f,  3.6f),  new Vector2(3.9f,  -3.6f),  new Vector2(3.6f,  3.9f),  new Vector2(1.7f,  -3.9f),  new Vector2(-1.7f,  -3.9f),  new Vector2(-3.6f,  -3.9f),  new Vector2(-3.6f,  3.9f),  new Vector2(-3.9f,  -3.6f),  new Vector2(-3.9f,  3.6f),  new Vector2(0.0f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(0.3f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(0.3f,  1.0f),  new Vector2(0.3f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.3f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(0.7f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(0.7f,  1.0f),  new Vector2(0.7f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.7f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(0.3f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(0.3f,  0.2f),  new Vector2(0.3f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.3f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(0.7f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(0.7f,  0.2f),  new Vector2(0.7f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.7f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(0.3f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(0.3f,  0.2f),  new Vector2(0.3f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.3f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(0.7f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(0.7f,  0.2f),  new Vector2(0.7f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.7f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.2f),  new Vector2(1.0f,  0.2f),  new Vector2(0.0f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(0.3f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(0.3f,  1.0f),  new Vector2(0.3f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.3f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(0.7f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(0.7f,  1.0f),  new Vector2(0.7f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.7f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.9f),  new Vector2(1.0f,  0.9f),  new Vector2(0.0f,  1.0f),  new Vector2(1.0f,  1.0f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.0f),  new Vector2(1.0f,  0.0f),  new Vector2(1.0f,  0.1f),  new Vector2(1.0f,  0.0f),  new Vector2(0.0f,  0.1f),  new Vector2(0.0f,  0.0f),  new Vector2(0.0f,  0.0f),  new Vector2(0.0f,  0.1f),  new Vector2(1.0f,  0.0f),  new Vector2(1.0f,  0.1f),  new Vector2(1.0f,  0.0f),  new Vector2(0.0f,  0.0f),  new Vector2(1.0f,  0.1f),  new Vector2(0.0f,  0.1f) };
+            Vector3[] posArrayData = { new Vector3(9.3f, -10.0f, 0.0f), new Vector3(10.0f, 9.3f, 0.0f), new Vector3(10.0f, -9.3f, 0.0f), new Vector3(9.3f, 10.0f, 0.0f), new Vector3(4.5f, -10.0f, 0.0f), new Vector3(-4.5f, -10.0f, 0.0f), new Vector3(-9.3f, -10.0f, 0.0f), new Vector3(-9.3f, 10.0f, 0.0f), new Vector3(-10.0f, -9.3f, 0.0f), new Vector3(-10.0f, 9.3f, 0.0f), new Vector3(-9.2f, -9.3f, 0.0f), new Vector3(-9.1f, -5.6f, 0.0f), new Vector3(-10.9f, -9.3f, 0.0f), new Vector3(-10.9f, -5.6f, 0.0f), new Vector3(-9.1f, -5.6f, 0.0f), new Vector3(-9.1f, -4.5f, 0.0f), new Vector3(-10.9f, -5.6f, 0.0f), new Vector3(-10.9f, -4.5f, 0.0f), new Vector3(-9.1f, -4.5f, 0.0f), new Vector3(-9.1f, -1.9f, 0.0f), new Vector3(-10.9f, -4.5f, 0.0f), new Vector3(-10.9f, -1.9f, 0.0f), new Vector3(-9.1f, -1.9f, 0.0f), new Vector3(-9.2f, 1.9f, 0.0f), new Vector3(-10.9f, -1.9f, 0.0f), new Vector3(-10.9f, 1.9f, 0.0f), new Vector3(-9.2f, 1.9f, 0.0f), new Vector3(-9.2f, 4.5f, 0.0f), new Vector3(-10.9f, 1.9f, 0.0f), new Vector3(-10.9f, 4.5f, 0.0f), new Vector3(-9.2f, 4.5f, 0.0f), new Vector3(-9.2f, 5.6f, 0.0f), new Vector3(-10.9f, 4.5f, 0.0f), new Vector3(-10.9f, 5.6f, 0.0f), new Vector3(-9.2f, 5.6f, 0.0f), new Vector3(-9.2f, 9.3f, 0.0f), new Vector3(-10.9f, 5.6f, 0.0f), new Vector3(-10.9f, 9.3f, 0.0f), new Vector3(-9.3f, 9.2f, 0.0f), new Vector3(-5.6f, 9.2f, 0.0f), new Vector3(-9.3f, 10.8f, 0.0f), new Vector3(-5.6f, 10.8f, 0.0f), new Vector3(-5.6f, 9.2f, 0.0f), new Vector3(-4.5f, 9.2f, 0.0f), new Vector3(-5.6f, 10.8f, 0.0f), new Vector3(-4.5f, 10.8f, 0.0f), new Vector3(-4.5f, 9.2f, 0.0f), new Vector3(-1.9f, 9.2f, 0.0f), new Vector3(-4.5f, 10.8f, 0.0f), new Vector3(-1.9f, 10.8f, 0.0f), new Vector3(-1.9f, 9.2f, 0.0f), new Vector3(1.9f, 9.2f, 0.0f), new Vector3(-1.9f, 10.8f, 0.0f), new Vector3(1.9f, 10.8f, 0.0f), new Vector3(1.9f, 9.2f, 0.0f), new Vector3(4.5f, 9.2f, 0.0f), new Vector3(1.9f, 10.8f, 0.0f), new Vector3(4.5f, 10.8f, 0.0f), new Vector3(4.5f, 9.2f, 0.0f), new Vector3(5.6f, 9.2f, 0.0f), new Vector3(4.5f, 10.8f, 0.0f), new Vector3(5.6f, 10.8f, 0.0f), new Vector3(5.6f, 9.2f, 0.0f), new Vector3(9.3f, 9.2f, 0.0f), new Vector3(5.6f, 10.8f, 0.0f), new Vector3(9.3f, 10.8f, 0.0f), new Vector3(9.2f, 9.3f, 0.0f), new Vector3(9.2f, 5.6f, 0.0f), new Vector3(10.8f, 9.3f, 0.0f), new Vector3(10.8f, 5.6f, 0.0f), new Vector3(9.2f, 5.6f, 0.0f), new Vector3(9.2f, 4.5f, 0.0f), new Vector3(10.8f, 5.6f, 0.0f), new Vector3(10.8f, 4.5f, 0.0f), new Vector3(9.2f, 4.5f, 0.0f), new Vector3(9.2f, 1.9f, 0.0f), new Vector3(10.8f, 4.5f, 0.0f), new Vector3(10.8f, 1.9f, 0.0f), new Vector3(9.2f, 1.9f, 0.0f), new Vector3(9.2f, -1.9f, 0.0f), new Vector3(10.8f, 1.9f, 0.0f), new Vector3(10.8f, -1.9f, 0.0f), new Vector3(9.2f, -1.9f, 0.0f), new Vector3(9.2f, -4.5f, 0.0f), new Vector3(10.8f, -1.9f, 0.0f), new Vector3(10.8f, -4.5f, 0.0f), new Vector3(9.2f, -4.5f, 0.0f), new Vector3(9.2f, -5.6f, 0.0f), new Vector3(10.8f, -4.5f, 0.0f), new Vector3(10.8f, -5.6f, 0.0f), new Vector3(9.2f, -5.6f, 0.0f), new Vector3(9.2f, -9.3f, 0.0f), new Vector3(10.8f, -5.6f, 0.0f), new Vector3(10.8f, -9.3f, 0.0f), new Vector3(9.3f, -9.2f, 0.0f), new Vector3(5.6f, -9.1f, 0.0f), new Vector3(9.3f, -10.9f, 0.0f), new Vector3(5.6f, -10.9f, 0.0f), new Vector3(5.6f, -9.1f, 0.0f), new Vector3(4.5f, -9.1f, 0.0f), new Vector3(5.6f, -10.9f, 0.0f), new Vector3(4.5f, -10.9f, 0.0f), new Vector3(4.5f, -9.1f, 0.0f), new Vector3(1.9f, -9.1f, 0.0f), new Vector3(4.5f, -10.9f, 0.0f), new Vector3(1.9f, -10.9f, 0.0f), new Vector3(1.9f, -9.1f, 0.0f), new Vector3(-1.9f, -9.2f, 0.0f), new Vector3(1.9f, -10.9f, 0.0f), new Vector3(-1.9f, -10.9f, 0.0f), new Vector3(-1.9f, -9.2f, 0.0f), new Vector3(-4.5f, -9.2f, 0.0f), new Vector3(-1.9f, -10.9f, 0.0f), new Vector3(-4.5f, -10.9f, 0.0f), new Vector3(-4.5f, -9.2f, 0.0f), new Vector3(-5.6f, -9.2f, 0.0f), new Vector3(-4.5f, -10.9f, 0.0f), new Vector3(-5.6f, -10.9f, 0.0f), new Vector3(-5.6f, -9.2f, 0.0f), new Vector3(-9.3f, -9.2f, 0.0f), new Vector3(-5.6f, -10.9f, 0.0f), new Vector3(-9.3f, -10.9f, 0.0f), new Vector3(-10.7f, 10.7f, 0.0f), new Vector3(-9.3f, 10.7f, 0.0f), new Vector3(-10.7f, 9.3f, 0.0f), new Vector3(-9.3f, 9.3f, 0.0f), new Vector3(10.7f, 10.7f, 0.0f), new Vector3(10.7f, 9.3f, 0.0f), new Vector3(9.3f, 10.7f, 0.0f), new Vector3(9.3f, 9.3f, 0.0f), new Vector3(-10.7f, -10.7f, 0.0f), new Vector3(-10.7f, -9.3f, 0.0f), new Vector3(-9.3f, -10.7f, 0.0f), new Vector3(-9.3f, -9.3f, 0.0f), new Vector3(10.7f, -10.7f, 0.0f), new Vector3(9.3f, -10.7f, 0.0f), new Vector3(10.7f, -9.3f, 0.0f), new Vector3(9.3f, -9.3f, 0.0f) };
+            Vector2[] uv0ArrayData = { new Vector2(3.6f, -3.9f), new Vector2(3.9f, 3.6f), new Vector2(3.9f, -3.6f), new Vector2(3.6f, 3.9f), new Vector2(1.7f, -3.9f), new Vector2(-1.7f, -3.9f), new Vector2(-3.6f, -3.9f), new Vector2(-3.6f, 3.9f), new Vector2(-3.9f, -3.6f), new Vector2(-3.9f, 3.6f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(0.3f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(0.3f, 1.0f), new Vector2(0.3f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.3f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(0.7f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(0.7f, 1.0f), new Vector2(0.7f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.7f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(0.3f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(0.3f, 0.2f), new Vector2(0.3f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.3f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(0.7f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(0.7f, 0.2f), new Vector2(0.7f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.7f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(0.3f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(0.3f, 0.2f), new Vector2(0.3f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.3f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(0.7f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(0.7f, 0.2f), new Vector2(0.7f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.7f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.2f), new Vector2(1.0f, 0.2f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(0.3f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(0.3f, 1.0f), new Vector2(0.3f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.3f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(0.7f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(0.7f, 1.0f), new Vector2(0.7f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.7f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.9f), new Vector2(1.0f, 0.9f), new Vector2(0.0f, 1.0f), new Vector2(1.0f, 1.0f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.0f), new Vector2(1.0f, 0.0f), new Vector2(1.0f, 0.1f), new Vector2(1.0f, 0.0f), new Vector2(0.0f, 0.1f), new Vector2(0.0f, 0.0f), new Vector2(0.0f, 0.0f), new Vector2(0.0f, 0.1f), new Vector2(1.0f, 0.0f), new Vector2(1.0f, 0.1f), new Vector2(1.0f, 0.0f), new Vector2(0.0f, 0.0f), new Vector2(1.0f, 0.1f), new Vector2(0.0f, 0.1f) };
 
             VerifyGeneratedGeometry(spriteShapeController, segments, posArrayData, uv0ArrayData);
         }
@@ -379,5 +400,50 @@ namespace UnityEditor.U2D.SpriteShapeTest
             VerifyGeneratedGeometry(spriteShapeController, segments, posArrayData, uv0ArrayData);
         }
 
+        [UnityTest]
+        public IEnumerator SpriteShape_GeneratesGeometryOnBoundsOutOfViewEditMode()
+        {
+
+            var go2 = new GameObject("TestObject");
+            var spriteShapeController2 = go2.AddComponent<SpriteShapeController>();
+            spriteShapeController2.spriteShape = Resources.Load<SpriteShape>("Goo");
+
+            // Generate the Shape in a far off position.
+            go2.transform.localPosition = new Vector3(200.0f, -200.0f, 0);
+            spriteShapeController2.spline.Clear();
+            spriteShapeController2.spline.InsertPointAt(0, new Vector3(10.0f, -10.0f, 0));
+            spriteShapeController2.spline.SetTangentMode(0, ShapeTangentMode.Continuous);
+            spriteShapeController2.spline.InsertPointAt(1, new Vector3(0.0f, 0, 0));
+            spriteShapeController2.spline.SetTangentMode(1, ShapeTangentMode.Continuous);
+            spriteShapeController2.spline.InsertPointAt(2, new Vector3(-10.0f, 10.0f, 0));
+            spriteShapeController2.spline.SetTangentMode(2, ShapeTangentMode.Continuous);
+            spriteShapeController2.splineDetail = 4;
+            spriteShapeController2.spline.isOpenEnded = true;
+
+            bool doingTest = false;
+            bool testDone = false;
+            Action<SceneView> sceneViewDelegate = (sceneView) =>
+            {
+                if (sceneView != s_SceneView)
+                    return;
+
+                if (!doingTest)
+                {
+                    doingTest = true;
+                    ResetSceneViewCamera();
+                    testDone = true;
+                }
+            };
+
+            SceneView.duringSceneGui += sceneViewDelegate;
+            while (!testDone)
+            {
+                yield return null;
+            }
+            SceneView.duringSceneGui -= sceneViewDelegate;
+            // Without the fix for always generate, this will be 0.
+            Assert.AreNotEqual(0, spriteShapeController2.spriteShapeHashCode);
+
+        }
     }
 }

@@ -469,6 +469,27 @@ namespace UnityEngine.U2D
             }
         }
 
+
+#if UNITY_EDITOR
+        void OnDrawGizmos()
+        {
+            var sr = GetComponent<SpriteShapeRenderer>();
+            if (sr != null)
+            {
+                var hasSplineChanged = HasSplineChanged();
+                if (!sr.isVisible && hasSplineChanged)
+                {
+                    BakeMesh();
+                    Rendering.CommandBuffer rc = new Rendering.CommandBuffer();
+                    var rt = RenderTexture.GetTemporary(256, 256, 0, RenderTextureFormat.ARGB32);
+                    Graphics.SetRenderTarget(rt);
+                    rc.DrawRenderer(sr, sr.sharedMaterial);
+                    Graphics.ExecuteCommandBuffer(rc);
+                }
+            }
+        }
+#endif
+
         public bool UpdateSpriteShapeParameters()
         {
             Matrix4x4 transformMatrix = Matrix4x4.identity;
