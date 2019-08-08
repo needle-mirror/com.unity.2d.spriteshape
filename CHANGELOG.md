@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.0.4] - 2019-08-09
+### Added
+- Added tangent channel support for proper 2D lighting in URP.
+
+## [3.0.3] - 2019-07-24
+### Added
+- Add related test packages
+
 ## [3.0.2] - 2019-07-13
 ### Changed
 - Update to latest Mathematics package version

@@ -1,8 +1,8 @@
 # Sprite Shape Profile
 
-The **Sprite Shape Profile** contains the settings that determine which Sprites that appear on a Sprite Shape at specific Angle Ranges, as well as other display settings. You can use the same Profile for multiple **Sprite Shapes** in a Scene.
+The __Sprite Shape Profile__ contains the settings that determine which Sprites that appear on a Sprite Shape at specific Angle Ranges, as well as other display settings. You can use the same Profile for multiple __Sprite Shapes__ in a Scene.
 
-Create a **Sprite Shape Profile** from the Editor main menu (menu: **Assets > Create > Sprite Shape Profile**), and select from the two available options: **Open Shape** and **Closed Shape**.
+Create a __Sprite Shape Profile__ from the Editor main menu (menu: __Assets > Create > Sprite Shape Profile__), and select from the two available options: __Open Shape__ and __Closed Shape__.
 
 ![](images/v1.1-SSProfile.png)
 
@@ -25,33 +25,33 @@ Create a **Sprite Shape Profile** from the Editor main menu (menu: **Assets > Cr
 
 ![Open Shape Profile preset](C:\Users\Sam\Documents\GitHub\com.unity.2d.spriteshape\Documentation~\images\OpenShapeProfile.png)
 
-Use the **Open Shape** preset Profile to create Shapes made from a single edge outline with tiled Sprites along its edge. This preset is ideal for creating level elements such as platforms. 
+Use the __Open Shape__ preset Profile to create Shapes made from a single edge outline with tiled Sprites along its edge. This preset is ideal for creating level elements such as platforms. 
 
 ![Example of an Open Shape](images/2D_SpriteShape_024.png)
 
-Drag the Open Shape Profile into the Scene view to automatically generate a Sprite Shape with **Open Ended** enabled in its **Sprite Shape Controller** settings.
+Drag the Open Shape Profile into the Scene view to automatically generate a Sprite Shape with __Open Ended__ enabled in its __Sprite Shape Controller__ settings.
 
 ## Closed Shape
 
 ![Closed Shape Profile preset](images/ClosedShapeProfile.png)
 
-Use the **Closed Shape** preset Profile to create Shapes that encompass an enclosed area. The Closed Sprite Shape can display and tile a Fill texture in the enclosed area, if a Fill texture is set in its Profile settings. Use this preset to create large solid filled Shapes that are ideal for backgrounds or large platforms.
+Use the __Closed Shape__ preset Profile to create Shapes that encompass an enclosed area. The Closed Sprite Shape can display and tile a Fill texture in the enclosed area, if a Fill texture is set in its Profile settings. Use this preset to create large solid filled Shapes that are ideal for backgrounds or large platforms.
 
 ![Closed Shape square](images/v1.1-ClosedShapeSquare.png)
 
-Drag the Closed Shape Profile into the Scene view to automatically generate a Sprite Shape with **Open Ended** disabled in its **Sprite Shape Controller** settings. The Closed Shape Profile's preset Angle Ranges create a square Sprite Shape by default.
+Drag the Closed Shape Profile into the Scene view to automatically generate a Sprite Shape with __Open Ended__ disabled in its __Sprite Shape Controller__ settings. The Closed Shape Profile's preset Angle Ranges create a square Sprite Shape by default.
 
-A key feature of the **Sprite Shape Profile** is the Angle Ranges tool. Assigning an Angle Range determines what Sprite is displayed at specific angles, as the Sprite Shape is deformed in the Scene.
+A key feature of the __Sprite Shape Profile__ is the Angle Ranges tool. Assigning an Angle Range determines what Sprite is displayed at specific angles, as the Sprite Shape is deformed in the Scene.
 
 ## Creating Angle Ranges 
 
 ### Method 1:
 
-To create an Angle Range, click the **Create Range** button at the bottom of the Angle Ranges tool:
+To create an Angle Range, click the __Create Range__ button at the bottom of the Angle Ranges tool:
 
 ![The 'Create Range'button](images/2D_SpriteShape_014.png)
 
-The **Create Range** button is only visible if the **Preview Handle** is over an area without an Angle Range (see the example image below).
+The __Create Range__ button is only visible if the __Preview Handle__ is over an area without an Angle Range (see the example image below).
 
 ![Selecting the preview handle](images/2D_SpriteShape_015.png)
 
@@ -67,15 +67,15 @@ The range covered by the currently selected Angle Range is displayed at the bott
 
 ![Enter Angle Range values](images/2D_SpriteShape_018.png)
 
-You can edit a range by entering new values into **Start** and **End**, or drag either endpoint of the tool to the desired angles. A range cannot be extended into an existing neighboring range. To delete an Angle Range, select the range and then press the **Del/Delete** key.
+You can edit a range by entering new values into __Start__ and __End__, or drag either endpoint of the tool to the desired angles. A range cannot be extended into an existing neighboring range. To delete an Angle Range, select the range and then press the __Del/Delete__ key.
 
 ## Assigning Sprites
 
-After creating the Angle Ranges, the next step is to assign Sprites to those ranges. The **Sprites** list is found beneath the **Angle Ranges** tool. It lists all the Sprites assigned to the selected range.
+After creating the Angle Ranges, the next step is to assign Sprites to those ranges. The __Sprites__ list is found beneath the __Angle Ranges__ tool. It lists all the Sprites assigned to the selected range.
 
 ![Sprite List](images/2D_SpriteShape_019.png)
 
-To add Sprites to the list, click the **+** icon to insert a new row to the list.  Click the circle icon next to the empty row to open the **Object Picker** window, which displays all available Sprites in the project.
+To add Sprites to the list, click the __+__ icon to insert a new row to the list.  Click the circle icon next to the empty row to open the __Object Picker__ window, which displays all available Sprites in the project.
 
 ![Adding a row to the list](images/2D_SpriteShape_020.png)
 
@@ -83,11 +83,11 @@ You can also drag a Sprite directly onto a row to add it to the list. The Sprite
 
 ![Drag and drop Sprites to the row to add to the list](images/2D_SpriteShape_021.png)
 
-Drag the leftmost ends of the rows up or down to reorder the list, which changes the **Sprite Variant** numbers of the Sprites accordingly.
+Drag the leftmost ends of the rows up or down to reorder the list, which changes the __Sprite Variant__ numbers of the Sprites accordingly.
 
 ## Previewing Sprites of multiple Angle Ranges
 
-After assigning Sprites to multiple **Angle Ranges**, rotate the Preview Handle around the Angle Range tool to preview the Sprites assigned those ranges.
+After assigning Sprites to multiple __Angle Ranges__, rotate the Preview Handle around the Angle Range tool to preview the Sprites assigned those ranges.
 
 ![Previewing one range](images/2D_SpriteShape_022.png)
 

@@ -31,6 +31,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent splineDetail = new GUIContent("Detail", "Tessellation Quality for rendering.");
             public static readonly GUIContent openEndedLabel = new GUIContent("Open Ended", "Is the path open ended or closed.");
             public static readonly GUIContent adaptiveUVLabel = new GUIContent("Adaptive UV", "Allow Adaptive UV Generation");
+            public static readonly GUIContent enableTangentsLabel = new GUIContent("Enable Tangents", "Enable Tangents for 2D Lighting.");
             public static readonly GUIContent worldUVLabel = new GUIContent("Worldspace UV", "Generate UV for world space.");
             public static readonly GUIContent stretchUVLabel = new GUIContent("Stretch UV", "Stretch the Fill UV to full Rect.");
             public static readonly GUIContent stretchTilingLabel = new GUIContent("Stretch Tiling", "Stretch Tiling Count.");
@@ -56,6 +57,7 @@ namespace UnityEditor.U2D
 
         private SerializedProperty m_OptimizeColliderProp;
         private SerializedProperty m_OptimizeGeometryProp;
+        private SerializedProperty m_EnableTangentsProp;
         private SerializedObject m_MeshRendererSO;
         private int m_CollidersCount = 0;
 
@@ -107,6 +109,7 @@ namespace UnityEditor.U2D
             m_ColliderOffsetProp = serializedObject.FindProperty("m_ColliderOffset");
             m_OptimizeColliderProp = serializedObject.FindProperty("m_OptimizeCollider");
             m_OptimizeGeometryProp = serializedObject.FindProperty("m_OptimizeGeometry");
+            m_EnableTangentsProp = serializedObject.FindProperty("m_EnableTangents");
 
             m_ShowStretchOption.valueChanged.AddListener(Repaint);
             m_ShowStretchOption.value = ShouldShowStretchOption();
@@ -398,6 +401,7 @@ namespace UnityEditor.U2D
             EditorGUILayout.PropertyField(m_AdaptiveUVProp, Contents.adaptiveUVLabel);
             if (!m_IsOpenEndedProp.boolValue)
                 EditorGUILayout.PropertyField(m_OptimizeGeometryProp, Contents.optimizeGeometryLabel);
+            EditorGUILayout.PropertyField(m_EnableTangentsProp, Contents.enableTangentsLabel);
 
             EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);

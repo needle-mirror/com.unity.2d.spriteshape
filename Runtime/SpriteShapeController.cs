@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
+using Unity.Collections.LowLevel.Unsafe;
 #if UNITY_EDITOR
 using UnityEditor.U2D;
 #endif
@@ -31,6 +32,7 @@ namespace UnityEngine.U2D
         SpriteShape m_ActiveSpriteShape;
         SpriteShapeParameters m_ActiveShapeParameters;
         NativeArray<float2> m_ColliderData;
+        NativeArray<Vector4> m_TangentData;
 
         int m_AngleRangeHash = 0;
         int m_ActiveCornerSpritesHash = 0;
@@ -65,6 +67,8 @@ namespace UnityEngine.U2D
         bool m_OptimizeCollider = true;
         [SerializeField]
         bool m_OptimizeGeometry = true;
+        [SerializeField]
+        bool m_EnableTangents = false;
 
         public int spriteShapeHashCode
         {
@@ -79,6 +83,11 @@ namespace UnityEngine.U2D
         {
             get { return m_FillPixelPerUnit; }
             set { m_FillPixelPerUnit = value; }
+        }
+        public bool enableTangents
+        {
+            get { return m_EnableTangents; }
+            set { m_EnableTangents = value; }
         }
         public float stretchTiling
         {
@@ -170,6 +179,8 @@ namespace UnityEngine.U2D
         {
             if (m_ColliderData.IsCreated)
                 m_ColliderData.Dispose();
+            if (m_TangentData.IsCreated)
+                m_TangentData.Dispose();
         }
 
         private void OnApplicationQuit()
@@ -309,6 +320,7 @@ namespace UnityEngine.U2D
             {
                 int hashCode = (int)2166136261 ^ m_Spline.GetHashCode();
                 hashCode = hashCode * 16777619 ^ (m_OptimizeGeometry ? 1 : 0);
+                hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
 
                 if (spriteShapeHashCode != hashCode)
                 {
@@ -344,9 +356,9 @@ namespace UnityEngine.U2D
         }
 
         // Ensure Neighbor points are not too close to each other.
-        private bool ValidatePoints(List<ShapeControlPoint> shapePoints)
+        private bool ValidatePoints(NativeArray<ShapeControlPoint> shapePoints)
         {
-            for (int i = 0; i < shapePoints.Count - 1; ++i)
+            for (int i = 0; i < shapePoints.Length - 1; ++i)
             {
                 var vec = shapePoints[i].position - shapePoints[i + 1].position;
                 if (vec.sqrMagnitude < s_DistanceTolerance)
@@ -358,15 +370,16 @@ namespace UnityEngine.U2D
             return true;
         }
 
-        JobHandle BakeMesh(bool needUpdateSpriteArrays)
+        unsafe JobHandle BakeMesh(bool needUpdateSpriteArrays)
         {
             JobHandle jobHandle = default;
             if (needUpdateSpriteArrays)
                 UpdateSprites();
 
-            List<ShapeControlPoint> shapePoints = new List<ShapeControlPoint>();
-            List<SpriteShapeMetaData> shapeMetaData = new List<SpriteShapeMetaData>();
             int pointCount = m_Spline.GetPointCount();
+            NativeArray<ShapeControlPoint> shapePoints  = new NativeArray<ShapeControlPoint>(pointCount, Allocator.Temp);
+            NativeArray<SpriteShapeMetaData> shapeMetaData = new NativeArray<SpriteShapeMetaData>(pointCount, Allocator.Temp);
+
             for (int i = 0; i < pointCount; ++i)
             {
                 ShapeControlPoint shapeControlPoint;
@@ -374,7 +387,7 @@ namespace UnityEngine.U2D
                 shapeControlPoint.leftTangent = m_Spline.GetLeftTangent(i);
                 shapeControlPoint.rightTangent = m_Spline.GetRightTangent(i);
                 shapeControlPoint.mode = (int)m_Spline.GetTangentMode(i);
-                shapePoints.Add(shapeControlPoint);
+                shapePoints[i] = shapeControlPoint;
 
                 SpriteShapeMetaData metaData;
                 metaData.corner = m_Spline.GetCorner(i);
@@ -382,7 +395,7 @@ namespace UnityEngine.U2D
                 metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
                 metaData.bevelCutoff = 0;
                 metaData.bevelSize = 0;
-                shapeMetaData.Add(metaData);
+                shapeMetaData[i] = metaData;
             }
 
             if (spriteShapeRenderer != null && ValidatePoints(shapePoints))
@@ -397,27 +410,43 @@ namespace UnityEngine.U2D
                 {
                     // Allow max quads for each segment to 128.
                     int maxArrayCount = (int)(pointCount * 256 * m_ActiveShapeParameters.splineDetail);
+
+                    // Collider Data
                     if (m_ColliderData.IsCreated)
                         m_ColliderData.Dispose();
                     m_ColliderData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
 
+                    // Tangent Data
+                    if (!m_TangentData.IsCreated)
+                        m_TangentData = new NativeArray<Vector4>(1, Allocator.Persistent);
+
                     NativeArray<ushort> indexArray;
                     NativeSlice<Vector3> posArray;
                     NativeSlice<Vector2> uv0Array;
-                    spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
                     NativeArray<Bounds> bounds = spriteShapeRenderer.GetBounds();
-                    NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(shapePoints.Count * 8);
+                    NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(shapePoints.Length * 8);
+                    NativeSlice<Vector4> tanArray = new NativeSlice<Vector4>(m_TangentData);
+
+                    if (m_EnableTangents)
+                    { 
+                        spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array, out tanArray);
+                    }
+                    else
+                    {
+                        spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
+                    }
 
                     var spriteShapeJob = new SpriteShapeGenerator()
                     {
-                        m_GeomArray = geomArray,
-                        m_IndexArray = indexArray,
+                        m_Bounds = bounds,
                         m_PosArray = posArray,
                         m_Uv0Array = uv0Array,
-                        m_ColliderPoints = m_ColliderData,
-                        m_Bounds = bounds
+                        m_TanArray = tanArray,
+                        m_GeomArray = geomArray,
+                        m_IndexArray = indexArray,
+                        m_ColliderPoints = m_ColliderData
                     };
-                    spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
+                    spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
                     jobHandle = spriteShapeJob.Schedule();
                     spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
                     JobHandle.ScheduleBatchedJobs();
@@ -429,6 +458,9 @@ namespace UnityEngine.U2D
                 spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
                 m_DynamicOcclusionOverriden = false;
             }
+
+            shapePoints.Dispose();
+            shapeMetaData.Dispose();
             return jobHandle;
         }
 

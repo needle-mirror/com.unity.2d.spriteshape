@@ -123,7 +123,7 @@ namespace UnityEditor.U2D.SpriteShapeInternal
     [CustomEditor(typeof(CustomPath))]
     internal class CustomPathInspector : GenericScriptablePathInspector<ScriptableSpriteShapeData, SpriteShapeData> { }
 
-    [EditorTool("Edit Test Shape", typeof(SpriteShapeController))]
+    [EditorTool("Edit SpriteShape", typeof(SpriteShapeController))]
     internal class SpriteShapeEditorTool : PathEditorTool<CustomPath>
     {
         private static InternalEditorBridge.ShortcutContext m_ShortcutContext;

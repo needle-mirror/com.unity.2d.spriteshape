@@ -45,7 +45,7 @@ namespace UnityEngine.U2D
         struct JobControlPoint
         {
             public int4 cpData;                 // x : Sprite Index y : Corner Type z : Mode w : Internal Sprite Index.
-            public int4 exData;                 // x : Corner Type y: Corner Sprite
+            public int4 exData;                 // x : Corner Type y: Corner Sprite z : Start/End Corner
             public float4 cpInfo;               // x : Height y : Bevel Cutoff z : Bevel Size. w : Render Order.
             public float2 position;
             public float2 tangentLt;
@@ -78,6 +78,7 @@ namespace UnityEngine.U2D
         {
             public float2 pos;
             public float2 uv;
+            public float4 tan;
             public float2 meta;                 // x : height y : -
             public int2 sprite;                 // x : sprite y : is main Point.
         }
@@ -160,6 +161,7 @@ namespace UnityEngine.U2D
         private int m_VertexArrayCount;
         public NativeSlice<Vector3> m_PosArray;
         public NativeSlice<Vector2> m_Uv0Array;
+        public NativeSlice<Vector4> m_TanArray;
 
         private int m_GeomArrayCount;
         public NativeArray<SpriteShapeSegment> m_GeomArray;
@@ -467,7 +469,7 @@ namespace UnityEngine.U2D
             corners[cornerCount++] = d;
         }
 
-        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPoint[] shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
+        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
         {
             kModeLinear = 0;
             kModeContinous = 1;
@@ -606,7 +608,7 @@ namespace UnityEngine.U2D
             }
         }
 
-        void PrepareControlPoints(ShapeControlPoint[] shapePoints, SpriteShapeMetaData[] metaData)
+        void PrepareControlPoints(NativeArray<ShapeControlPoint> shapePoints, NativeArray<SpriteShapeMetaData> metaData)
         {
             float2 zero = new float2(0, 0);
             m_ControlPoints = new NativeArray<JobControlPoint>(kControlPointCount, Allocator.TempJob);
@@ -730,7 +732,7 @@ namespace UnityEngine.U2D
                 JobControlPoint iscpNext = GetControlPoint(next);
 
                 // If this segment is corner, continue.
-                if (iscp.exData.x > 0 && iscp.exData.x == iscpNext.exData.x)
+                if (iscp.exData.x > 0 && iscp.exData.x == iscpNext.exData.x && iscp.exData.z == 1)
                     continue;
 
                 // Resolve Angle and Order.
@@ -1038,11 +1040,19 @@ namespace UnityEngine.U2D
                             pos = new Vector3(vertices[m_ActiveVertexCount].x, vertices[m_ActiveVertexCount].y, 0);
                             m_PosArray[m_ActiveVertexCount] = pos;
                         }
+
                         geom.indexCount = m_ActiveIndexCount;
                         geom.vertexCount = m_ActiveVertexCount;
                     }
                 }
             }
+
+            if (m_TanArray.Length > 1)
+            {
+                for (int i = 0; i < m_ActiveVertexCount; ++i)
+                    m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
+            }
+
             m_GeomArray[0] = geom;
 
         }
@@ -1103,7 +1113,7 @@ namespace UnityEngine.U2D
 
         }
 
-        void CopyVertexData(ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, int outIndex, NativeArray<JobShapeVertex> inVertices, int inIndex, float pivot, float sOrder)
+        void CopyVertexData(ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, ref NativeSlice<Vector4> outTan, int outIndex, NativeArray<JobShapeVertex> inVertices, int inIndex, float pivot, float sOrder)
         {
             Vector3 iscp = outPos[outIndex];
             Vector2 iscu = outUV0[outIndex];
@@ -1120,7 +1130,7 @@ namespace UnityEngine.U2D
             v1 = v1 + rt;
             v3 = v3 + rt;
 
-            outPos[outIndex] = v0;
+            outPos[outIndex] = v0;            
             outUV0[outIndex] = inVertices[inIndex].uv;
             outPos[outIndex + 1] = v1;
             outUV0[outIndex + 1] = inVertices[inIndex + 1].uv;
@@ -1128,9 +1138,17 @@ namespace UnityEngine.U2D
             outUV0[outIndex + 2] = inVertices[inIndex + 2].uv;
             outPos[outIndex + 3] = v3;
             outUV0[outIndex + 3] = inVertices[inIndex + 3].uv;
+
+            if (outTan.Length > 1)
+            {
+                outTan[outIndex] = inVertices[inIndex].tan;
+                outTan[outIndex + 1] = inVertices[inIndex + 1].tan;
+                outTan[outIndex + 2] = inVertices[inIndex + 2].tan;
+                outTan[outIndex + 3] = inVertices[inIndex + 3].tan;
+            }
         }
 
-        int CopySegmentRenderData(JobSpriteInfo ispr, ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, ref int outCount, ref NativeArray<ushort> indexData, ref int indexCount, NativeArray<JobShapeVertex> inVertices, int inCount, float sOrder)
+        int CopySegmentRenderData(JobSpriteInfo ispr, ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, ref NativeSlice<Vector4> outTan, ref int outCount, ref NativeArray<ushort> indexData, ref int indexCount, NativeArray<JobShapeVertex> inVertices, int inCount, float sOrder)
         {
             if (inCount < 4)
                 return -1;
@@ -1143,7 +1161,7 @@ namespace UnityEngine.U2D
 
             for (int i = 0; i < inCount; i = i + 4, outCount = outCount + 4, localVertex = localVertex + 4)
             {
-                CopyVertexData(ref outPos, ref outUV0, outCount, inVertices, i, pivot, sOrder);
+                CopyVertexData(ref outPos, ref outUV0, ref outTan, outCount, inVertices, i, pivot, sOrder);
                 indexData[indexCount++] = (ushort)(localVertex);
                 indexData[indexCount++] = (ushort)(3 + localVertex);
                 indexData[indexCount++] = (ushort)(1 + localVertex);
@@ -1231,18 +1249,25 @@ namespace UnityEngine.U2D
                     m_FirstLT = lt;
                 }
 
+                // default tan (1, 0, 0, -1) which is along uv. same here.
+                float2 nlt = math.normalize(rt - lt);
+                float4 tan = new float4(nlt.x, nlt.y, 0, -1.0f);
                 column0.pos = lt;
                 column0.meta = cs.meta;
                 column0.sprite = sprite;
+                column0.tan = tan;
                 column1.pos = rt;
                 column1.meta = ns.meta;
                 column1.sprite = sprite;
+                column1.tan = tan;
                 column2.pos = lb;
                 column2.meta = cs.meta;
                 column2.sprite = sprite;
+                column2.tan = tan;
                 column3.pos = rb;
                 column3.meta = ns.meta;
                 column3.sprite = sprite;
+                column3.tan = tan;
 
                 // Calculate UV.
                 if (validHead && i == 0)
@@ -1488,7 +1513,7 @@ namespace UnityEngine.U2D
                 if (outputCount == 0)
                     continue;
                 var z = -0.01f + ((float)isi.spInfo.z * kEpsilonRelaxed) + ((float)-i * kEpsilon);
-                CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, m_OutputVertexData, outputCount, z);
+                CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_TanArray, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, m_OutputVertexData, outputCount, z);
 
                 if (hasCollider)
                 {
@@ -1606,10 +1631,12 @@ namespace UnityEngine.U2D
             float2 ra = pt + (math.normalize(rt) * rrd);
 
             ccp.exData.x = ct;
+            ccp.exData.z = 1;
             ccp.position = la;
             newPoints[activePoint++] = ccp;
 
             ccp.exData.x = ct;
+            ccp.exData.z = 0;
             ccp.position = ra;
             newPoints[activePoint++] = ccp;
 
@@ -1728,6 +1755,7 @@ namespace UnityEngine.U2D
                 Vector3 pos = m_PosArray[ic];
                 Vector2 uv0 = m_Uv0Array[ic];
                 bool ccw = (corner <= kCornerTypeOuterBottomRight);
+                int vertexArrayCount = m_VertexArrayCount;
 
                 for (int i = 0; i < m_CornerCount; ++i)
                 {
@@ -1775,6 +1803,12 @@ namespace UnityEngine.U2D
                         vc = vc + 4;
                         ic = ic + 6;
                     }
+                }
+
+                if (m_TanArray.Length > 1)
+                {
+                    for (int i = vertexArrayCount; i < m_VertexArrayCount; ++i)
+                        m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
                 }
 
                 // Geom Data
@@ -1999,7 +2033,7 @@ namespace UnityEngine.U2D
 
         #region Entry, Exit Points.
 
-        public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, ShapeControlPoint[] shapePoints, SpriteShapeMetaData[] metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
+        public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, NativeArray<SpriteShapeMetaData> metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
         {
             // Prepare Inputs.
             PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
