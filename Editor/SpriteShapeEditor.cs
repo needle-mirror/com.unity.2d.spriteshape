@@ -91,6 +91,11 @@ namespace UnityEditor.U2D
             set { m_SelectedIndex = value; }
         }
 
+        bool isSelectedIndexValid
+        {
+            get { return (selectedIndex != kInvalidMinimum && selectedIndex < angleRanges.Count); }
+        }
+
         public float previewAngle
         {
             get { return m_PreviewAngle; }
@@ -304,10 +309,13 @@ namespace UnityEditor.U2D
                     {
                         string assetPath = AssetDatabase.GetAssetPath(sprite);
                         TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-                        TextureImporterSettings textureSettings = new TextureImporterSettings();
-                        importer.ReadTextureSettings(textureSettings);
-                        if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
-                            tightMeshSprites.Add(sprite);
+                        if (importer != null)
+                        { 
+                            TextureImporterSettings textureSettings = new TextureImporterSettings();
+                            importer.ReadTextureSettings(textureSettings);
+                            if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
+                                tightMeshSprites.Add(sprite);
+                        }
                     }
                 }
             }
@@ -327,10 +335,13 @@ namespace UnityEditor.U2D
                 {
                     string assetPath = AssetDatabase.GetAssetPath(sprite);
                     TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-                    TextureImporterSettings textureSettings = new TextureImporterSettings();
-                    importer.ReadTextureSettings(textureSettings);
-                    if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
-                        tightMeshSprites.Add(sprite);
+                    if (importer != null)
+                    { 
+                        TextureImporterSettings textureSettings = new TextureImporterSettings();
+                        importer.ReadTextureSettings(textureSettings);
+                        if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
+                            tightMeshSprites.Add(sprite);
+                    }
                 }
             }
 
@@ -391,7 +402,7 @@ namespace UnityEditor.U2D
 
                 EditorGUILayout.Space();
 
-                if (m_AngleRangeSpriteList != null)
+                if (m_AngleRangeSpriteList != null && angleRanges.Count > 0)
                     m_AngleRangeSpriteList.DoLayoutList();
                 else
                     m_EmptySpriteList.DoLayoutList();
@@ -434,7 +445,7 @@ namespace UnityEditor.U2D
 
         private void HandleAngleSpriteListGUI(Rect rect)
         {
-            if (m_CurrentAngleRange == null)
+            if (m_CurrentAngleRange == null || !isSelectedIndexValid)
                 return;
 
             var currentEvent = Event.current;
@@ -559,7 +570,7 @@ namespace UnityEditor.U2D
             Debug.Assert(angleRanges.Count == m_AngleRangesProp.arraySize);
             Debug.Assert(selectedIndex < angleRanges.Count);
 
-            if (targets.Length == 1 && selectedIndex != kInvalidMinimum)
+            if (targets.Length == 1 && isSelectedIndexValid)
             {
                 var spritesProp = m_AngleRangesProp.GetArrayElementAtIndex(selectedIndex).FindPropertyRelative("m_Sprites");
                 m_AngleRangeSpriteList = new ReorderableList(spritesProp.serializedObject, spritesProp)
@@ -579,7 +590,7 @@ namespace UnityEditor.U2D
             if (Event.current.type != EventType.Repaint)
                 return;
 
-            if (selectedIndex == kInvalidMinimum)
+            if (!isSelectedIndexValid)
                 return;
 
             var sprites = angleRanges[selectedIndex].sprites;
@@ -611,7 +622,7 @@ namespace UnityEditor.U2D
 
         private void HandleSpritePreviewCycle(Rect rect)
         {
-            if (selectedIndex == kInvalidMinimum)
+            if (!isSelectedIndexValid)
                 return;
 
             Debug.Assert(m_AngleRangeSpriteList != null);

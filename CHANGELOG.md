@@ -4,6 +4,11 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.0.5] - 2019-09-05
+### Fixed
+- Fix (Case 1159767) Error generated when using a default sprite for Corner sprite or Angle Range sprite in Sprite Shape Profile
+- Fix (Case 1178579) "ArgumentOutofRangeException" is thrown and SpriteShapeProfile freezes on reset
+
 ## [3.0.4] - 2019-08-09
 ### Added
 - Added tangent channel support for proper 2D lighting in URP.
