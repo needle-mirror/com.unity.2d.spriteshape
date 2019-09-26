@@ -8,12 +8,16 @@ using Unity.Collections.LowLevel.Unsafe;
 using Unity.SpriteShape.External.LibTessDotNet;
 
 // We will enable this once Burst gets a verified final version as this attribute keeps changing.
-// using Unity.Burst;
+#if ENABLE_SPRITESHAPE_BURST
+using Unity.Burst;
+#endif
 
 namespace UnityEngine.U2D
 {
-    
-    // [BurstCompile(FloatPrecision.Standard, FloatMode.Fast)]
+
+#if ENABLE_SPRITESHAPE_BURST
+    [BurstCompile]
+#endif
     public struct SpriteShapeGenerator : IJob
     {
 
@@ -653,14 +657,13 @@ namespace UnityEngine.U2D
             return (sp * nt * nt * nt) + (st * nt * nt * xt * x3) + (et * nt * xt * xt * x3) + (ep * xt * xt * xt);
         }
 
-        static float SlopeAngle(float2 start, float2 end)
+        static float SlopeAngle(float2 dirNormalized)
         {
-            float2 dir = math.normalize(start - end);
             float2 dvup = new float2(0, 1f);
             float2 dvrt = new float2(1f, 0);
 
-            float dr = math.dot(dir, dvrt);
-            float du = math.dot(dir, dvup);
+            float dr = math.dot(dirNormalized, dvrt);
+            float du = math.dot(dirNormalized, dvup);
             float cu = math.acos(du);
             float sn = dr >= 0 ? 1.0f : -1.0f;
             float an = cu * Mathf.Rad2Deg * sn;
@@ -669,6 +672,12 @@ namespace UnityEngine.U2D
             an = (du != 1f) ? an : 0;
             an = (du != -1f) ? an : -180f;
             return an;
+        }
+
+        static float SlopeAngle(float2 start, float2 end)
+        {
+            float2 dir = math.normalize(start - end);
+            return SlopeAngle(dir);
         }
 
         bool ResolveAngle(float angle, int activeIndex, ref float renderOrder, ref int spriteIndex, ref int firstSpriteIndex)
@@ -1645,8 +1654,8 @@ namespace UnityEngine.U2D
             {
                 iscp.bottom = bt;
                 iscp.top = tp;
-                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, 0.5f);
-                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, 0.5f);
+                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ispr.metaInfo.y);
+                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ispr.metaInfo.y);
                 iscp.left = lt0;
                 iscp.right = lb1;
             }
@@ -1654,8 +1663,8 @@ namespace UnityEngine.U2D
             {
                 iscp.bottom = tp;
                 iscp.top = bt;
-                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, 0.5f);
-                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, 0.5f);
+                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ispr.metaInfo.y);
+                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ispr.metaInfo.y);
                 iscp.left = lb0;
                 iscp.right = lt1;
             }
@@ -1673,22 +1682,38 @@ namespace UnityEngine.U2D
             return m_CornerCoordinates[cornerArrayIndex + index];
         }
 
-        int CalculateCorner(float2 lt, float2 rt)
+        int CalculateCorner(int index, float angle, float2 lt, float2 rt)
         {
-            int ct = 0;
-            float at = 0;
-            float ac = math.cos(45.0f * Mathf.Deg2Rad);
-            var cnrs = new float2[] { new float2(0, 1.0f), new float2(1.0f, 0), new float2(0, -1.0f), new float2(-1.0f, 0) };
-            var cnrtypes = new int[] { kCornerTypeOuterTopLeft, kCornerTypeInnerTopRight, kCornerTypeOuterTopRight, kCornerTypeInnerBottomRight, kCornerTypeOuterBottomRight, kCornerTypeInnerBottomLeft, kCornerTypeOuterBottomLeft, kCornerTypeInnerTopLeft };
-            for (int quadrant = 0; (quadrant < 4 && at < ac); ++quadrant)
+            var ct = 0;
+            float slope = SlopeAngle(lt);
+            var slopePairs = new float2[] 
             {
-                at = math.dot(cnrs[quadrant], lt);
-                int d = (quadrant + 1) % 4;
-                float dt = math.dot(cnrs[d], rt);
-                ct = (quadrant * 2);
-                ct = (dt > 0) ? cnrtypes[ct] : cnrtypes[ct + 1];
+                new float2(-135.0f, -35.0f),
+                new float2(35.0f, 135.0f),
+                new float2(-35.0f, 35.0f),
+                new float2(-135.0f, 135.0f)
+            };
+            var cornerPairs = new int2[] 
+            {
+                new int2(kCornerTypeInnerTopLeft, kCornerTypeOuterBottomLeft),
+                new int2(kCornerTypeInnerBottomRight, kCornerTypeOuterTopRight),
+                new int2(kCornerTypeInnerTopRight, kCornerTypeOuterTopLeft),
+                new int2(kCornerTypeInnerBottomLeft, kCornerTypeOuterBottomRight)
+            };
+            for (int i = 0; i < 3; ++i)
+            {
+                if ( slope > slopePairs[i].x && slope < slopePairs[i].y )
+                {
+                    ct = (angle > 0) ? cornerPairs[i].x : cornerPairs[i].y;
+                    break;
+                }
+            }
+            if (ct == 0)
+            {
+                ct = (angle > 0) ? kCornerTypeInnerBottomLeft : kCornerTypeOuterBottomRight;
             }
             return ct;
+
         }
 
         bool InsertCorner(int index, ref NativeArray<int2> cpSpriteIndices, ref NativeArray<JobControlPoint> newPoints, ref int activePoint)
@@ -1726,16 +1751,19 @@ namespace UnityEngine.U2D
             // Now perform expensive stuff like angles etc..
             float2 idir = math.normalize(ncp.position - icp.position);
             float2 ndir = math.normalize(pcp.position - icp.position);
-
-            float angle = Mathf.Abs(AngleBetweenVector(idir, ndir));
-            bool corner = AngleWithinRange(angle, (90f - m_ShapeParams.splineData.z), (90f + m_ShapeParams.splineData.z));
+            float angle = AngleBetweenVector(idir, ndir);
+            float angleAbs = math.abs(angle);
+            bool corner = AngleWithinRange(angleAbs, (90f - m_ShapeParams.splineData.z), (90f + m_ShapeParams.splineData.z));
             if (corner)
             {
                 float2 rdir = math.normalize(icp.position - pcp.position);
-                int ct = CalculateCorner(rdir, idir);
+                int ct = CalculateCorner(index, angle, rdir, idir);
                 // Check if we have a valid Sprite.
-                JobSpriteInfo cspr = GetCornerSpriteInfo(ct);
-                return AttachCorner(index, ct, cspr, ref newPoints, ref activePoint);
+                if (ct > 0)
+                {
+                    JobSpriteInfo cspr = GetCornerSpriteInfo(ct);
+                    return AttachCorner(index, ct, cspr, ref newPoints, ref activePoint);
+                }
             }
 
             return false;
@@ -1794,11 +1822,12 @@ namespace UnityEngine.U2D
 
                         // Indices.
                         m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + 0);
-                        m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + (ccw ? 1 : 2));
-                        m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + (ccw ? 2 : 1));
-                        m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + 2);
                         m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + (ccw ? 1 : 3));
                         m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + (ccw ? 3 : 1));
+
+                        m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + 0);
+                        m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + (ccw ? 3 : 2));
+                        m_IndexArray[m_IndexArrayCount++] = (ushort)(vc + (ccw ? 2 : 3));
 
                         vc = vc + 4;
                         ic = ic + 6;

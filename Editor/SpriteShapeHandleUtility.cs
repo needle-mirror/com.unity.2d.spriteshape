@@ -219,21 +219,21 @@ namespace UnityEditor.U2D
         public static void PlayHeadCap(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
         {
             if (styles.playheadTex == null)
-                styles.playheadTex = Resources.Load<Texture>("ss_playhead");
+                styles.playheadTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.unity.2d.spriteshape/Editor/Handles/ss_playhead.png");
             GUITextureCap(controlID, styles.playheadTex, position, rotation, size, eventType);
         }
 
         public static void RangeLeftCap(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
         {
             if (styles.handLeftTex == null)
-                styles.handLeftTex = Resources.Load<Texture>("ss_leftrange");
+                styles.handLeftTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.unity.2d.spriteshape/Editor/Handles/ss_leftrange.png");
             GUITextureCap(controlID, styles.handLeftTex, position, rotation, size, eventType);
         }
 
         public static void RangeRightCap(int controlID, Vector3 position, Quaternion rotation, float size, EventType eventType)
         {
             if (styles.handRightTex == null)
-                styles.handRightTex = Resources.Load<Texture>("ss_rightrange");
+                styles.handRightTex = AssetDatabase.LoadAssetAtPath<Texture2D>("Packages/com.unity.2d.spriteshape/Editor/Handles/ss_rightrange.png");
             GUITextureCap(controlID, styles.handRightTex, position, rotation, size, eventType);
         }
 

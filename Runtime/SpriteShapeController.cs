@@ -56,6 +56,8 @@ namespace UnityEngine.U2D
         [SerializeField]
         bool m_WorldSpaceUV;
 
+        [SerializeField]
+        float m_CornerAngleThreshold = 30.0f;
 
         [SerializeField]
         int m_ColliderDetail;
@@ -153,6 +155,12 @@ namespace UnityEngine.U2D
         {
             get { return m_ColliderOffset; }
             set { m_ColliderOffset = value; }
+        }
+
+        public float cornerAngleThreshold
+        {
+            get { return m_CornerAngleThreshold; }
+            set { m_CornerAngleThreshold = value; }
         }
 
         public bool hasCollider
@@ -525,7 +533,7 @@ namespace UnityEngine.U2D
             Texture2D fillTexture = null;
             uint fillScale = 0;
             uint splineDetail = (uint)m_SplineDetail;
-            float angleThreshold = 30.0f;
+            float angleThreshold = (m_CornerAngleThreshold >= 0 && m_CornerAngleThreshold < 90) ? m_CornerAngleThreshold : 89.9999f;
             float borderPivot = 0f;
             bool smartSprite = true;
             bool carpet = !m_Spline.isOpenEnded;

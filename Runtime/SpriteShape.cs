@@ -44,13 +44,9 @@ namespace UnityEngine.U2D
 
         public override int GetHashCode()
         {
-            return position.GetHashCode() ^
-                (leftTangent.GetHashCode() << 2) ^
-                (rightTangent.GetHashCode() >> 2) ^
-                ((int)mode).GetHashCode() ^
-                height.GetHashCode() ^
-                spriteIndex.GetHashCode() ^
-                corner.GetHashCode();
+            return  ((int)position.x).GetHashCode() ^ ((int)position.y).GetHashCode() ^ position.GetHashCode() ^
+                    (leftTangent.GetHashCode() << 2) ^ (rightTangent.GetHashCode() >> 2) ^  ((int)mode).GetHashCode() ^
+                    height.GetHashCode() ^ spriteIndex.GetHashCode() ^ corner.GetHashCode();
         }
     }
 

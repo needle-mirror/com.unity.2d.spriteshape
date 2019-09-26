@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [3.0.6] - 2019-09-27
+### Added
+- Added support to set CornerAngleThreshold.
+- Burst is now enabled for performance boost.
+### Fixed
+- Fix (Case 1041062) Inputting Point Position manually causes mesh to not conform to the spline
+- Fix GC in confirming Spline Extras sample.
+- Fix hash Validation errors.
+- Removed resources from Packages.
+
 ## [3.0.5] - 2019-09-05
 ### Fixed
 - Fix (Case 1159767) Error generated when using a default sprite for Corner sprite or Angle Range sprite in Sprite Shape Profile

@@ -36,6 +36,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent stretchUVLabel = new GUIContent("Stretch UV", "Stretch the Fill UV to full Rect.");
             public static readonly GUIContent stretchTilingLabel = new GUIContent("Stretch Tiling", "Stretch Tiling Count.");
             public static readonly GUIContent colliderDetail = new GUIContent("Detail", "Tessellation Quality on the collider.");
+            public static readonly GUIContent cornerThresholdDetail = new GUIContent("Corner Threshold", "Corner angle threshold below which corners wont be placed.");
             public static readonly GUIContent colliderOffset = new GUIContent("Offset", "Extrude collider distance.");
             public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider", "Update Collider as you edit SpriteShape");
             public static readonly GUIContent optimizeColliderLabel = new GUIContent("Optimize Collider", "Cleanup planar self-intersections and optimize collider points");
@@ -50,6 +51,7 @@ namespace UnityEditor.U2D
         private SerializedProperty m_StretchTilingProp;
         private SerializedProperty m_WorldSpaceUVProp;
         private SerializedProperty m_FillPixelPerUnitProp;
+        private SerializedProperty m_CornerAngleThresholdProp;
 
         private SerializedProperty m_ColliderAutoUpdate;
         private SerializedProperty m_ColliderDetailProp;
@@ -103,6 +105,7 @@ namespace UnityEditor.U2D
             m_StretchTilingProp = serializedObject.FindProperty("m_StretchTiling");
             m_WorldSpaceUVProp = serializedObject.FindProperty("m_WorldSpaceUV");
             m_FillPixelPerUnitProp = serializedObject.FindProperty("m_FillPixelPerUnit");
+            m_CornerAngleThresholdProp = serializedObject.FindProperty("m_CornerAngleThreshold");
 
             m_ColliderAutoUpdate = serializedObject.FindProperty("m_UpdateCollider");
             m_ColliderDetailProp = serializedObject.FindProperty("m_ColliderDetail");
@@ -402,6 +405,14 @@ namespace UnityEditor.U2D
             if (!m_IsOpenEndedProp.boolValue)
                 EditorGUILayout.PropertyField(m_OptimizeGeometryProp, Contents.optimizeGeometryLabel);
             EditorGUILayout.PropertyField(m_EnableTangentsProp, Contents.enableTangentsLabel);
+
+            EditorGUI.BeginChangeCheck();
+            var threshold = EditorGUILayout.Slider(Contents.cornerThresholdDetail, m_CornerAngleThresholdProp.floatValue, 0.0f, 90.0f);
+            if (EditorGUI.EndChangeCheck())
+            { 
+                m_CornerAngleThresholdProp.floatValue = threshold;
+                updateCollider = true;
+            }
 
             EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);

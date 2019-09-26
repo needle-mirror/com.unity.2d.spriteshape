@@ -37,13 +37,8 @@ using System.Diagnostics;
 namespace Unity.SpriteShape.External
 {
 
-#if DOUBLE
-using Real = System.Double;
-namespace LibTessDotNet.Double
-#else
 using Real = System.Single;
 namespace LibTessDotNet
-#endif
 {
     internal partial class Tess
     {

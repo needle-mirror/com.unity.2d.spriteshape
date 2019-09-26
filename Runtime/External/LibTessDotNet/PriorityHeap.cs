@@ -37,11 +37,7 @@ using System.Diagnostics;
 namespace Unity.SpriteShape.External
 {
 
-#if DOUBLE
-namespace LibTessDotNet.Double
-#else
 namespace LibTessDotNet
-#endif
 {
     internal struct PQHandle
     {

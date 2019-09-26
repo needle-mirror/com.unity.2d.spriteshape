@@ -37,13 +37,8 @@ using System.Diagnostics;
 namespace Unity.SpriteShape.External
 {
 
-#if DOUBLE
-using Real = System.Double;
-namespace LibTessDotNet.Double
-#else
 using Real = System.Single;
 namespace LibTessDotNet
-#endif
 {
     internal enum WindingRule
     {
@@ -107,11 +102,7 @@ namespace LibTessDotNet
 
         public Real SUnitX = 1;
         public Real SUnitY = 0;
-#if DOUBLE
-        public Real SentinelCoord = 4e150;
-#else
         public Real SentinelCoord = 4e30f;
-#endif
 
         /// <summary>
         /// If true, will remove empty (zero area) polygons.
