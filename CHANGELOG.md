@@ -1,8 +1,14 @@
 # Changelog
-All notable changes to this package will be documented in this file.
+## [4.0.0] - 2019-11-06
+### Changed
+- Update version number for Unity 2020.1
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [3.0.7] - 2019-10-27
+### Fixed
+- Added missing meta file
+
+### Changed
+- Update com.unity.2d.path package dependency
 
 ## [3.0.6] - 2019-09-27
 ### Added
