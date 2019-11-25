@@ -1,4 +1,13 @@
 # Changelog
+## [4.0.1] - 2019-11-26
+### Changed
+- Updated License file
+- Updated Third Party Notices file
+- Changed how Samples are installed into user's project
+
+### Fixed
+- Fixed where the last point of the Sprite Shape does not behave correctly when using Continuous Points in a closed shape (case 1184721)
+
 ## [4.0.0] - 2019-11-06
 ### Changed
 - Update version number for Unity 2020.1
