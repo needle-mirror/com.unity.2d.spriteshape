@@ -1,8 +1,20 @@
 # Changelog
-All notable changes to this package will be documented in this file.
 
-The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+## [3.0.8] - 2019-12-02
+### Changed
+- Updated License file
+- Updated Third Party Notices file
+- Changed how Samples are installed into user's project
+
+### Fixed
+- Fixed where the last point of the Sprite Shape does not behave correctly when using Continuous Points in a closed shape (case 1184721)
+
+## [3.0.7] - 2019-10-27
+### Fixed
+- Added missing meta file
+
+### Changed
+- Update com.unity.2d.path package dependency
 
 ## [3.0.7] - 2019-10-27
 ### Fixed

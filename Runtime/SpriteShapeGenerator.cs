@@ -1258,6 +1258,9 @@ namespace UnityEngine.U2D
                     m_FirstLT = lt;
                 }
 
+                if (!((math.any(lt) || math.any(lb)) && (math.any(rt) || math.any(rb))))                
+                    continue;
+                
                 // default tan (1, 0, 0, -1) which is along uv. same here.
                 float2 nlt = math.normalize(rt - lt);
                 float4 tan = new float4(nlt.x, nlt.y, 0, -1.0f);
@@ -1314,23 +1317,25 @@ namespace UnityEngine.U2D
                     column2.uv.y = column3.uv.y = 1.0f;
                     uvNow = uvNext;
                 }
+                
+                {
+                    // Fix UV and Copy.
+                    column0.uv.x = (column0.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
+                    column0.uv.y = (column0.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
+                    outputVertices[outputVertexCount++] = column0;
 
-                // Fix UV and Copy.
-                column0.uv.x = (column0.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
-                column0.uv.y = (column0.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
-                outputVertices[outputVertexCount++] = column0;
+                    column1.uv.x = (column1.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
+                    column1.uv.y = (column1.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
+                    outputVertices[outputVertexCount++] = column1;
 
-                column1.uv.x = (column1.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
-                column1.uv.y = (column1.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
-                outputVertices[outputVertexCount++] = column1;
+                    column2.uv.x = (column2.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
+                    column2.uv.y = (column2.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
+                    outputVertices[outputVertexCount++] = column2;
 
-                column2.uv.x = (column2.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
-                column2.uv.y = (column2.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
-                outputVertices[outputVertexCount++] = column2;
-
-                column3.uv.x = (column3.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
-                column3.uv.y = (column3.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
-                outputVertices[outputVertexCount++] = column3;
+                    column3.uv.x = (column3.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
+                    column3.uv.y = (column3.uv.y * sprInfo.uvInfo.w) + sprInfo.uvInfo.y;
+                    outputVertices[outputVertexCount++] = column3;
+                }
             }
             outputCount = outputVertexCount;
         }
