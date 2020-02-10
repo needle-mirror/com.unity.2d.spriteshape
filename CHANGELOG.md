@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.9] - 2020-02-11
+### Changed
+- Improved Memory Allocations.
+
+### Fixed
+- Fixed OnDrawGizmos to Get/Release RenderTexture through CommandBuffer.
+
 ## [3.0.8] - 2019-12-02
 ### Changed
 - Updated License file
@@ -54,7 +61,7 @@
 ### Changed
 - Mark package to support Unity 2019.3.0a10 onwards.
 
-## [3.0.0] - 2019-6-19
+## [3.0.0] - 2019-06-19
 ### Changed
 - Stable Version.
 - Remove experimental namespace.
@@ -66,63 +73,63 @@
 - Fix (Case 1157201) Edge Sprite Material changed when using a fill texture that is already an edge sprite on spriteshape
 - Fix (Case 1162134) Open ended Spriteshape renders the fill texture instead of the range sprite
 
-## [2.1.0-preview.7] - 2019-6-2
+## [2.1.0-preview.7] - 2019-06-02
 ### Changed
 - Fix Variant Selection.
 
-## [2.1.0-preview.6] - 2019-6-2
+## [2.1.0-preview.6] - 2019-06-02
 ### Changed
 - Fix Null reference exception caused by SplineEditorCache changes.
 - Fill Inspector changes due to Path integration.
 
-## [2.1.0-preview.4] - 2019-5-28
+## [2.1.0-preview.4] - 2019-05-28
 ### Changed
 - Upgrade Mathematics package.
 - Use path editor.
 
-## [2.1.0-preview.2] - 2019-5-13
+## [2.1.0-preview.2] - 2019-05-13
 ### Changed
 - Initial version for 2019.2
 - Update for common package.
 
-## [2.0.0-preview.8] - 2019-5-16
+## [2.0.0-preview.8] - 2019-05-16
 ### Fixed
 - Fixed issue when sprites are re-ordered in Angle Range.
 - Updated Samples.
 
-## [2.0.0-preview.7] - 2019-5-10
+## [2.0.0-preview.7] - 2019-05-10
 ### Fixed
 - Version Update and fixes.
 
-## [2.0.0-preview.6] - 2019-5-8
+## [2.0.0-preview.6] - 2019-05-08
 ### Fixed
 - Added Sprite Variant Selector.
 - Fix Variant Bug (https://forum.unity.com/threads/spriteshape-preview-package.522575/page-6#post-4480936)
 - Fix (Case 1146747) SpriteShape generating significant GC allocations every frame (OnWillRenderObject)
 
-## [2.0.0-preview.5] - 2019-4-18
+## [2.0.0-preview.5] - 2019-04-18
 ### Fixed
 - Shape angle does not show the accurate sprite on certain parts of the shape.
 - SpriteShape - Unable to use the Depth buffer (https://forum.unity.com/threads/spriteshape-preview-package.522575/page-6#post-4413142)
 
-## [2.0.0-preview.4] - 2019-3-28
+## [2.0.0-preview.4] - 2019-03-28
 ### Changed
 - Disable burst for now until we have a final release.
 
-## [2.0.0-preview.3] - 2019-3-25
+## [2.0.0-preview.3] - 2019-03-25
 ### Fixed
 - Update Common version.
 
-## [2.0.0-preview.2] - 2019-3-8
+## [2.0.0-preview.2] - 2019-03-08
 ### Fixed
 - Fix Edge Case Scenario where Vertices along Continuous segment could be duplicated..
 - Ensure that Collider uses a valid Sprite on Generation.
 
-## [2.0.0-preview.1] - 2019-2-27
+## [2.0.0-preview.1] - 2019-02-27
 ### Changed
 - Updated version.
 
-## [1.1.0-preview.1] - 2019-2-10
+## [1.1.0-preview.1] - 2019-02-10
 ### Added
 - Spriteshape tessellation code is re-implemented in C# Jobs and utilizes Burst for Performance.
 - Added Mirrored and Non-Mirrored continous Tangent mode.
@@ -161,11 +168,11 @@
 ### Removed
 - Remove redundant parameters BevelCutoff and BevelSize that can be done by simply modifying source spline.
 
-## [1.0.12-preview.1] - 2018-8-03
+## [1.0.12-preview.1] - 2018-08-03
 ### Added
 - Fix issue where Point Positions do not update visually at runtime for Builds
 
-## [1.0.11-preview] - 2018-6-20
+## [1.0.11-preview] - 2018-06-20
 ### Added
 - Fix Spriteshape does not update when Sprites are reimported.
 - Fix SpriteShapeController in Scene view shows a different sprite when user reapplies a Sprite import settings
@@ -174,7 +181,7 @@
 - Fix SpriteShape generation when End-points are Broken.
 - Fix cases where the UV continuity is broken even when the Control point is continous.
 
-## [1.0.10-preview] - 2018-4-12
+## [1.0.10-preview] - 2018-04-12
 ### Added
 - Version number format changed to -preview
 

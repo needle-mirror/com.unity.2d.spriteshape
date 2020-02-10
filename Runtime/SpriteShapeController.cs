@@ -416,8 +416,26 @@ namespace UnityEngine.U2D
                 }
                 else
                 {
-                    // Allow max quads for each segment to 128.
-                    int maxArrayCount = (int)(pointCount * 256 * m_ActiveShapeParameters.splineDetail);
+                    bool hasSprites = false;
+                    float smallestWidth = 99999.0f;
+                    foreach (var sprite in m_SpriteArray)
+                    {
+                        if (sprite != null)
+                        {
+                            hasSprites = true;
+                            float pixelWidth = BezierUtility.GetSpritePixelWidth(sprite);
+                            smallestWidth = (smallestWidth > pixelWidth) ? pixelWidth : smallestWidth;                            
+                        }
+                    }
+                    
+                    // Approximate vertex Array Count.
+                    float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail);
+                    int adjustWidth = hasSprites ? ((int)(shapeLength / smallestWidth) * 6) + (pointCount * 6 * splineDetail) : 0;
+                    int adjustShape = pointCount * 4 * splineDetail;
+#if !UNITY_EDITOR
+                    adjustShape = (spriteShape != null && spriteShape.fillTexture != null) ? adjustShape : 0;                    
+#endif                    
+                    int maxArrayCount = adjustShape + adjustWidth;
 
                     // Collider Data
                     if (m_ColliderData.IsCreated)
@@ -518,9 +536,10 @@ namespace UnityEngine.U2D
                 {
                     BakeMesh();
                     Rendering.CommandBuffer rc = new Rendering.CommandBuffer();
-                    var rt = RenderTexture.GetTemporary(256, 256, 0, RenderTextureFormat.ARGB32);
-                    Graphics.SetRenderTarget(rt);
+                    rc.GetTemporaryRT(0, 256, 256, 0);
+                    rc.SetRenderTarget(0);
                     rc.DrawRenderer(sr, sr.sharedMaterial);
+                    rc.ReleaseTemporaryRT(0);
                     Graphics.ExecuteCommandBuffer(rc);
                 }
             }
@@ -595,7 +614,7 @@ namespace UnityEngine.U2D
             List<Sprite> edgeSpriteList = new List<Sprite>();
             List<Sprite> cornerSpriteList = new List<Sprite>();
             List<AngleRangeInfo> angleRangeInfoList = new List<AngleRangeInfo>();
-
+            
             if (spriteShape)
             {
                 List<AngleRange> sortedAngleRanges = new List<AngleRange>(spriteShape.angleRanges);
