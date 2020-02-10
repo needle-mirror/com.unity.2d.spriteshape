@@ -1,6 +1,6 @@
 using NUnit.Framework;
 
-public class SpriteShapePlaceholder 
+internal class SpriteShapePlaceholder 
 {
     [Test]
     public void PlaceHolderTest()

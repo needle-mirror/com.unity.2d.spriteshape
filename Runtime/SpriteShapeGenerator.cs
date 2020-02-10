@@ -3,7 +3,6 @@ using System.Linq;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine.U2D;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.SpriteShape.External.LibTessDotNet;
 
@@ -136,15 +135,6 @@ namespace UnityEngine.U2D
 
         [DeallocateOnJobCompletion]
         private NativeArray<float2> m_CornerCoordinates;
-
-        [DeallocateOnJobCompletion]
-        private NativeArray<Vector2> m_AreaInputs;
-
-        [DeallocateOnJobCompletion]
-        private NativeArray<int> m_AreaIndices;
-
-        [DeallocateOnJobCompletion]
-        private NativeArray<Vector2> m_AreaVertices;
 
         [DeallocateOnJobCompletion]
         private NativeArray<float2> m_TempPoints;
@@ -534,10 +524,7 @@ namespace UnityEngine.U2D
             m_VertexData = new NativeArray<JobShapeVertex>(maxArrayCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_OutputVertexData = new NativeArray<JobShapeVertex>(maxArrayCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_CornerCoordinates = new NativeArray<float2>(32, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-
-            m_AreaInputs = new NativeArray<Vector2>(m_TessPoints.Length * 8, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            m_AreaIndices = new NativeArray<int>(m_TessPoints.Length * 64, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            m_AreaVertices = new NativeArray<Vector2>(m_TessPoints.Length * 64, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
+            
             m_TempPoints = new NativeArray<float2>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_GeneratedControlPoints = new NativeArray<JobControlPoint>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_SpriteIndices = new NativeArray<int2>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -1194,6 +1181,7 @@ namespace UnityEngine.U2D
 
             int cms = vertexCount - 1;
             int lcm = cms - 1;
+            int expectedCount = outputCount + (cms * 4);
             var sprite = vertices[0].sprite;
 
             float uvDist = 0;
@@ -1204,6 +1192,9 @@ namespace UnityEngine.U2D
             float uvNow = uvStart / uvTotal;
             float dt = uvInter / pxlWidth;
 
+            if (expectedCount >= outputVertices.Length)
+                throw new InvalidOperationException("Mesh data has reached Limits. Please try dividing shape into smaller blocks.");            
+            
             // Generate Render Inputs.
             for (int i = 0; i < cms; ++i)
             {
@@ -1317,7 +1308,7 @@ namespace UnityEngine.U2D
                     column2.uv.y = column3.uv.y = 1.0f;
                     uvNow = uvNext;
                 }
-                
+
                 {
                     // Fix UV and Copy.
                     column0.uv.x = (column0.uv.x * sprInfo.uvInfo.z) + sprInfo.uvInfo.x;
@@ -1463,11 +1454,13 @@ namespace UnityEngine.U2D
                         float sh = icp.ptData.x, eh = ncp.ptData.x, hl = 0;
                         sl = sl + al;
 
-                        var addtail = true;
+                        // Connect previously left out space when sl < pxlWidth
+                        var addtail = (0 == vertexCount);
                         float2 step = math.normalize(df);
                         isv.pos = icp.position;
                         isv.meta.x = icp.ptData.x;
                         isv.sprite.x = sprIx;
+                        
                         if (vertexCount > 0)
                         { 
                             var dt = math.length(m_VertexData[vertexCount-1].pos - isv.pos);
@@ -2102,9 +2095,6 @@ namespace UnityEngine.U2D
             SafeDispose(m_Segments);
             SafeDispose(m_ControlPoints);
             SafeDispose(m_ContourPoints);
-            SafeDispose(m_AreaIndices);
-            SafeDispose(m_AreaVertices);
-            SafeDispose(m_AreaInputs);
             SafeDispose(m_TempPoints);
             SafeDispose(m_GeneratedControlPoints);
             SafeDispose(m_SpriteIndices);

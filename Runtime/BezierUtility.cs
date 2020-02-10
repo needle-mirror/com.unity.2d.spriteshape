@@ -1,13 +1,59 @@
-﻿namespace UnityEngine.U2D
+﻿
+using Unity.Collections;
+using Unity.Mathematics;
+
+namespace UnityEngine.U2D
 {
     public static class BezierUtility
     {
         static Vector3[] s_TempPoints = new Vector3[3];
-
+        
         public static Vector3 BezierPoint(Vector3 startPosition, Vector3 startTangent, Vector3 endTangent, Vector3 endPosition, float t)
         {
             float s = 1.0f - t;
-            return startPosition * s * s * s + startTangent * s * s * t * 3.0f + endTangent * s * t * t * 3.0f + endPosition * t * t * t;
+            return s * s * s * startPosition + 3.0f * s * s * t * startTangent + 3.0f * s * t * t * endTangent + t * t * t * endPosition;
+        }        
+        internal static float GetSpritePixelWidth(Sprite sprite)
+        {
+            float4 meta = new float4(sprite.pixelsPerUnit, sprite.pivot.y / sprite.textureRect.height, sprite.rect.width, sprite.rect.height);
+            float4 border = new float4(sprite.border.x, sprite.border.y, sprite.border.z, sprite.border.w);
+            float rpunits = 1.0f / meta.x;
+            float2 whsize = new float2(meta.z, meta.w) * rpunits;
+                            
+            border = border * rpunits;
+            float stPixelU = border.x;
+            float enPixelU = whsize.x - border.z;
+            float pxlWidth = enPixelU - stPixelU;
+            return pxlWidth;
+        }
+        internal static float BezierLength(NativeArray<ShapeControlPoint> shapePoints, int splineDetail)
+        {
+            // Expand the Bezier.
+            int controlPointContour = shapePoints.Length - 1;
+            float spd = 0;
+            float fmax = (float)(splineDetail - 1);
+            for (int i = 0; i < controlPointContour; ++i)
+            {
+                int j = i + 1;
+                ShapeControlPoint cp = shapePoints[i];
+                ShapeControlPoint pp = shapePoints[j];
+
+                Vector3 p0 = cp.position;
+                Vector3 p1 = pp.position;
+                Vector3 sp = p0;
+                Vector3 rt = p0 + cp.rightTangent;
+                Vector3 lt = p1 + pp.leftTangent;
+
+                for (int n = 0; n < splineDetail; ++n)
+                {
+                    float t = (float)n / fmax;
+                    Vector3 bp = BezierPoint(rt, p0, p1, lt, t);
+                    spd += math.distance(bp, sp);
+                    sp = bp;
+                }
+            }
+
+            return spd;
         }
 
         public static Vector3 ClosestPointOnCurve(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, out float t)
