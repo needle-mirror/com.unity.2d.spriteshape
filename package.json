@@ -1,6 +1,6 @@
 {
   "name": "com.unity.2d.spriteshape",
-  "version": "3.0.9",
+  "version": "3.0.10",
   "unity": "2019.3",
   "unityRelease": "0a10",
   "displayName": "2D SpriteShape",
@@ -32,13 +32,13 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.spriteshape.tests": "3.0.9",
+    "com.unity.2d.spriteshape.tests": "3.0.10",
     "com.unity.2d.common.tests": "2.0.2"
   },
   "repository": {
-    "footprint": "ad472fce33df8d8eac702701e325333dece706e5",
+    "footprint": "7d910c1e00aa64c711b649f48402942f5bd20bb8",
     "type": "git",
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
-    "revision": "a071381b38510c1d3bbbf240f19891b0fe0d1ed7"
+    "revision": "33dcbbfada364b55c3bd833c1c02cf41d16b786c"
   }
 }

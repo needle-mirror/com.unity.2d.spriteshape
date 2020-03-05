@@ -189,6 +189,7 @@ namespace UnityEngine.U2D
         int kControlPointCount;
 
         float kEpsilon;
+        float kEpsilonOrder;
         float kEpsilonRelaxed;
         float kExtendSegment;
         float kRenderQuality;
@@ -485,6 +486,7 @@ namespace UnityEngine.U2D
             m_ActiveVertexCount = 0;
 
             kEpsilon = 0.00001f;
+            kEpsilonOrder = -0.0001f; 
             kEpsilonRelaxed = 0.001f;
             kExtendSegment = 10000.0f;
 
@@ -1519,14 +1521,12 @@ namespace UnityEngine.U2D
                 TessellateSegment(ispr, isi, whsize, border, pxlWidth, useClosure, validHead, validTail, m_VertexData, vertexCount, ref m_OutputVertexData, ref outputCount);
                 if (outputCount == 0)
                     continue;
-                var z = -0.01f + ((float)isi.spInfo.z * kEpsilonRelaxed) + ((float)-i * kEpsilon);
+                var z = ((float)(i + 1) * kEpsilonOrder) + ((float)isi.spInfo.z * kEpsilonOrder * 0.001f);
                 CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_TanArray, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, m_OutputVertexData, outputCount, z);
 
                 if (hasCollider)
                 {
-                    JobSpriteInfo isprc = GetSpriteInfo(isi.spInfo.w);
-                    if (isprc.metaInfo.x == 0)
-                        isprc = ispr;
+                    JobSpriteInfo isprc = (ispr.metaInfo.x == 0) ? GetSpriteInfo(isi.spInfo.w) : ispr;
                     outputCount = 0;
                     rpunits = 1.0f / isprc.metaInfo.x;
                     whsize = new float2(isprc.metaInfo.z, isprc.metaInfo.w) * rpunits;

@@ -385,6 +385,9 @@ namespace UnityEngine.U2D
                 UpdateSprites();
 
             int pointCount = m_Spline.GetPointCount();
+            if (pointCount < 2)
+                return jobHandle;
+            
             NativeArray<ShapeControlPoint> shapePoints  = new NativeArray<ShapeControlPoint>(pointCount, Allocator.Temp);
             NativeArray<SpriteShapeMetaData> shapeMetaData = new NativeArray<SpriteShapeMetaData>(pointCount, Allocator.Temp);
 
@@ -424,16 +427,17 @@ namespace UnityEngine.U2D
                         {
                             hasSprites = true;
                             float pixelWidth = BezierUtility.GetSpritePixelWidth(sprite);
-                            smallestWidth = (smallestWidth > pixelWidth) ? pixelWidth : smallestWidth;                            
+                            smallestWidth = (smallestWidth > pixelWidth) ? pixelWidth : smallestWidth;
                         }
                     }
                     
                     // Approximate vertex Array Count.
-                    float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail);
+                    float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail) * 2.0f;
                     int adjustWidth = hasSprites ? ((int)(shapeLength / smallestWidth) * 6) + (pointCount * 6 * splineDetail) : 0;
                     int adjustShape = pointCount * 4 * splineDetail;
+                    adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
 #if !UNITY_EDITOR
-                    adjustShape = (spriteShape != null && spriteShape.fillTexture != null) ? adjustShape : 0;                    
+                    adjustShape = (spriteShape != null && spriteShape.fillTexture != null) ? adjustShape : 0;
 #endif                    
                     int maxArrayCount = adjustShape + adjustWidth;
 
@@ -527,24 +531,25 @@ namespace UnityEngine.U2D
 
 #if UNITY_EDITOR
         void OnDrawGizmos()
+#else        
+        void OnGUI()
+#endif
         {
-            var sr = GetComponent<SpriteShapeRenderer>();
-            if (sr != null)
+            if (spriteShapeRenderer != null)
             {
                 var hasSplineChanged = HasSplineChanged();
-                if (!sr.isVisible && hasSplineChanged)
+                if (!spriteShapeRenderer.isVisible && hasSplineChanged)
                 {
                     BakeMesh();
                     Rendering.CommandBuffer rc = new Rendering.CommandBuffer();
                     rc.GetTemporaryRT(0, 256, 256, 0);
                     rc.SetRenderTarget(0);
-                    rc.DrawRenderer(sr, sr.sharedMaterial);
+                    rc.DrawRenderer(spriteShapeRenderer, spriteShapeRenderer.sharedMaterial);
                     rc.ReleaseTemporaryRT(0);
                     Graphics.ExecuteCommandBuffer(rc);
                 }
             }
         }
-#endif
 
         public bool UpdateSpriteShapeParameters()
         {
