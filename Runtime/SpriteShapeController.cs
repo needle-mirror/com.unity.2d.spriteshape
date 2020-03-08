@@ -385,6 +385,9 @@ namespace UnityEngine.U2D
                 UpdateSprites();
 
             int pointCount = m_Spline.GetPointCount();
+            if (pointCount < 2)
+                return jobHandle;
+            
             NativeArray<ShapeControlPoint> shapePoints  = new NativeArray<ShapeControlPoint>(pointCount, Allocator.Temp);
             NativeArray<SpriteShapeMetaData> shapeMetaData = new NativeArray<SpriteShapeMetaData>(pointCount, Allocator.Temp);
 
@@ -528,24 +531,25 @@ namespace UnityEngine.U2D
 
 #if UNITY_EDITOR
         void OnDrawGizmos()
+#else        
+        void OnGUI()
+#endif
         {
-            var sr = GetComponent<SpriteShapeRenderer>();
-            if (sr != null)
+            if (spriteShapeRenderer != null)
             {
                 var hasSplineChanged = HasSplineChanged();
-                if (!sr.isVisible && hasSplineChanged)
+                if (!spriteShapeRenderer.isVisible && hasSplineChanged)
                 {
                     BakeMesh();
                     Rendering.CommandBuffer rc = new Rendering.CommandBuffer();
                     rc.GetTemporaryRT(0, 256, 256, 0);
                     rc.SetRenderTarget(0);
-                    rc.DrawRenderer(sr, sr.sharedMaterial);
+                    rc.DrawRenderer(spriteShapeRenderer, spriteShapeRenderer.sharedMaterial);
                     rc.ReleaseTemporaryRT(0);
                     Graphics.ExecuteCommandBuffer(rc);
                 }
             }
         }
-#endif
 
         public bool UpdateSpriteShapeParameters()
         {
