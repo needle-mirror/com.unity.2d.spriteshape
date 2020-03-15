@@ -66,7 +66,7 @@ namespace UnityEditor.U2D.SpriteShapeInternal
     {
         public float height = 1f;
         public int spriteIndex;
-        public bool corner = true;
+        public int corner = 1;
     }
 
     internal class ScriptableSpriteShapeData : ScriptableData<SpriteShapeData> { }
@@ -82,8 +82,8 @@ namespace UnityEditor.U2D.SpriteShapeInternal
             public static readonly GUIContent invalidSpriteLabel = new GUIContent("No sprite defined");
             public static readonly GUIContent cornerLabel = new GUIContent("Corner", "Set if Corner is automatic or disabled.");
 
-            public static readonly int[] cornerValues = { 0, 1 };
-            public static readonly GUIContent[] cornerOptions = { new GUIContent("Disabled"), new GUIContent("Automatic") };
+            public static readonly int[] cornerValues = { 0, 1, 2 };
+            public static readonly GUIContent[] cornerOptions = { new GUIContent("Disabled"), new GUIContent("Automatic"), new GUIContent("Stretched"),  };
         }
 
         private SerializedProperty m_Data;
@@ -109,9 +109,9 @@ namespace UnityEditor.U2D.SpriteShapeInternal
                 m_HeightProperty.floatValue = heightValue;
 
             EditorGUI.BeginChangeCheck();
-            var cornerValue = EditorGUILayout.IntPopup(Contents.cornerLabel, m_CornerProperty.boolValue ? 1 : 0, Contents.cornerOptions, Contents.cornerValues) > 0;
+            var cornerValue = EditorGUILayout.IntPopup(Contents.cornerLabel, m_CornerProperty.intValue, Contents.cornerOptions, Contents.cornerValues);
             if (EditorGUI.EndChangeCheck())
-                m_CornerProperty.boolValue = cornerValue;
+                m_CornerProperty.intValue = cornerValue;
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -176,7 +176,7 @@ namespace UnityEditor.U2D.SpriteShapeInternal
                 {
                     spriteIndex = spline.GetSpriteIndex(i),
                     height = spline.GetHeight(i),
-                    corner = spline.GetCorner(i)
+                    corner = (int)spline.GetCornerMode(i)
                 });
             }
 
@@ -207,7 +207,7 @@ namespace UnityEditor.U2D.SpriteShapeInternal
                 elementProp.FindPropertyRelative("mode").enumValueIndex = (int)point.tangentMode;
                 elementProp.FindPropertyRelative("height").floatValue = data.height;
                 elementProp.FindPropertyRelative("spriteIndex").intValue = data.spriteIndex;
-                elementProp.FindPropertyRelative("corner").boolValue = data.corner;
+                elementProp.FindPropertyRelative("m_CornerMode").intValue = data.corner;
             }
 
             serializedObject.ApplyModifiedProperties();

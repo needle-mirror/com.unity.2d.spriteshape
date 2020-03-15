@@ -3,6 +3,14 @@ using System.Collections.Generic;
 
 namespace UnityEngine.U2D
 {
+    // Spline Internal Meta Data.
+    internal struct SplinePointMetaData
+    {
+        public float height;
+        public uint spriteIndex;
+        public int cornerMode;
+    };    
+    
     [Serializable]
     public class Spline
     {
@@ -58,7 +66,7 @@ namespace UnityEngine.U2D
         {
             if (!IsPositionValid(index, index, point))
                 throw new ArgumentException(KErrorMessage);
-            m_ControlPoints.Insert(index, new SplineControlPoint { position = point, height = 1.0f, corner = true });
+            m_ControlPoints.Insert(index, new SplineControlPoint { position = point, height = 1.0f, cornerMode = Corner.Automatic });
         }
 
         public void RemovePointAt(int index)
@@ -159,12 +167,13 @@ namespace UnityEngine.U2D
 
         public bool GetCorner(int index)
         {
-            return m_ControlPoints[index].corner;
+            return GetCornerMode(index) != Corner.Disable;
         }
 
         public void SetCorner(int index, bool value)
         {
             m_ControlPoints[index].corner = value;
+            m_ControlPoints[index].cornerMode = value ? Corner.Automatic : Corner.Disable;
         }
 
         public override int GetHashCode()
@@ -183,5 +192,25 @@ namespace UnityEngine.U2D
                 return hashCode;
             }
         }
+        
+        internal void SetCornerMode(int index, Corner value)
+        {
+            m_ControlPoints[index].corner = (value != Corner.Disable);
+            m_ControlPoints[index].cornerMode = value;
+        }
+        
+        internal Corner GetCornerMode(int index)
+        {
+            if (m_ControlPoints[index].cornerMode == Corner.Disable)
+            {
+                // For backward compatibility.
+                if (m_ControlPoints[index].corner)
+                {
+                    m_ControlPoints[index].cornerMode = Corner.Automatic;
+                    return Corner.Automatic;
+                }
+            }
+            return m_ControlPoints[index].cornerMode;
+        }        
     }
 }

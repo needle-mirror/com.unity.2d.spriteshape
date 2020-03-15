@@ -29,6 +29,13 @@ namespace UnityEngine.U2D
         Low = 4
     }
 
+    public enum Corner
+    {
+        Disable = 0,
+        Automatic = 1,
+        Stretched = 2,
+    }
+
     [System.Serializable]
     public class SplineControlPoint
     {
@@ -41,12 +48,20 @@ namespace UnityEngine.U2D
         public float bevelSize;
         public int spriteIndex;
         public bool corner;
+        [SerializeField]
+        Corner m_CornerMode;
+
+        public Corner cornerMode
+        {
+            get => m_CornerMode;
+            set => m_CornerMode = value;
+        }
 
         public override int GetHashCode()
         {
             return  ((int)position.x).GetHashCode() ^ ((int)position.y).GetHashCode() ^ position.GetHashCode() ^
                     (leftTangent.GetHashCode() << 2) ^ (rightTangent.GetHashCode() >> 2) ^  ((int)mode).GetHashCode() ^
-                    height.GetHashCode() ^ spriteIndex.GetHashCode() ^ corner.GetHashCode();
+                    height.GetHashCode() ^ spriteIndex.GetHashCode() ^ corner.GetHashCode() ^ m_CornerMode.GetHashCode();
         }
     }
 

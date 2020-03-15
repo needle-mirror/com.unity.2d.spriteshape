@@ -26,7 +26,6 @@ namespace UnityEngine.U2D
 
         bool m_DynamicOcclusionLocal;
         bool m_DynamicOcclusionOverriden;
-        bool m_LegacyGenerator = false;
         SpriteShapeRenderer m_SpriteShapeRenderer;
 
         SpriteShape m_ActiveSpriteShape;
@@ -389,7 +388,7 @@ namespace UnityEngine.U2D
                 return jobHandle;
             
             NativeArray<ShapeControlPoint> shapePoints  = new NativeArray<ShapeControlPoint>(pointCount, Allocator.Temp);
-            NativeArray<SpriteShapeMetaData> shapeMetaData = new NativeArray<SpriteShapeMetaData>(pointCount, Allocator.Temp);
+            NativeArray<SplinePointMetaData> shapeMetaData = new NativeArray<SplinePointMetaData>(pointCount, Allocator.Temp);
 
             for (int i = 0; i < pointCount; ++i)
             {
@@ -400,87 +399,76 @@ namespace UnityEngine.U2D
                 shapeControlPoint.mode = (int)m_Spline.GetTangentMode(i);
                 shapePoints[i] = shapeControlPoint;
 
-                SpriteShapeMetaData metaData;
-                metaData.corner = m_Spline.GetCorner(i);
+                SplinePointMetaData metaData;
                 metaData.height = m_Spline.GetHeight(i);
                 metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
-                metaData.bevelCutoff = 0;
-                metaData.bevelSize = 0;
+                metaData.cornerMode = (int)m_Spline.GetCornerMode(i);
                 shapeMetaData[i] = metaData;
             }
 
             if (spriteShapeRenderer != null && ValidatePoints(shapePoints))
-            {
-                if (m_LegacyGenerator)
+            {                
+                bool hasSprites = false;
+                float smallestWidth = 99999.0f;
+                foreach (var sprite in m_SpriteArray)
                 {
-                    SpriteShapeUtility.GenerateSpriteShape(spriteShapeRenderer, m_ActiveShapeParameters,
-                        shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray,
-                        m_CornerSpriteArray);
+                    if (sprite != null)
+                    {
+                        hasSprites = true;
+                        float pixelWidth = BezierUtility.GetSpritePixelWidth(sprite);
+                        smallestWidth = (smallestWidth > pixelWidth) ? pixelWidth : smallestWidth;
+                    }
+                }
+                    
+                // Approximate vertex Array Count.
+                float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail) * 2.0f;
+                int adjustWidth = hasSprites ? ((int)(shapeLength / smallestWidth) * 6) + (pointCount * 6 * splineDetail) : 0;
+                int adjustShape = pointCount * 4 * splineDetail;
+                adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
+#if !UNITY_EDITOR
+                adjustShape = (spriteShape != null && spriteShape.fillTexture != null) ? adjustShape : 0;
+#endif                    
+                int maxArrayCount = adjustShape + adjustWidth;
+
+                // Collider Data
+                if (m_ColliderData.IsCreated)
+                    m_ColliderData.Dispose();
+                m_ColliderData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
+
+                // Tangent Data
+                if (!m_TangentData.IsCreated)
+                    m_TangentData = new NativeArray<Vector4>(1, Allocator.Persistent);
+
+                NativeArray<ushort> indexArray;
+                NativeSlice<Vector3> posArray;
+                NativeSlice<Vector2> uv0Array;
+                NativeArray<Bounds> bounds = spriteShapeRenderer.GetBounds();
+                NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(shapePoints.Length * 8);
+                NativeSlice<Vector4> tanArray = new NativeSlice<Vector4>(m_TangentData);
+
+                if (m_EnableTangents)
+                { 
+                    spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array, out tanArray);
                 }
                 else
                 {
-                    bool hasSprites = false;
-                    float smallestWidth = 99999.0f;
-                    foreach (var sprite in m_SpriteArray)
-                    {
-                        if (sprite != null)
-                        {
-                            hasSprites = true;
-                            float pixelWidth = BezierUtility.GetSpritePixelWidth(sprite);
-                            smallestWidth = (smallestWidth > pixelWidth) ? pixelWidth : smallestWidth;
-                        }
-                    }
-                    
-                    // Approximate vertex Array Count.
-                    float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail) * 2.0f;
-                    int adjustWidth = hasSprites ? ((int)(shapeLength / smallestWidth) * 6) + (pointCount * 6 * splineDetail) : 0;
-                    int adjustShape = pointCount * 4 * splineDetail;
-                    adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
-#if !UNITY_EDITOR
-                    adjustShape = (spriteShape != null && spriteShape.fillTexture != null) ? adjustShape : 0;
-#endif                    
-                    int maxArrayCount = adjustShape + adjustWidth;
-
-                    // Collider Data
-                    if (m_ColliderData.IsCreated)
-                        m_ColliderData.Dispose();
-                    m_ColliderData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
-
-                    // Tangent Data
-                    if (!m_TangentData.IsCreated)
-                        m_TangentData = new NativeArray<Vector4>(1, Allocator.Persistent);
-
-                    NativeArray<ushort> indexArray;
-                    NativeSlice<Vector3> posArray;
-                    NativeSlice<Vector2> uv0Array;
-                    NativeArray<Bounds> bounds = spriteShapeRenderer.GetBounds();
-                    NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(shapePoints.Length * 8);
-                    NativeSlice<Vector4> tanArray = new NativeSlice<Vector4>(m_TangentData);
-
-                    if (m_EnableTangents)
-                    { 
-                        spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array, out tanArray);
-                    }
-                    else
-                    {
-                        spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
-                    }
-
-                    var spriteShapeJob = new SpriteShapeGenerator()
-                    {
-                        m_Bounds = bounds,
-                        m_PosArray = posArray,
-                        m_Uv0Array = uv0Array,
-                        m_TanArray = tanArray,
-                        m_GeomArray = geomArray,
-                        m_IndexArray = indexArray,
-                        m_ColliderPoints = m_ColliderData
-                    };
-                    spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
-                    jobHandle = spriteShapeJob.Schedule();
-                    spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
-                    JobHandle.ScheduleBatchedJobs();
+                    spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
                 }
+
+                var spriteShapeJob = new SpriteShapeGenerator()
+                {
+                    m_Bounds = bounds,
+                    m_PosArray = posArray,
+                    m_Uv0Array = uv0Array,
+                    m_TanArray = tanArray,
+                    m_GeomArray = geomArray,
+                    m_IndexArray = indexArray,
+                    m_ColliderPoints = m_ColliderData
+                };
+                spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
+                jobHandle = spriteShapeJob.Schedule();
+                spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
+                JobHandle.ScheduleBatchedJobs();
             }
 
             if (m_DynamicOcclusionOverriden)
@@ -557,7 +545,7 @@ namespace UnityEngine.U2D
             Texture2D fillTexture = null;
             uint fillScale = 0;
             uint splineDetail = (uint)m_SplineDetail;
-            float angleThreshold = (m_CornerAngleThreshold >= 0 && m_CornerAngleThreshold < 90) ? m_CornerAngleThreshold : 89.9999f;
+            float angleThreshold = (m_CornerAngleThreshold >= 0 && m_CornerAngleThreshold < 90) ? m_CornerAngleThreshold : 90.0f;
             float borderPivot = 0f;
             bool smartSprite = true;
             bool carpet = !m_Spline.isOpenEnded;

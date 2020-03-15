@@ -1,10 +1,20 @@
 # Changelog
 
+## [4.1.0] - 2020-03-16
+### Added
+- Stretched Corners.
+
+### Fixed
+- 1226841 Fix when Collider generation allocation.
+- 1226856 SpriteShape Edge Collider does not extend to End-point even if Edges dont overlap.
+- 1226847 SpriteShape Corner Threshold does not work.
+
+
 ## [4.0.3] - 2020-03-09
 ### Fixed
 - 1220091 SpriteShapeController leaks memory when zero control points are used
 - 1216990 Colliders should also respect Pivot property of Edge Sprites.
-- 1225366 Ensure SpriteShape are not generated when not in view on Runtime.
+- 1225366 Ensure SpriteShape are generated when not in view on Runtime.
 
 ## [4.0.2] - 2020-02-11
 ### Changed
