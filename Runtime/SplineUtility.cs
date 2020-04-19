@@ -1,4 +1,9 @@
-﻿namespace UnityEngine.U2D
+﻿using System;
+using Unity.Collections;
+using System.Runtime.InteropServices;
+using Unity.Collections.LowLevel.Unsafe;
+
+namespace UnityEngine.U2D
 {
     public class SplineUtility
     {
@@ -59,6 +64,22 @@
         {
             int r = x % m;
             return r < 0 ? r + m : r;
+        }
+    }
+
+    // Copy utility.
+    internal class SpriteShapeCopyUtility<T> where T : struct
+    {
+        internal static void Copy(NativeSlice<T> dst, T[] src, int length)
+        {
+            NativeSlice<T> dstSet = new NativeSlice<T>(dst, 0, length);
+            dstSet.CopyFrom(src);
+        }
+
+        internal static void Copy(T[] dst, NativeSlice<T> src, int length)
+        {
+            NativeSlice<T> dstSet = new NativeSlice<T>(src, 0, length);
+            dstSet.CopyTo(dst);
         }
     }
 }

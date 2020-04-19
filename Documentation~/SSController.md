@@ -6,7 +6,7 @@ The __Sprite Shape Controller__ component is automatically attached to the GameO
 
 The default component settings below are displayed when Edit Spline is not enabled.
 
-![Sprite Shape Controller property settings](images/2019_3_SSController_noedit.png)
+![Sprite Shape Controller property settings](images/2019_3_SSController_noedit.png) 
 
 | __Property__                                                 | __Function__                                                 |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -36,10 +36,20 @@ Enable __Edit Spline__ in the Controller settings to make Control Points on the 
 | __Position__                                            | The local x and y coordinates of a selected Control Point.   |
 | __Height__                                              | Increase or decrease the height of Sprites at the Control Point by a factor of 0.1 to 4. |
 | __Corner__                                              | Sets whether Corner Sprites are rendered at Control Points. Set to __Automatic__ by default. |
-| __Disabled__                                            | The selected Control Point does not automatically render a Control Point. |
-| __Automatic__                                           | The Control Point displays the assigned Corner Sprite, if both it and its neighbors are in __Linear Point Mode__. |
+| &nbsp;&nbsp;__Disabled__                                | A Sprite is not rendered at the selected Control Point.      |
+| &nbsp;&nbsp; __Automatic__                              | The Control Point displays the assigned Corner Sprite, if both it and its neighbors are in __Linear Point Mode__. |
+| &nbsp;&nbsp;__Stretched__                               | The Corner Sprite at the selected Control Point is connected to its adjacent neighbors, stretching the Sprite. See the [list of required criteria](#stretched-corners) below to use this feature. |
 | __Sprite Variant__                                      | Select the __Sprite Variant__ from the visual Variant selector. Press __N__ to cycle through all available Variants for the Control Point. |
 | __Snapping__                                            | Enable to snap Control Points according the Project's Snap settings. |
+
+### Stretched Corners
+
+This feature allows the Sprite Shape to form corners with stretched Sprites between adjacent edges between the corner point and its neighbors. Select the Stretched option from the __Corner__ dropdown menu, and ensure the following criteria are met:
+
+1. Both the selected and adjacent points have the same __Height__.
+2. Sprites rendered at the Corner point and its neighboring points must have the same Sprite pivot position.
+
+Please note that scripting support for this new Corner mode will be available in a later release. 
 
 ### Additional Collider settings
 

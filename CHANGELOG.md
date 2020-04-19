@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.1.1] - 2020-04-20
+### Added
+- Added BakeMesh to save generated geometry data.
+- Added warning when a valid SpriteShape profile is not set.
+
 ## [4.1.0] - 2020-03-16
 ### Added
 - Stretched Corners.

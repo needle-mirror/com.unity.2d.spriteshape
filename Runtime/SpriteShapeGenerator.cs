@@ -2245,7 +2245,6 @@ namespace UnityEngine.U2D
             int kColliderPointCountClamped = m_ColliderPointCount / 2;
             int kSplineDetailClamped = math.clamp(splineDetail * 3, 0, 8);
             int kNeighbors = kSplineDetailClamped > kColliderPointCountClamped ? kColliderPointCountClamped : kSplineDetailClamped;
-            // Debug.Log(kSplineDetailClamped + " : " + kNeighbors + " = " + m_ColliderPointCount);
 
             if (!isCarpet)
                 m_TempPoints[trimmedPointCount++] = m_ColliderPoints[0];
