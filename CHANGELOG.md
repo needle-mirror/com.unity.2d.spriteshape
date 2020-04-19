@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.0.11] - 2020-04-20
+### Changed
+- Added warning when a valid SpriteShape profile is not set.
+- Code cleanup.
+
 ## [3.0.10] - 2020-03-06
 ### Fixed
 - 1220091 SpriteShapeController leaks memory when zero control points are used
@@ -21,13 +26,6 @@
 
 ### Fixed
 - Fixed where the last point of the Sprite Shape does not behave correctly when using Continuous Points in a closed shape (case 1184721)
-
-## [3.0.7] - 2019-10-27
-### Fixed
-- Added missing meta file
-
-### Changed
-- Update com.unity.2d.path package dependency
 
 ## [3.0.7] - 2019-10-27
 ### Fixed
@@ -72,7 +70,7 @@
 - Stable Version.
 - Remove experimental namespace.
 
-## [2.1.0-preview.8] - 2019-6-12
+## [2.1.0-preview.8] - 2019-06-12
 ### Changed
 - Fix (Case 1152342) The first point of the Sprite Shape does not behave correctly when using Continuous Points
 - Fix (Case 1160009) Edge and Polygon Collider does not seem to follow the spriteshape for some broken mirrored tangent points

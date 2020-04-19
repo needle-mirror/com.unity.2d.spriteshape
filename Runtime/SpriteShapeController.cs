@@ -15,29 +15,34 @@ namespace UnityEngine.U2D
     [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@latest/index.html")]
     public class SpriteShapeController : MonoBehaviour
     {
+        // Internal Dataset.
         const float s_DistanceTolerance = 0.001f;
+
+        // Cached Objects.
+        SpriteShape m_ActiveSpriteShape;
         EdgeCollider2D m_EdgeCollider2D;
         PolygonCollider2D m_PolygonCollider2D;
+        SpriteShapeRenderer m_SpriteShapeRenderer;
 
         Sprite[] m_SpriteArray;
         Sprite[] m_EdgeSpriteArray;
         Sprite[] m_CornerSpriteArray;
         AngleRangeInfo[] m_AngleRangeInfoArray;
 
-        bool m_DynamicOcclusionLocal;
-        bool m_DynamicOcclusionOverriden;
-        bool m_LegacyGenerator = false;
-        SpriteShapeRenderer m_SpriteShapeRenderer;
-
-        SpriteShape m_ActiveSpriteShape;
-        SpriteShapeParameters m_ActiveShapeParameters;
+        // Required for Generation.
         NativeArray<float2> m_ColliderData;
         NativeArray<Vector4> m_TangentData;
 
-        int m_AngleRangeHash = 0;
-        int m_ActiveCornerSpritesHash = 0;
-        int m_ActiveSplineHash = 0;
+        // Renderer Stuff.
+        bool m_DynamicOcclusionLocal;
+        bool m_DynamicOcclusionOverriden;
 
+        // Hash Check.
+        int m_ActiveSplineHash = 0;
+        int m_ActiveSpriteShapeHash = 0;
+        SpriteShapeParameters m_ActiveShapeParameters;
+
+        // Serialized Data.
         [SerializeField]
         Spline m_Spline = new Spline();
         [SerializeField]
@@ -55,10 +60,8 @@ namespace UnityEngine.U2D
         bool m_StretchUV;
         [SerializeField]
         bool m_WorldSpaceUV;
-
         [SerializeField]
         float m_CornerAngleThreshold = 30.0f;
-
         [SerializeField]
         int m_ColliderDetail;
         [SerializeField, Range(-0.5f, 0.5f)]
@@ -72,71 +75,50 @@ namespace UnityEngine.U2D
         [SerializeField]
         bool m_EnableTangents = false;
 
-        public int spriteShapeHashCode
+        #region GetSet
+
+        internal int splineHashCode
         {
             get { return m_ActiveSplineHash; }
         }
+
+        internal Sprite[] spriteArray
+        {
+            get { return m_SpriteArray; }
+        }
+
+        internal SpriteShapeParameters spriteShapeParameters
+        {
+            get { return m_ActiveShapeParameters; }
+        }
+
+        public int spriteShapeHashCode
+        {
+            get { return m_ActiveSpriteShapeHash; }
+        }
+
         public bool worldSpaceUVs
         {
             get { return m_WorldSpaceUV; }
             set { m_WorldSpaceUV = value; }
         }
+
         public float fillPixelsPerUnit
         {
             get { return m_FillPixelPerUnit; }
             set { m_FillPixelPerUnit = value; }
         }
+
         public bool enableTangents
         {
             get { return m_EnableTangents; }
             set { m_EnableTangents = value; }
         }
+
         public float stretchTiling
         {
             get { return m_StretchTiling; }
             set { m_StretchTiling = value; }
-        }
-        public Spline spline
-        {
-            get { return m_Spline; }
-        }
-        public SpriteShape spriteShape
-        {
-            get { return m_SpriteShape; }
-            set { m_SpriteShape = value; }
-        }
-
-        public SpriteShapeRenderer spriteShapeRenderer
-        {
-            get
-            {
-                if (!m_SpriteShapeRenderer)
-                    m_SpriteShapeRenderer = GetComponent<SpriteShapeRenderer>();
-
-                return m_SpriteShapeRenderer;
-            }
-        }
-
-        public PolygonCollider2D polygonCollider
-        {
-            get
-            {
-                if (!m_PolygonCollider2D)
-                    m_PolygonCollider2D = GetComponent<PolygonCollider2D>();
-
-                return m_PolygonCollider2D;
-            }
-        }
-
-        public EdgeCollider2D edgeCollider
-        {
-            get
-            {
-                if (!m_EdgeCollider2D)
-                    m_EdgeCollider2D = GetComponent<EdgeCollider2D>();
-
-                return m_EdgeCollider2D;
-            }
         }
 
         public int splineDetail
@@ -163,11 +145,6 @@ namespace UnityEngine.U2D
             set { m_CornerAngleThreshold = value; }
         }
 
-        public bool hasCollider
-        {
-            get { return (edgeCollider != null) || (polygonCollider != null); }
-        }
-
         public bool autoUpdateCollider
         {
             get { return m_UpdateCollider; }
@@ -178,12 +155,63 @@ namespace UnityEngine.U2D
         {
             get { return m_OptimizeCollider; }
         }
+
         public bool optimizeGeometry
         {
             get { return m_OptimizeGeometry; }
         }
 
-        private void DisposeNativeArrays()
+        public bool hasCollider
+        {
+            get { return (edgeCollider != null) || (polygonCollider != null); }
+        }
+
+        public Spline spline
+        {
+            get { return m_Spline; }
+        }
+
+        public SpriteShape spriteShape
+        {
+            get { return m_SpriteShape; }
+            set { m_SpriteShape = value; }
+        }
+
+        public EdgeCollider2D edgeCollider
+        {
+            get
+            {
+                if (!m_EdgeCollider2D)
+                    m_EdgeCollider2D = GetComponent<EdgeCollider2D>();
+                return m_EdgeCollider2D;
+            }
+        }
+
+        public PolygonCollider2D polygonCollider
+        {
+            get
+            {
+                if (!m_PolygonCollider2D)
+                    m_PolygonCollider2D = GetComponent<PolygonCollider2D>();
+                return m_PolygonCollider2D;
+            }
+        }
+
+        public SpriteShapeRenderer spriteShapeRenderer
+        {
+            get
+            {
+                if (!m_SpriteShapeRenderer)
+                    m_SpriteShapeRenderer = GetComponent<SpriteShapeRenderer>();
+                return m_SpriteShapeRenderer;
+            }
+        }
+
+        #endregion
+
+        #region EventHandles.
+
+        void DisposeInternal()
         {
             if (m_ColliderData.IsCreated)
                 m_ColliderData.Dispose();
@@ -191,9 +219,53 @@ namespace UnityEngine.U2D
                 m_TangentData.Dispose();
         }
 
-        private void OnApplicationQuit()
+        void OnApplicationQuit()
         {
-            DisposeNativeArrays();
+            DisposeInternal();
+        }
+
+        void OnEnable()
+        {
+            spriteShapeRenderer.enabled = true;
+            m_DynamicOcclusionOverriden = true;
+            m_DynamicOcclusionLocal = spriteShapeRenderer.allowOcclusionWhenDynamic;
+            spriteShapeRenderer.allowOcclusionWhenDynamic = false;
+            UpdateSpriteData();
+        }
+
+        void OnDisable()
+        {
+            spriteShapeRenderer.enabled = false;
+            DisposeInternal();
+        }
+
+        void OnDestroy()
+        {
+
+        }
+
+        void Reset()
+        {
+            m_SplineDetail = (int)QualityDetail.High;
+            m_AdaptiveUV = true;
+            m_StretchUV = false;
+            m_FillPixelPerUnit = 100f;
+
+            m_ColliderDetail = (int)QualityDetail.High;
+            m_StretchTiling = 1.0f;
+            m_WorldSpaceUV = false;
+            m_CornerAngleThreshold = 30.0f;
+            m_ColliderOffset = 0;
+            m_UpdateCollider = true;
+            m_OptimizeCollider = true;
+            m_OptimizeGeometry = true;
+            m_EnableTangents = false;
+
+            spline.Clear();
+            spline.InsertPointAt(0, Vector2.left + Vector2.down);
+            spline.InsertPointAt(1, Vector2.left + Vector2.up);
+            spline.InsertPointAt(2, Vector2.right + Vector2.up);
+            spline.InsertPointAt(3, Vector2.right + Vector2.down);
         }
 
         static void SmartDestroy(UnityEngine.Object o)
@@ -209,128 +281,87 @@ namespace UnityEngine.U2D
                 Destroy(o);
         }
 
-        void Reset()
+        #endregion
+
+        #region HashAndDataCheck
+
+        public void RefreshSpriteShape()
         {
-            m_SplineDetail = (int)QualityDetail.High;
-            m_AdaptiveUV = true;
-            m_StretchUV = false;
-            m_FillPixelPerUnit = 100f;
-
-            m_Spline.InsertPointAt(0, Vector2.left + Vector2.down);
-            m_Spline.InsertPointAt(1, Vector2.left + Vector2.up);
-            m_Spline.InsertPointAt(2, Vector2.right + Vector2.up);
-            m_Spline.InsertPointAt(3, Vector2.right + Vector2.down);
-
-            m_ColliderDetail = (int)QualityDetail.High;
+            m_ActiveSplineHash = 0;
         }
 
-        void OnEnable()
+        // Ensure Neighbor points are not too close to each other.
+        bool ValidateSpline()
         {
-            spriteShapeRenderer.enabled = true;
-            m_DynamicOcclusionOverriden = true;
-            m_DynamicOcclusionLocal = spriteShapeRenderer.allowOcclusionWhenDynamic;
-            spriteShapeRenderer.allowOcclusionWhenDynamic = false;
-        }
-
-        void OnDisable()
-        {
-            spriteShapeRenderer.enabled = false;
-            DisposeNativeArrays();
-        }
-
-        void OnDestroy()
-        {
-
-        }
-
-        void ValidateSpriteShapeData()
-        {
-            if (spriteShape == null)
+            int pointCount = spline.GetPointCount();
+            if (pointCount < 2)
+                return false;
+            for (int i = 0; i < pointCount - 1; ++i)
             {
-                if (m_EdgeSpriteArray != null)
-                    m_EdgeSpriteArray = null;
-                if (m_CornerSpriteArray != null)
-                    m_CornerSpriteArray = null;
-                if (m_AngleRangeInfoArray != null)
-                    m_AngleRangeInfoArray = null;
-                if (m_SpriteArray != null)
-                    m_SpriteArray = null;
-            }
-        }
-
-        int GetAngleRangeHashCode()
-        {
-            unchecked
-            {
-                int hashCode = (int)2166136261;
-
-                hashCode = hashCode * 16777619 ^ spriteShape.angleRanges.Count;
-
-                for (int i = 0; i < spriteShape.angleRanges.Count; ++i)
+                var vec = spline.GetPosition(i) - spline.GetPosition(i + 1);
+                if (vec.sqrMagnitude < s_DistanceTolerance)
                 {
-                    hashCode = hashCode * 16777619 ^ (spriteShape.angleRanges[i].GetHashCode() + i);
+                    Debug.LogWarningFormat(gameObject, "[SpriteShape] Control points {0} & {1} are too close. SpriteShape will not be generated for < {2} >.", i, i + 1, gameObject.name);
+                    return false;
                 }
-
-                return hashCode;
             }
+            return true;
         }
 
-        int GetCornerSpritesHashCode()
+        // Ensure SpriteShape is valid if not
+        bool ValidateSpriteShapeTexture()
         {
-            unchecked
+            bool valid = true;
+            valid = (spriteShape != null);
+            valid = valid && (spriteShape.fillTexture != null);
+            if (!valid && !spline.isOpenEnded && 0 == spriteArray.Length)
+                Debug.LogWarningFormat(gameObject, "[SpriteShape] A valid SpriteShape profile has not been set for gameObject < {0} >", gameObject.name);
+#if UNITY_EDITOR
+            // We allow null SpriteShape for rapid prototyping in Editor.
+            valid = true;
+#endif
+            return valid;
+        }
+
+        bool HasSpriteShapeChanged()
+        {
+            bool changed = (m_ActiveSpriteShape != spriteShape);
+            if (changed)
+                m_ActiveSpriteShape = spriteShape;
+            return changed;
+        }
+
+        bool HasSpriteShapeDataChanged()
+        {
+            bool updateSprites = HasSpriteShapeChanged();
+            if (spriteShape)
             {
-                int hashCode = (int)2166136261;
-
-                hashCode = hashCode * 16777619 ^ spriteShape.cornerSprites.Count;
-
-                for (int i = 0; i < spriteShape.cornerSprites.Count; ++i)
+                var hashCode = SpriteShape.GetSpriteShapeHashCode(spriteShape);
+                if (spriteShapeHashCode != hashCode)
                 {
-                    hashCode = hashCode * 16777619 ^ (spriteShape.cornerSprites[i].GetHashCode() + i);
-                }
-
-                return hashCode;
-            }
-        }
-
-        bool SpriteShapeChanged()
-        {
-            return m_ActiveSpriteShape != spriteShape;
-        }
-
-        bool NeedUpdateSprites()
-        {
-            if (m_EdgeSpriteArray == null || m_CornerSpriteArray == null || m_AngleRangeInfoArray == null)
-                return true;
-
-            bool updateSprites = SpriteShapeChanged();
-            if (spriteShape && !updateSprites)
-            {
-                var angleRangeHashCode = GetAngleRangeHashCode();
-                if (m_AngleRangeHash != angleRangeHashCode)
-                {
-                    m_AngleRangeHash = angleRangeHashCode;
-                    updateSprites = true;
-                }
-
-                var cornerSpritesHashCode = GetCornerSpritesHashCode();
-                if (m_ActiveCornerSpritesHash != cornerSpritesHashCode)
-                {
-                    m_ActiveCornerSpritesHash = cornerSpritesHashCode;
+                    m_ActiveSpriteShapeHash = hashCode;
                     updateSprites = true;
                 }
             }
             return updateSprites;
         }
 
-        bool HasSplineChanged()
+        bool HasSplineDataChanged()
         {
             unchecked
             {
-                int hashCode = (int)2166136261 ^ m_Spline.GetHashCode();
-                hashCode = hashCode * 16777619 ^ (m_OptimizeGeometry ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
+                // Spline.
+                int hashCode = (int)2166136261 ^ spline.GetHashCode();
 
-                if (spriteShapeHashCode != hashCode)
+                // Local Stuff.
+                hashCode = hashCode * 16777619 ^ (m_WorldSpaceUV ? 1 : 0); 
+                hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
+                hashCode = hashCode * 16777619 ^ (m_OptimizeGeometry ? 1 : 0);
+                hashCode = hashCode * 16777619 ^ (m_StretchTiling.GetHashCode());
+                hashCode = hashCode * 16777619 ^ (m_ColliderOffset.GetHashCode());
+                hashCode = hashCode * 16777619 ^ (m_ColliderDetail.GetHashCode());
+
+                if (splineHashCode != hashCode)
                 {
                     m_ActiveSplineHash = hashCode;
                     return true;
@@ -341,229 +372,51 @@ namespace UnityEngine.U2D
 
         void OnWillRenderObject()
         {
-            ValidateSpriteShapeData();
-            bool needUpdateSprites = NeedUpdateSprites();
-            bool spriteShapeParametersChanged = UpdateSpriteShapeParameters();
-            bool splineChanged = HasSplineChanged();
-
             BakeCollider();
-            if (needUpdateSprites || spriteShapeParametersChanged || splineChanged)
-                BakeMesh(needUpdateSprites);
-            m_ActiveSpriteShape = spriteShape;
-        }
-
-        public void RefreshSpriteShape()
-        {
-            m_ActiveSplineHash = 0;
+            BakeMesh();
         }
 
         public JobHandle BakeMesh()
         {
-            UpdateSpriteShapeParameters();
-            return BakeMesh(NeedUpdateSprites());
-        }
-
-        // Ensure Neighbor points are not too close to each other.
-        private bool ValidatePoints(NativeArray<ShapeControlPoint> shapePoints)
-        {
-            for (int i = 0; i < shapePoints.Length - 1; ++i)
-            {
-                var vec = shapePoints[i].position - shapePoints[i + 1].position;
-                if (vec.sqrMagnitude < s_DistanceTolerance)
-                {
-                    Debug.LogWarningFormat("Control points {0} & {1} are too close to each other. SpriteShape will not be generated.", i, i + 1);
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        unsafe JobHandle BakeMesh(bool needUpdateSpriteArrays)
-        {
             JobHandle jobHandle = default;
-            if (needUpdateSpriteArrays)
-                UpdateSprites();
+            bool valid = ValidateSpline();
 
-            int pointCount = m_Spline.GetPointCount();
-            if (pointCount < 2)
-                return jobHandle;
-            
-            NativeArray<ShapeControlPoint> shapePoints  = new NativeArray<ShapeControlPoint>(pointCount, Allocator.Temp);
-            NativeArray<SpriteShapeMetaData> shapeMetaData = new NativeArray<SpriteShapeMetaData>(pointCount, Allocator.Temp);
-
-            for (int i = 0; i < pointCount; ++i)
+            if (valid)
             {
-                ShapeControlPoint shapeControlPoint;
-                shapeControlPoint.position = m_Spline.GetPosition(i);
-                shapeControlPoint.leftTangent = m_Spline.GetLeftTangent(i);
-                shapeControlPoint.rightTangent = m_Spline.GetRightTangent(i);
-                shapeControlPoint.mode = (int)m_Spline.GetTangentMode(i);
-                shapePoints[i] = shapeControlPoint;
+                bool splineChanged = HasSplineDataChanged();
+                bool spriteShapeChanged = HasSpriteShapeDataChanged();
+                bool spriteShapeParametersChanged = UpdateSpriteShapeParameters();
 
-                SpriteShapeMetaData metaData;
-                metaData.corner = m_Spline.GetCorner(i);
-                metaData.height = m_Spline.GetHeight(i);
-                metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
-                metaData.bevelCutoff = 0;
-                metaData.bevelSize = 0;
-                shapeMetaData[i] = metaData;
-            }
-
-            if (spriteShapeRenderer != null && ValidatePoints(shapePoints))
-            {
-                if (m_LegacyGenerator)
+                if (spriteShapeChanged)
                 {
-                    SpriteShapeUtility.GenerateSpriteShape(spriteShapeRenderer, m_ActiveShapeParameters,
-                        shapePoints.ToArray(), shapeMetaData.ToArray(), m_AngleRangeInfoArray, m_EdgeSpriteArray,
-                        m_CornerSpriteArray);
+                    UpdateSpriteData();
                 }
-                else
+
+                if (splineChanged || spriteShapeChanged || spriteShapeParametersChanged)
                 {
-                    bool hasSprites = false;
-                    float smallestWidth = 99999.0f;
-                    foreach (var sprite in m_SpriteArray)
-                    {
-                        if (sprite != null)
-                        {
-                            hasSprites = true;
-                            float pixelWidth = BezierUtility.GetSpritePixelWidth(sprite);
-                            smallestWidth = (smallestWidth > pixelWidth) ? pixelWidth : smallestWidth;
-                        }
-                    }
-                    
-                    // Approximate vertex Array Count.
-                    float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail) * 2.0f;
-                    int adjustWidth = hasSprites ? ((int)(shapeLength / smallestWidth) * 6) + (pointCount * 6 * splineDetail) : 0;
-                    int adjustShape = pointCount * 4 * splineDetail;
-                    adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
-#if !UNITY_EDITOR
-                    adjustShape = (spriteShape != null && spriteShape.fillTexture != null) ? adjustShape : 0;
-#endif                    
-                    int maxArrayCount = adjustShape + adjustWidth;
-
-                    // Collider Data
-                    if (m_ColliderData.IsCreated)
-                        m_ColliderData.Dispose();
-                    m_ColliderData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
-
-                    // Tangent Data
-                    if (!m_TangentData.IsCreated)
-                        m_TangentData = new NativeArray<Vector4>(1, Allocator.Persistent);
-
-                    NativeArray<ushort> indexArray;
-                    NativeSlice<Vector3> posArray;
-                    NativeSlice<Vector2> uv0Array;
-                    NativeArray<Bounds> bounds = spriteShapeRenderer.GetBounds();
-                    NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(shapePoints.Length * 8);
-                    NativeSlice<Vector4> tanArray = new NativeSlice<Vector4>(m_TangentData);
-
-                    if (m_EnableTangents)
-                    { 
-                        spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array, out tanArray);
-                    }
-                    else
-                    {
-                        spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
-                    }
-
-                    var spriteShapeJob = new SpriteShapeGenerator()
-                    {
-                        m_Bounds = bounds,
-                        m_PosArray = posArray,
-                        m_Uv0Array = uv0Array,
-                        m_TanArray = tanArray,
-                        m_GeomArray = geomArray,
-                        m_IndexArray = indexArray,
-                        m_ColliderPoints = m_ColliderData
-                    };
-                    spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
-                    jobHandle = spriteShapeJob.Schedule();
-                    spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
-                    JobHandle.ScheduleBatchedJobs();
+                    jobHandle = ScheduleBake();
                 }
             }
-
-            if (m_DynamicOcclusionOverriden)
-            {
-                spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
-                m_DynamicOcclusionOverriden = false;
-            }
-
-            shapePoints.Dispose();
-            shapeMetaData.Dispose();
             return jobHandle;
         }
 
-        public void BakeCollider()
-        {
-            if (m_ColliderData.IsCreated)
-            {
-                if (autoUpdateCollider)
-                {
-                    if (hasCollider)
-                    {
-                        int maxCount = short.MaxValue - 1;
-                        float2 last = (float2)0;
-                        List<Vector2> m_ColliderSegment = new List<Vector2>();
-                        for (int i = 0; i < maxCount; ++i)
-                        {
-                            float2 now = m_ColliderData[i];
-                            if (!math.any(last) && !math.any(now))
-                                break;
-                            m_ColliderSegment.Add(new Vector2(now.x, now.y));
-                        }
+#endregion
 
-                        EdgeCollider2D edge = GetComponent<EdgeCollider2D>();
-                        if (edge != null)
-                            edge.points = m_ColliderSegment.ToArray();
-                        PolygonCollider2D poly = GetComponent<PolygonCollider2D>();
-                        if (poly != null)
-                            poly.points = m_ColliderSegment.ToArray();
-                    }
-                }
-                m_ColliderData.Dispose();
-#if UNITY_EDITOR
-                if (UnityEditor.SceneView.lastActiveSceneView != null)
-                    UnityEditor.SceneView.lastActiveSceneView.Repaint();
-#endif
-            }
-        }
-
-#if UNITY_EDITOR
-        void OnDrawGizmos()
-#else        
-        void OnGUI()
-#endif
-        {
-            if (spriteShapeRenderer != null)
-            {
-                var hasSplineChanged = HasSplineChanged();
-                if (!spriteShapeRenderer.isVisible && hasSplineChanged)
-                {
-                    BakeMesh();
-                    Rendering.CommandBuffer rc = new Rendering.CommandBuffer();
-                    rc.GetTemporaryRT(0, 256, 256, 0);
-                    rc.SetRenderTarget(0);
-                    rc.DrawRenderer(spriteShapeRenderer, spriteShapeRenderer.sharedMaterial);
-                    rc.ReleaseTemporaryRT(0);
-                    Graphics.ExecuteCommandBuffer(rc);
-                }
-            }
-        }
+#region UpdateData
 
         public bool UpdateSpriteShapeParameters()
         {
-            Matrix4x4 transformMatrix = Matrix4x4.identity;
-            Texture2D fillTexture = null;
-            uint fillScale = 0;
-            uint splineDetail = (uint)m_SplineDetail;
-            float angleThreshold = (m_CornerAngleThreshold >= 0 && m_CornerAngleThreshold < 90) ? m_CornerAngleThreshold : 89.9999f;
-            float borderPivot = 0f;
+            bool carpet = !spline.isOpenEnded;
             bool smartSprite = true;
-            bool carpet = !m_Spline.isOpenEnded;
             bool adaptiveUV = m_AdaptiveUV;
             bool stretchUV = m_StretchUV;
             bool spriteBorders = false;
+            uint fillScale = 0;
+            uint splineDetail = (uint)m_SplineDetail;
+            float borderPivot = 0f;
+            float angleThreshold = (m_CornerAngleThreshold >= 0 && m_CornerAngleThreshold < 90) ? m_CornerAngleThreshold : 89.9999f;
+            Texture2D fillTexture = null;
+            Matrix4x4 transformMatrix = Matrix4x4.identity;
 
             if (spriteShape)
             {
@@ -581,8 +434,7 @@ namespace UnityEngine.U2D
             else
             {
 #if UNITY_EDITOR
-                if (fillTexture == null)
-                    fillTexture = UnityEditor.EditorGUIUtility.whiteTexture;
+                fillTexture = UnityEditor.EditorGUIUtility.whiteTexture;
                 fillScale = 100;
 #endif
             }
@@ -614,14 +466,14 @@ namespace UnityEngine.U2D
             return changed;
         }
 
-        void UpdateSprites()
+        void UpdateSpriteData()
         {
-            List<Sprite> edgeSpriteList = new List<Sprite>();
-            List<Sprite> cornerSpriteList = new List<Sprite>();
-            List<AngleRangeInfo> angleRangeInfoList = new List<AngleRangeInfo>();
-            
             if (spriteShape)
             {
+                List<Sprite> edgeSpriteList = new List<Sprite>();
+                List<Sprite> cornerSpriteList = new List<Sprite>();
+                List<AngleRangeInfo> angleRangeInfoList = new List<AngleRangeInfo>();
+
                 List<AngleRange> sortedAngleRanges = new List<AngleRange>(spriteShape.angleRanges);
                 sortedAngleRanges.Sort((a, b) => a.order.CompareTo(b.order));
 
@@ -673,16 +525,200 @@ namespace UnityEngine.U2D
                         cornerSpriteList.Add(cornerSprite.sprites[0]);
                     }
                 }
+
+                m_EdgeSpriteArray = edgeSpriteList.ToArray();
+                m_CornerSpriteArray = cornerSpriteList.ToArray();
+                m_AngleRangeInfoArray = angleRangeInfoList.ToArray();
+
+                List<Sprite> spriteList = new List<Sprite>();
+                spriteList.AddRange(m_EdgeSpriteArray);
+                spriteList.AddRange(m_CornerSpriteArray);
+                m_SpriteArray = spriteList.ToArray();
+            }
+            else
+            {
+                m_SpriteArray = new Sprite[0];
+                m_EdgeSpriteArray = new Sprite[0];
+                m_CornerSpriteArray = new Sprite[0];
+                m_AngleRangeInfoArray = new AngleRangeInfo[0];
+            }
+        }
+
+        NativeArray<ShapeControlPoint> GetShapeControlPoints()
+        {
+            int pointCount = spline.GetPointCount();
+            NativeArray<ShapeControlPoint> shapePoints = new NativeArray<ShapeControlPoint>(pointCount, Allocator.Temp);
+            for (int i = 0; i < pointCount; ++i)
+            {
+                ShapeControlPoint shapeControlPoint;
+                shapeControlPoint.position = spline.GetPosition(i);
+                shapeControlPoint.leftTangent = spline.GetLeftTangent(i);
+                shapeControlPoint.rightTangent = spline.GetRightTangent(i);
+                shapeControlPoint.mode = (int)spline.GetTangentMode(i);
+                shapePoints[i] = shapeControlPoint;
+            }
+            return shapePoints;
+        }
+
+        NativeArray<SpriteShapeMetaData> GetSpriteShapeMetaData()
+        {
+            int pointCount = spline.GetPointCount();
+            NativeArray<SpriteShapeMetaData> shapeMetaData = new NativeArray<SpriteShapeMetaData>(pointCount, Allocator.Temp);
+            for (int i = 0; i < pointCount; ++i)
+            {
+                SpriteShapeMetaData metaData = shapeMetaData[i];
+                metaData.height = m_Spline.GetHeight(i);
+                metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
+                metaData.corner = m_Spline.GetCorner(i);
+                shapeMetaData[i] = metaData;
+            }
+            return shapeMetaData;
+        }
+
+        int CalculateMaxArrayCount(NativeArray<ShapeControlPoint> shapePoints)
+        {
+            bool hasSprites = false;
+            float smallestWidth = 99999.0f;
+
+            if (null != spriteArray)
+            {
+                foreach (var sprite in m_SpriteArray)
+                {
+                    if (sprite != null)
+                    {
+                        hasSprites = true;
+                        float pixelWidth = BezierUtility.GetSpritePixelWidth(sprite);
+                        smallestWidth = (smallestWidth > pixelWidth) ? pixelWidth : smallestWidth;
+                    }
+                }
             }
 
-            m_EdgeSpriteArray = edgeSpriteList.ToArray();
-            m_CornerSpriteArray = cornerSpriteList.ToArray();
-            m_AngleRangeInfoArray = angleRangeInfoList.ToArray();
+            // Approximate vertex Array Count.
+            float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail) * 2.0f;
+            int adjustWidth = hasSprites ? ((int)(shapeLength / smallestWidth) * 6) + (shapePoints.Length * 6 * splineDetail) : 0;
+            int adjustShape = shapePoints.Length * 4 * splineDetail;
+            adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
+            var validFT = ValidateSpriteShapeTexture();
+#if !UNITY_EDITOR
+                adjustShape = (!spline.isOpenEnded && validFT) ? adjustShape : 0;
+#endif
+            int maxArrayCount = adjustShape + adjustWidth;
+            return maxArrayCount;
+        }
 
-            List<Sprite> spriteList = new List<Sprite>();
-            spriteList.AddRange(m_EdgeSpriteArray);
-            spriteList.AddRange(m_CornerSpriteArray);
-            m_SpriteArray = spriteList.ToArray();
+#endregion
+
+        unsafe JobHandle ScheduleBake()
+        {
+            JobHandle jobHandle = default;
+
+            int pointCount = spline.GetPointCount();
+            NativeArray<ShapeControlPoint> shapePoints = GetShapeControlPoints();
+            NativeArray<SpriteShapeMetaData> shapeMetaData = GetSpriteShapeMetaData();
+            int maxArrayCount = CalculateMaxArrayCount(shapePoints);
+
+            if (maxArrayCount > 0)
+            {
+                // Collider Data
+                if (m_ColliderData.IsCreated)
+                    m_ColliderData.Dispose();
+                m_ColliderData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
+
+                // Tangent Data
+                if (!m_TangentData.IsCreated)
+                    m_TangentData = new NativeArray<Vector4>(1, Allocator.Persistent);
+
+                NativeArray<ushort> indexArray;
+                NativeSlice<Vector3> posArray;
+                NativeSlice<Vector2> uv0Array;
+                NativeArray<Bounds> bounds = spriteShapeRenderer.GetBounds();
+                NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(shapePoints.Length * 8);
+                NativeSlice<Vector4> tanArray = new NativeSlice<Vector4>(m_TangentData);
+
+                if (m_EnableTangents)
+                { 
+                    spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array, out tanArray);
+                }
+                else
+                {
+                    spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
+                }
+
+                var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
+                spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
+                jobHandle = spriteShapeJob.Schedule();
+                spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
+                JobHandle.ScheduleBatchedJobs();
+            }
+
+            if (m_DynamicOcclusionOverriden)
+            {
+                spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
+                m_DynamicOcclusionOverriden = false;
+            }
+            shapePoints.Dispose();
+            shapeMetaData.Dispose();
+            return jobHandle;
+        }
+
+        public void BakeCollider()
+        {
+            if (m_ColliderData.IsCreated)
+            {
+                if (autoUpdateCollider)
+                {
+                    if (hasCollider)
+                    {
+                        int maxCount = short.MaxValue - 1;
+                        float2 last = (float2)0;
+                        List<Vector2> m_ColliderSegment = new List<Vector2>();
+                        for (int i = 0; i < maxCount; ++i)
+                        {
+                            float2 now = m_ColliderData[i];
+                            if (!math.any(last) && !math.any(now))
+                                break;
+                            m_ColliderSegment.Add(new Vector2(now.x, now.y));
+                        }
+
+                        if (edgeCollider != null)
+                            edgeCollider.points = m_ColliderSegment.ToArray();
+                        if (polygonCollider != null)
+                            polygonCollider.points = m_ColliderSegment.ToArray();
+                    }
+                }
+                m_ColliderData.Dispose();
+#if UNITY_EDITOR
+                if (UnityEditor.SceneView.lastActiveSceneView != null)
+                    UnityEditor.SceneView.lastActiveSceneView.Repaint();
+#endif
+            }
+        }
+
+        internal void BakeMeshForced()
+        {
+            if (spriteShapeRenderer != null)
+            {
+                var hasSplineChanged = HasSplineDataChanged();
+                if (!spriteShapeRenderer.isVisible && hasSplineChanged)
+                {
+                    BakeMesh();
+                    Rendering.CommandBuffer rc = new Rendering.CommandBuffer();
+                    rc.GetTemporaryRT(0, 256, 256, 0);
+                    rc.SetRenderTarget(0);
+                    rc.DrawRenderer(spriteShapeRenderer, spriteShapeRenderer.sharedMaterial);
+                    rc.ReleaseTemporaryRT(0);
+                    Graphics.ExecuteCommandBuffer(rc);
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        void OnDrawGizmos()
+#else
+        void OnGUI()
+#endif
+        {
+            BakeMeshForced();
         }
 
         Texture2D GetTextureFromIndex(int index)

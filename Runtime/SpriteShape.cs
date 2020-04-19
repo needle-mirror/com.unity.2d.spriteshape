@@ -279,5 +279,32 @@ namespace UnityEngine.U2D
         {
             ResetCornerList();
         }
+
+        internal static int GetSpriteShapeHashCode(SpriteShape spriteShape)
+        {
+            // useSpriteBorders, fillOffset and fillTexture are hashChecked elsewhere.
+
+            unchecked
+            {
+                int hashCode = (int)2166136261;
+
+                hashCode = hashCode * 16777619 ^ spriteShape.angleRanges.Count;
+
+                for (int i = 0; i < spriteShape.angleRanges.Count; ++i)
+                {
+                    hashCode = hashCode * 16777619 ^ (spriteShape.angleRanges[i].GetHashCode() + i);
+                }
+
+                hashCode = hashCode * 16777619 ^ spriteShape.cornerSprites.Count;
+
+                for (int i = 0; i < spriteShape.cornerSprites.Count; ++i)
+                {
+                    hashCode = hashCode * 16777619 ^ (spriteShape.cornerSprites[i].GetHashCode() + i);
+                }
+
+                return hashCode;
+            }
+        }
+
     }
 }
