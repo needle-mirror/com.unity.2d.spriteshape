@@ -1,5 +1,16 @@
 # Changelog
 
+## [3.0.12] - 2020-05-28
+### Added
+- Added BakeMesh to save generated geometry data.
+- Sample script GenerateSpriteShapes.cs to demonstrate force generating invisible SpriteShapes on runtime scene load.
+
+### Fixed
+- 1248171 Error occurs when unselecting Cache Geometry for Sprite Shape prefab
+- 1240380 OnGUI in SpriteShapeController creates GC allocs.
+- 1242531 InvalidOperationException thrown continuously on adding "Sprite Shape Controller" Component to a Sprite object
+- 1242533 "A Native Collection has not been disposed, resulting in a memory leak" is thrown when 2D Sprite Shape Controller is added.
+
 ## [3.0.11] - 2020-04-20
 ### Changed
 - Added warning when a valid SpriteShape profile is not set.

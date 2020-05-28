@@ -23,11 +23,12 @@ namespace UnityEngine.U2D
         EdgeCollider2D m_EdgeCollider2D;
         PolygonCollider2D m_PolygonCollider2D;
         SpriteShapeRenderer m_SpriteShapeRenderer;
+        SpriteShapeGeometryCache m_SpriteShapeGeometryCache;
 
-        Sprite[] m_SpriteArray;
-        Sprite[] m_EdgeSpriteArray;
-        Sprite[] m_CornerSpriteArray;
-        AngleRangeInfo[] m_AngleRangeInfoArray;
+        Sprite[] m_SpriteArray = new Sprite[0];
+        Sprite[] m_EdgeSpriteArray = new Sprite[0];
+        Sprite[] m_CornerSpriteArray = new Sprite[0];
+        AngleRangeInfo[] m_AngleRangeInfoArray = new AngleRangeInfo[0];
 
         // Required for Generation.
         NativeArray<float2> m_ColliderData;
@@ -74,8 +75,16 @@ namespace UnityEngine.U2D
         bool m_OptimizeGeometry = true;
         [SerializeField]
         bool m_EnableTangents = false;
+        [SerializeField]
+        [HideInInspector]
+        bool m_GeometryCached = false;
 
         #region GetSet
+
+        internal bool geometryCached
+        {
+            get { return m_GeometryCached; }
+        }
 
         internal int splineHashCode
         {
@@ -90,6 +99,16 @@ namespace UnityEngine.U2D
         internal SpriteShapeParameters spriteShapeParameters
         {
             get { return m_ActiveShapeParameters; }
+        }
+
+        internal SpriteShapeGeometryCache spriteShapeGeometryCache
+        {
+            get
+            {
+                if (!m_SpriteShapeGeometryCache)
+                    m_SpriteShapeGeometryCache = GetComponent<SpriteShapeGeometryCache>();
+                return m_SpriteShapeGeometryCache;
+            }
         }
 
         public int spriteShapeHashCode
@@ -311,11 +330,22 @@ namespace UnityEngine.U2D
         // Ensure SpriteShape is valid if not
         bool ValidateSpriteShapeTexture()
         {
-            bool valid = true;
-            valid = (spriteShape != null);
-            valid = valid && (spriteShape.fillTexture != null);
-            if (!valid && !spline.isOpenEnded && 0 == spriteArray.Length)
-                Debug.LogWarningFormat(gameObject, "[SpriteShape] A valid SpriteShape profile has not been set for gameObject < {0} >", gameObject.name);
+            bool valid = false;
+            
+            // Check if SpriteShape Profile is valid.
+            if (spriteShape != null)
+            {
+                // Open ended and no valid Sprites set. Check if it has a valid fill texture.
+                if (!spline.isOpenEnded)
+                {
+                    valid = (spriteShape.fillTexture != null);
+                }
+            }
+            else
+            {
+                // Warn that no SpriteShape is set.
+                Debug.LogWarningFormat(gameObject, "[SpriteShape] A valid SpriteShape profile has not been set for gameObject < {0} >.", gameObject.name);
+            }
 #if UNITY_EDITOR
             // We allow null SpriteShape for rapid prototyping in Editor.
             valid = true;
@@ -356,6 +386,7 @@ namespace UnityEngine.U2D
                 // Local Stuff.
                 hashCode = hashCode * 16777619 ^ (m_WorldSpaceUV ? 1 : 0); 
                 hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
+                hashCode = hashCode * 16777619 ^ (m_GeometryCached ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_OptimizeGeometry ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_StretchTiling.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (m_ColliderOffset.GetHashCode());
@@ -600,7 +631,7 @@ namespace UnityEngine.U2D
             adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
             var validFT = ValidateSpriteShapeTexture();
 #if !UNITY_EDITOR
-                adjustShape = (!spline.isOpenEnded && validFT) ? adjustShape : 0;
+                adjustShape = validFT ? adjustShape : 0;
 #endif
             int maxArrayCount = adjustShape + adjustWidth;
             return maxArrayCount;
@@ -612,12 +643,23 @@ namespace UnityEngine.U2D
         {
             JobHandle jobHandle = default;
 
+            bool staticUpload = Application.isPlaying;
+#if !UNITY_EDITOR
+            staticUpload = true;
+#endif
+            if (staticUpload && geometryCached)
+            {
+                if (spriteShapeGeometryCache)
+                    if (spriteShapeGeometryCache.maxArrayCount != 0)
+                        return spriteShapeGeometryCache.Upload(spriteShapeRenderer, this);
+            }
+
             int pointCount = spline.GetPointCount();
             NativeArray<ShapeControlPoint> shapePoints = GetShapeControlPoints();
             NativeArray<SpriteShapeMetaData> shapeMetaData = GetSpriteShapeMetaData();
             int maxArrayCount = CalculateMaxArrayCount(shapePoints);
 
-            if (maxArrayCount > 0)
+            if (maxArrayCount > 0 && enabled)
             {
                 // Collider Data
                 if (m_ColliderData.IsCreated)
@@ -648,6 +690,12 @@ namespace UnityEngine.U2D
                 spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
                 jobHandle = spriteShapeJob.Schedule();
                 spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
+
+#if UNITY_EDITOR
+                if (spriteShapeGeometryCache && geometryCached)
+                    spriteShapeGeometryCache.SetGeometryCache(maxArrayCount, posArray, uv0Array, tanArray, indexArray, geomArray);
+#endif
+
                 JobHandle.ScheduleBatchedJobs();
             }
 
@@ -686,7 +734,6 @@ namespace UnityEngine.U2D
                             polygonCollider.points = m_ColliderSegment.ToArray();
                     }
                 }
-                m_ColliderData.Dispose();
 #if UNITY_EDITOR
                 if (UnityEditor.SceneView.lastActiveSceneView != null)
                     UnityEditor.SceneView.lastActiveSceneView.Repaint();
@@ -710,15 +757,6 @@ namespace UnityEngine.U2D
                     Graphics.ExecuteCommandBuffer(rc);
                 }
             }
-        }
-
-#if UNITY_EDITOR
-        void OnDrawGizmos()
-#else
-        void OnGUI()
-#endif
-        {
-            BakeMeshForced();
         }
 
         Texture2D GetTextureFromIndex(int index)

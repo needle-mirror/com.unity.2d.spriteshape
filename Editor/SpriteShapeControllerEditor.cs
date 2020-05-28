@@ -7,6 +7,7 @@ using UnityEditor.U2D.SpriteShapeInternal;
 using UnityEditor.U2D.Common;
 using UnityEditor.AnimatedValues;
 using UnityEditor.U2D.Path;
+using UnityEngine.SceneManagement;
 
 namespace UnityEditor.U2D
 {
@@ -41,6 +42,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider", "Update Collider as you edit SpriteShape");
             public static readonly GUIContent optimizeColliderLabel = new GUIContent("Optimize Collider", "Cleanup planar self-intersections and optimize collider points");
             public static readonly GUIContent optimizeGeometryLabel = new GUIContent("Optimize Geometry", "Simplify geometry");
+            public static readonly GUIContent cacheGeometryLabel = new GUIContent("Cache Geometry", "Bake geometry data. This will save geometry data on editor and load it on runtime instead of generating.");
         }
 
         private SerializedProperty m_SpriteShapeProp;
@@ -60,7 +62,8 @@ namespace UnityEditor.U2D
         private SerializedProperty m_OptimizeColliderProp;
         private SerializedProperty m_OptimizeGeometryProp;
         private SerializedProperty m_EnableTangentsProp;
-        private SerializedObject m_MeshRendererSO;
+        private SerializedProperty m_GeometryCachedProp;
+
         private int m_CollidersCount = 0;
 
         private int[] m_QualityValues = new int[] { (int)QualityDetail.High, (int)QualityDetail.Mid, (int)QualityDetail.Low };
@@ -113,6 +116,7 @@ namespace UnityEditor.U2D
             m_OptimizeColliderProp = serializedObject.FindProperty("m_OptimizeCollider");
             m_OptimizeGeometryProp = serializedObject.FindProperty("m_OptimizeGeometry");
             m_EnableTangentsProp = serializedObject.FindProperty("m_EnableTangents");
+            m_GeometryCachedProp = serializedObject.FindProperty("m_GeometryCached");
 
             m_ShowStretchOption.valueChanged.AddListener(Repaint);
             m_ShowStretchOption.value = ShouldShowStretchOption();
@@ -343,7 +347,10 @@ namespace UnityEditor.U2D
             serializedObject.Update();
             EditorGUILayout.PropertyField(m_SpriteShapeProp, Contents.spriteShapeProfile);
 
-            DoEditButton<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
+            var hasEditToolChanged = DoEditButtonChecked<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
+            if (hasEditToolChanged && !EditorTools.EditorTools.activeToolType.Equals(typeof(SpriteShapeEditorTool)))
+                SpriteShapeUpdateCache.UpdateCache(targets);
+
             DoPathInspector<SpriteShapeEditorTool>();
             var pathTool = SpriteShapeEditorTool.activeSpriteShapeEditorTool;
 
@@ -406,6 +413,35 @@ namespace UnityEditor.U2D
                 EditorGUILayout.PropertyField(m_OptimizeGeometryProp, Contents.optimizeGeometryLabel);
             EditorGUILayout.PropertyField(m_EnableTangentsProp, Contents.enableTangentsLabel);
 
+            if (EditorTools.EditorTools.activeToolType == typeof(SpriteShapeEditorTool))
+            {
+                // Cache Geometry is only editable for Scene Objects or when in Prefab Isolation Mode. 
+                if (Selection.gameObjects.Length == 1 && Selection.transforms.Contains(Selection.gameObjects[0].transform))
+                {
+                    EditorGUI.BeginChangeCheck();
+                    EditorGUILayout.PropertyField(m_GeometryCachedProp, Contents.cacheGeometryLabel);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (m_GeometryCachedProp.boolValue)
+                        {
+                            var geometryCache = m_SpriteShapeController.spriteShapeGeometryCache;
+                            if (!geometryCache)
+                                geometryCache = m_SpriteShapeController.gameObject
+                                    .AddComponent<SpriteShapeGeometryCache>();
+                            geometryCache.hideFlags = HideFlags.HideInInspector;
+                        }
+                        else
+                        {
+                            if (m_SpriteShapeController.spriteShapeGeometryCache)
+                                Object.DestroyImmediate(m_SpriteShapeController.spriteShapeGeometryCache);
+                        }
+
+                        m_SpriteShapeController.RefreshSpriteShape();
+                    }
+                }
+                SpriteShapeUpdateCache.s_cacheGeometrySet = true;
+            }
+
             EditorGUI.BeginChangeCheck();
             var threshold = EditorGUILayout.Slider(Contents.cornerThresholdDetail, m_CornerAngleThresholdProp.floatValue, 0.0f, 90.0f);
             if (EditorGUI.EndChangeCheck())
@@ -435,8 +471,8 @@ namespace UnityEditor.U2D
                 EditorGUILayout.PropertyField(m_ColliderAutoUpdate, Contents.updateColliderLabel);
                 if (m_ColliderAutoUpdate.boolValue)
                 { 
-                EditorGUILayout.PropertyField(m_ColliderOffsetProp, Contents.colliderOffset);
-                EditorGUILayout.PropertyField(m_OptimizeColliderProp, Contents.optimizeColliderLabel);
+                    EditorGUILayout.PropertyField(m_ColliderOffsetProp, Contents.colliderOffset);
+                    EditorGUILayout.PropertyField(m_OptimizeColliderProp, Contents.optimizeColliderLabel);
                     if (m_OptimizeColliderProp.boolValue)
                         EditorGUILayout.IntPopup(m_ColliderDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.colliderDetail);
                 }
@@ -514,6 +550,50 @@ namespace UnityEditor.U2D
             }
             Handles.matrix = oldMatrix;
             Handles.color = oldColor;
+        }
+    }
+
+    [UnityEditor.InitializeOnLoad]
+    internal static class SpriteShapeUpdateCache
+    {
+
+        internal static bool s_cacheGeometrySet = false;
+        static SpriteShapeUpdateCache()
+        {
+            UnityEditor.EditorApplication.playModeStateChanged += change =>
+            {
+                if (change == UnityEditor.PlayModeStateChange.ExitingEditMode)
+                    UpdateSpriteShapeCacheInOpenScenes();
+            };
+        }
+
+        static void UpdateSpriteShapeCacheInOpenScenes()
+        {
+            for (int i = 0; s_cacheGeometrySet && (i < SceneManager.sceneCount); ++i)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                var gos = scene.GetRootGameObjects();
+                foreach (var go in gos)
+                {
+                    var scs = go.GetComponentsInChildren<SpriteShapeController>();
+                    foreach (var sc in scs)
+                        if (sc.spriteShapeGeometryCache)
+                            sc.spriteShapeGeometryCache.UpdateGeometryCache();
+                }
+            }
+
+            s_cacheGeometrySet = false;
+        }
+        
+        internal static void UpdateCache(UnityEngine.Object[] targets)
+        {
+            foreach (var t in targets)
+            {
+                var s = t as SpriteShapeController;
+                if (s)
+                    if (s.spriteShapeGeometryCache)
+                        s.spriteShapeGeometryCache.UpdateGeometryCache();
+            }
         }
     }
 
