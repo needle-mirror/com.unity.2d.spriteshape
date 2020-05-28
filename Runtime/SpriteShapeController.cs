@@ -759,15 +759,6 @@ namespace UnityEngine.U2D
             }
         }
 
-#if UNITY_EDITOR
-        void OnDrawGizmos()
-#else
-        void OnGUI()
-#endif
-        {
-            BakeMeshForced();
-        }
-
         Texture2D GetTextureFromIndex(int index)
         {
             if (index == 0)

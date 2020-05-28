@@ -1,5 +1,16 @@
 # Changelog
 
+## [4.1.2] - 2020-05-28
+### Added
+- Sample script GenerateSpriteShapes.cs to demonstrate force generating invisible SpriteShapes on runtime scene load.
+
+### Fixed
+- 1248170 Error occurs when unselecting Cache Geometry for Sprite Shape prefab
+- 1240380 OnGUI in SpriteShapeController creates GC allocs.
+- 1242516 "A Native Collection has not been disposed, resulting in a memory leak" is thrown when 2D Sprite Shape Controller is disabled
+- 1242518 InvalidOperationException thrown continuously on adding "Sprite Shape Controller" Component to a Sprite object
+- 1242498 Disabled corner option does not work on existing spriteshape upgraded from a previous version
+
 ## [4.1.1] - 2020-04-20
 ### Added
 - Added BakeMesh to save generated geometry data.
@@ -13,7 +24,6 @@
 - 1226841 Fix when Collider generation allocation.
 - 1226856 SpriteShape Edge Collider does not extend to End-point even if Edges dont overlap.
 - 1226847 SpriteShape Corner Threshold does not work.
-
 
 ## [4.0.3] - 2020-03-09
 ### Fixed
