@@ -1,8 +1,8 @@
 {
   "name": "com.unity.2d.spriteshape",
-  "version": "4.1.1",
-  "unity": "2020.1",
-  "unityRelease": "0a10",
+  "version": "5.0.0",
+  "unity": "2020.2",
+  "unityRelease": "0a14",
   "displayName": "2D SpriteShape",
   "description": "SpriteShape Runtime & Editor Package contains the tooling and the runtime component that allows you to create very organic looking spline based 2D worlds. It comes with intuitive configurator and a highly performant renderer.",
   "keywords": [
@@ -16,8 +16,8 @@
   "category": "2D",
   "dependencies": {
     "com.unity.mathematics": "1.1.0",
-    "com.unity.2d.common": "3.0.0",
-    "com.unity.2d.path": "3.0.1",
+    "com.unity.2d.common": "4.0.0",
+    "com.unity.2d.path": "4.0.0",
     "com.unity.modules.physics2d": "1.0.0"
   },
   "samples": [
@@ -33,15 +33,15 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.spriteshape.tests": "4.1.1",
-    "com.unity.2d.common.tests": "3.0.0"
+    "com.unity.2d.spriteshape.tests": "5.0.0",
+    "com.unity.2d.common.tests": "4.0.0"
   },
   "upmCi": {
-    "footprint": "a890c1034f9ec545d9212d75dfe8394d0e4b2111"
+    "footprint": "f9ffe3adb1dbc8b318e6d6b521e23dc9458ba8c3"
   },
   "repository": {
-    "type": "git",
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
-    "revision": "43ebcd28b387c0a52efed484cb7d9242b9d7cf6f"
+    "type": "git",
+    "revision": "4651ccecac488987a6b5bbb033282cb61de0e007"
   }
 }

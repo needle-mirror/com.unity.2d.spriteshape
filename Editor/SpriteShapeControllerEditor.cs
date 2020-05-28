@@ -415,7 +415,8 @@ namespace UnityEditor.U2D
 
             if (EditorTools.EditorTools.activeToolType == typeof(SpriteShapeEditorTool))
             {
-                if (Selection.gameObjects.Length == 1)
+                // Cache Geometry is only editable for Scene Objects or when in Prefab Isolation Mode. 
+                if (Selection.gameObjects.Length == 1 && Selection.transforms.Contains(Selection.gameObjects[0].transform))
                 {
                     EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(m_GeometryCachedProp, Contents.cacheGeometryLabel);

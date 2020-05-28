@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.0.0] - 2020-05-28
+### Added
+- Sample script GenerateSpriteShapes.cs to demonstrate force generating invisible SpriteShapes on runtime scene load.
+
+### Changed
+- Version bump for Unity 2020.2
+
+### Fixed
+- 1246133 Error occurs when unselecting Cache Geometry for Sprite Shape prefab
+- 1240380 OnGUI in SpriteShapeController creates GC allocs.
+- 1235972 "A Native Collection has not been disposed, resulting in a memory leak" is thrown when 2D Sprite Shape Controller is disabled
+- 1240514 InvalidOperationException thrown continuously on adding "Sprite Shape Controller" Component to a Sprite object
+- 1241841 Disabled corner option does not work on existing spriteshape upgraded from a previous version
+
 ## [4.1.1] - 2020-04-20
 ### Added
 - Added BakeMesh to save generated geometry data.

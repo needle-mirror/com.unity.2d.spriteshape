@@ -17,14 +17,14 @@ namespace UnityEditor.U2D
             return angleRange;
         }
 
-        [MenuItem("Assets/Create/Sprite Shape Profile/Open Shape", false, 358)]
+        //[MenuItem("Assets/Create/Sprite Shape Profile/Open Shape", false, 358)]
         public static void CreateNewSpriteStrip()
         {
             UnityEngine.U2D.SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
             newSpriteShape.angleRanges.Add(CreateAngleRange(-180.0f, 180.0f, 0));
         }
 
-        [MenuItem("Assets/Create/Sprite Shape Profile/Closed Shape", false, 359)]
+        //[MenuItem("Assets/Create/Sprite Shape Profile/Closed Shape", false, 359)]
         public static void CreateNewSpriteShape()
         {
             UnityEngine.U2D.SpriteShape newSpriteShape = SpriteShapeEditorUtility.CreateSpriteShapeAsset();
@@ -34,7 +34,7 @@ namespace UnityEditor.U2D
             newSpriteShape.angleRanges.Add(CreateAngleRange(45.0f, 135.0f, 1));
         }
 
-        [MenuItem("GameObject/2D Object/Sprite Shape")]
+        //[MenuItem("GameObject/2D Object/Sprite Shape")]
         internal static void CreateSpriteShapeEmpty()
         {
             SpriteShapeEditorUtility.SetShapeFromAsset(SpriteShapeEditorUtility.CreateSpriteShapeControllerFromSelection());
