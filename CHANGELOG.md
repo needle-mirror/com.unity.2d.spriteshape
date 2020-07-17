@@ -1,5 +1,15 @@
 # Changelog
 
+## [3.0.13] - 2020-07-17
+### Changed
+- If Geometry is baked using SpriteShapeGeometryCache, do not check for dirty once data is updated to prevent GC.
+- Updated Help Section to point to the correct URLs.
+
+### Fixed
+- 1242910 Unable to add item on Resetting the Preset of the SpriteShapeProfile
+- 1260990 Exception thrown continuously when Undo operation is performed with sprites are assigned earlier
+- 1263318 BakeCollider requires GC every frame even when there are no changes in SpriteShape
+
 ## [3.0.12] - 2020-05-28
 ### Added
 - Added BakeMesh to save generated geometry data.

@@ -600,7 +600,7 @@ namespace UnityEditor.U2D
 
             var selectedSpriteIndex = GetPreviewSpriteIndex(selectedIndex);
 
-            if (selectedSpriteIndex == kInvalidMinimum)
+            if (selectedSpriteIndex == kInvalidMinimum || selectedSpriteIndex >= sprites.Count)
                 return;
 
             var sprite = sprites[selectedSpriteIndex];
