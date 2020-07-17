@@ -12,7 +12,7 @@ namespace UnityEngine.U2D
     [ExecuteInEditMode]
     [RequireComponent(typeof(SpriteShapeRenderer))]
     [DisallowMultipleComponent]
-    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@latest/index.html")]
+    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@latest/index.html?subfolder=/manual/SSController.html")]
     public class SpriteShapeController : MonoBehaviour
     {
         // Internal Dataset.
@@ -410,6 +410,16 @@ namespace UnityEngine.U2D
         public JobHandle BakeMesh()
         {
             JobHandle jobHandle = default;
+
+#if !UNITY_EDITOR            
+            if (spriteShapeGeometryCache)
+            {
+                // If SpriteShapeGeometry has already been uploaded, don't bother checking further.
+                if (0 != spriteShapeGeometryCache.maxArrayCount && 0 != m_ActiveSplineHash)
+                    return jobHandle;
+            }
+#endif                
+
             bool valid = ValidateSpline();
 
             if (valid)
@@ -734,6 +744,9 @@ namespace UnityEngine.U2D
                             polygonCollider.points = m_ColliderSegment.ToArray();
                     }
                 }
+                // Dispose Collider as its no longer needed.
+                m_ColliderData.Dispose();
+                
 #if UNITY_EDITOR
                 if (UnityEditor.SceneView.lastActiveSceneView != null)
                     UnityEditor.SceneView.lastActiveSceneView.Repaint();
