@@ -6,7 +6,9 @@ The __Sprite Shape Controller__ component is automatically attached to the GameO
 
 The default component settings below are displayed when Edit Spline is not enabled.
 
-![Sprite Shape Controller property settings](images/2019_3_SSController_noedit.png) 
+![Sprite Shape Controller property settings](images/SpriteShapeController_propUpdate.png)
+
+ 
 
 | __Property__                                                 | __Function__                                                 |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -16,10 +18,13 @@ The default component settings below are displayed when Edit Spline is not enabl
 | __Detail__                                                   | Select the tessellation quality of the rendered Sprite Shape mesh. High/Medium/Low Quality options available. |
 | __Open Ended__                                               | Disable to connect both ends of the Sprite Shape together to form an enclosed Shape. Enable to leave both ends of the Sprite Shape unconnected. |
 | __Adaptive UV__                                              | Enabled by default. When enabled, Unity attempts to seamlessly tile the Sprites along the Sprite Shape path by deforming the Sprites to between Control Points. Disable this property to tile Sprites with no deformation and at  their exact width. Sprites may appear cutoff if the space between Control Points is shorter than the width of the Sprite. |
+| __Optimize Geometry__                                        | Enable this property to minimize the triangle count of the Sprite Shape’s inner geometry. |
+| __Enable Tangents__                                          | Enable this property if there are features which require tangent calculations, such as when utilizing the Shaders with the [2D Universal Render Pipeline](https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@9.0/manual/2d-index.html). |
+| __Corner Threshold__                                         | Use this slider to set the threshold of when a point is considered a corner of the Sprite Shape, where the value is the angle between adjacent edges and angles at the. A point is considered a corner at the threshold value and lower. The default value is 30 degrees. Set a custom value to override this default value. |
 | __Fill__                                                     | -                                                            |
 | __Stretch UV__                                               | Enable this setting to have Unity stretch the UV of the Fill texture across the Full Rect of the Sprite Shape. |
-| __Pixels Per Unit__ (only available when Stretch UV is disabled) | This values affect the appearance of the Fill texture of the Sprite Shape. This value affects the scale of the Fill texture, with higher values reducing the size of the texture. The default value is 100. |
-| __World Space UV__ (only available when __Stretch UV__ is disabled) | Enable to apply the Fill texture according to the World Space UV, instead of per GameObject UV. |
+| __Pixels Per Unit (only available when Stretch UV is disabled)__ | This values affect the appearance of the Fill texture of the Sprite Shape. This value affects the scale of the Fill texture, with higher values reducing the size of the texture. The default value is 100. |
+| __World Space UV (only available when Stretch UV is disabled)__ | Enable to apply the Fill texture according to the World Space UV, instead of per GameObject UV. |
 
 ### With Edit Spline enabled and a Control Point selected
 

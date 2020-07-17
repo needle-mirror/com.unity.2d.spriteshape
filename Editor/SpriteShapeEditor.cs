@@ -411,7 +411,7 @@ namespace UnityEditor.U2D
 
         private void DoCreateRangeButton()
         {
-            if (selectedIndex != kInvalidMinimum)
+            if (selectedIndex != kInvalidMinimum && angleRanges.Count != 0)
                 return;
 
             EditorGUILayout.BeginHorizontal();
@@ -600,7 +600,7 @@ namespace UnityEditor.U2D
 
             var selectedSpriteIndex = GetPreviewSpriteIndex(selectedIndex);
 
-            if (selectedSpriteIndex == kInvalidMinimum)
+            if (selectedSpriteIndex == kInvalidMinimum || selectedSpriteIndex >= sprites.Count)
                 return;
 
             var sprite = sprites[selectedSpriteIndex];
