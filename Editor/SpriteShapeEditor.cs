@@ -411,7 +411,7 @@ namespace UnityEditor.U2D
 
         private void DoCreateRangeButton()
         {
-            if (selectedIndex != kInvalidMinimum)
+            if (selectedIndex != kInvalidMinimum && angleRanges.Count != 0)
                 return;
 
             EditorGUILayout.BeginHorizontal();

@@ -1,5 +1,11 @@
 # Changelog
 
+## [3.0.14] - 2020-08-31
+### Fixed
+
+- 1271231 Sprite Variant Window does not appear in Sprite Shape Controller Component when selecting a Spline
+- 1268305 Unable to add item on Resetting the Preset of the SpriteShapeProfile
+
 ## [3.0.13] - 2020-07-17
 ### Changed
 - If Geometry is baked using SpriteShapeGeometryCache, do not check for dirty once data is updated to prevent GC.

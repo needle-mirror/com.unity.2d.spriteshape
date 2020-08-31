@@ -87,6 +87,7 @@ namespace UnityEditor.U2D
         int m_SelectedPoint = -1;
         int m_SelectedAngleRange = -1;
         int m_SpriteShapeHashCode = 0;
+        int m_SplineHashCode = 0;
         List<ShapeSegment> m_ShapeSegments = new List<ShapeSegment>();
         SpriteSelector spriteSelector = new SpriteSelector();
 
@@ -279,11 +280,12 @@ namespace UnityEditor.U2D
             var sc = target as SpriteShapeController;
 
             // Either SpriteShape Asset or SpriteShape Data has changed. 
-            if (m_SpriteShapeHashCode != sc.spriteShapeHashCode)
+            if (m_SpriteShapeHashCode != sc.spriteShapeHashCode || m_SplineHashCode != sc.splineHashCode)
             {
                 List<ShapeAngleRange> angleRanges = GetAngleRangeSorted(sc.spriteShape);
                 GenerateSegments(sc, angleRanges);
                 m_SpriteShapeHashCode = sc.spriteShapeHashCode;
+                m_SplineHashCode = sc.splineHashCode;
                 m_SelectedPoint = -1;
             }
         }
