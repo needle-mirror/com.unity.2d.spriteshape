@@ -3,6 +3,7 @@ using System.Linq;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
+using UnityEngine.U2D.UTess;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.SpriteShape.External.LibTessDotNet;
 
@@ -184,6 +185,7 @@ namespace UnityEngine.U2D
         int kModeLinear;
         int kModeContinous;
         int kModeBroken;
+        int kModeUTess;
 
         int kCornerTypeOuterTopLeft;
         int kCornerTypeOuterTopRight;
@@ -1014,13 +1016,8 @@ namespace UnityEngine.U2D
 
             // End
             m_ContourPointCount = ap;
-        }
-
-        void TessellateContour()
-        {
-
             int tessPoints = 0;
-
+            
             // Create Tessallator if required.
             for (int i = 0; i < contourPointCount; ++i)
             {
@@ -1052,7 +1049,109 @@ namespace UnityEngine.U2D
                     m_TessPoints[tessPoints++] = cp.position + (vn * borderPivot);
             }
 
-            m_TessPointCount = tessPoints;
+            m_TessPointCount = tessPoints;            
+        }
+
+        // Burstable UTess2D Version.
+        void TessellateContour()
+        {
+
+            // Generate Contour
+            GenerateContour();
+            
+            // Fill Geom. Generate in Native code until we have a reasonably fast enough Tessellation in NativeArray based Jobs.
+            SpriteShapeSegment geom = m_GeomArray[0];
+            Vector3 pos = m_PosArray[0];
+
+            geom.vertexCount = 0;
+            geom.geomIndex = 0;
+            geom.indexCount = 0;
+            geom.spriteIndex = -1;
+
+            // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
+            if (math.all(m_ShapeParams.shapeData.xw))
+            {
+                // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
+                if (m_TessPointCount > 0)
+                {
+                    if (kOptimizeRender > 0)
+                        OptimizePoints(kRenderQuality, ref m_TessPoints, ref m_TessPointCount);
+
+                    int dataLength = m_TessPointCount;
+                    NativeArray<TessEdge> edges = new NativeArray<TessEdge>(dataLength - 1, Allocator.Temp);
+                    NativeArray<float2> points = new NativeArray<float2>(dataLength - 1, Allocator.Temp);
+
+                    for (int i = 0; i < points.Length; ++i)
+                        points[i] = m_TessPoints[i];
+                    
+                    for (int i = 0; i < dataLength - 2; ++i)
+                    {
+                        TessEdge te = edges[i];
+                        te.a = i;
+                        te.b = i + 1;
+                        edges[i] = te;
+                    }
+                    TessEdge tee = edges[dataLength - 2];
+                    tee.a = dataLength - 2;
+                    tee.b = 0;
+                    edges[dataLength - 2] = tee;
+                    
+                    Tessellator st = new Tessellator();
+                    st.Triangulate(points, edges);
+                    st.ApplyDelaunay(points, edges);
+                    NativeArray<TessCell> cellsOut = st.RemoveExterior(ref m_TessPointCount);
+
+                    for (int i = 0; i < m_TessPointCount; ++i)
+                    {
+
+                        var a = (UInt16)cellsOut[i].a;
+                        var b = (UInt16)cellsOut[i].b;
+                        var c = (UInt16)cellsOut[i].c;
+                        if ( a != 0 || b != 0 || c != 0)
+                        {
+                            m_IndexArray[m_ActiveIndexCount++] = a;
+                            m_IndexArray[m_ActiveIndexCount++] = c;
+                            m_IndexArray[m_ActiveIndexCount++] = b;
+                        }
+                        
+                    }
+
+                    cellsOut.Dispose();
+                    points.Dispose();
+                    edges.Dispose();
+                    st.Cleanup();
+
+                    if (m_ActiveIndexCount > 0)
+                    {
+
+                        for (m_ActiveVertexCount = 0; m_ActiveVertexCount < m_TessPointCount + 3; ++m_ActiveVertexCount)
+                        {
+                            pos = new Vector3(m_TessPoints[m_ActiveVertexCount].x, m_TessPoints[m_ActiveVertexCount].y, 0);
+                            m_PosArray[m_ActiveVertexCount] = pos;
+                        }
+
+                        m_IndexDataCount = geom.indexCount = m_ActiveIndexCount;
+                        m_VertexDataCount = geom.vertexCount = m_ActiveVertexCount;
+                        
+                    }
+                }
+            }
+
+            if (m_TanArray.Length > 1)
+            {
+                for (int i = 0; i < m_ActiveVertexCount; ++i)
+                    m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
+            }
+
+            m_GeomArray[0] = geom;
+
+        }        
+        
+        void TessellateContourMainThread()
+        {
+
+            // Generate Contour
+            GenerateContour();
 
             // Fill Geom. Generate in Native code until we have a reasonably fast enough Tessellation in NativeArray based Jobs.
             SpriteShapeSegment geom = m_GeomArray[0];
@@ -2172,9 +2271,18 @@ namespace UnityEngine.U2D
             m_TempPoints[++optimizedColliderPointCount] = pointSet[endColliderPointCount + 1];
             if (isCarpet)
                 m_TempPoints[++optimizedColliderPointCount] = pointSet[0];
-            pointCount = optimizedColliderPointCount + 1;
-            for (int i = 0; i < pointCount; ++i)
-                pointSet[i] = m_TempPoints[i];
+            var localPointCount = optimizedColliderPointCount + 1;
+
+            if (localPointCount > 0)
+            {
+                pointCount = 0;
+                pointSet[pointCount++] = m_TempPoints[0];
+                for (int i = 1; i < localPointCount; ++i)
+                {
+                    if (math.distance(pointSet[pointCount - 1], m_TempPoints[i]) > 0.0001f)
+                        pointSet[pointCount++] = m_TempPoints[i];
+                }
+            }
         }
 
         #endregion
@@ -2359,12 +2467,12 @@ namespace UnityEngine.U2D
             PrepareControlPoints(shapePoints, newMetaData);
             newMetaData.Dispose();
 
-            // Generate Intermediates.
-            GenerateContour();
-            TessellateContour();
+            // Generate Fill. Obsolete API and let's stick with main-thread fill.
+            kModeUTess = 0;            
+            TessellateContourMainThread();
         }
 
-        internal void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, NativeArray<SplinePointMetaData> metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
+        internal void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, NativeArray<SplinePointMetaData> metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites, bool UseUTess)
         {
             // Prepare Inputs.
             PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
@@ -2372,14 +2480,17 @@ namespace UnityEngine.U2D
             PrepareAngleRanges(angleRanges);
             PrepareControlPoints(shapePoints, metaData);
 
-            // Generate Intermediates.
-            GenerateContour();
-            TessellateContour();
+            // Generate Fill.
+            kModeUTess = UseUTess ? 1 : 0;
+            if (0 == kModeUTess)
+                TessellateContourMainThread();
         }        
         
         public void Execute()
         {
             // BURST
+            if (0 != kModeUTess)
+                TessellateContour();
             GenerateSegments();
             UpdateSegments();
             TessellateSegments();

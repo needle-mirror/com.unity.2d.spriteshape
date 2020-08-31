@@ -78,7 +78,9 @@ namespace UnityEngine.U2D
         [SerializeField]
         [HideInInspector]
         bool m_GeometryCached = false;
-
+        // [SerializeField] 
+        // bool m_UTess2D = false;
+        
         #region GetSet
 
         internal bool geometryCached
@@ -384,6 +386,7 @@ namespace UnityEngine.U2D
                 int hashCode = (int)2166136261 ^ spline.GetHashCode();
 
                 // Local Stuff.
+                // hashCode = hashCode * 16777619 ^ (m_UTess2D ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_WorldSpaceUV ? 1 : 0); 
                 hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_GeometryCached ? 1 : 0);
@@ -697,7 +700,7 @@ namespace UnityEngine.U2D
                 }
 
                 var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
-                spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray);
+                spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray, false);
                 jobHandle = spriteShapeJob.Schedule();
                 spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
 

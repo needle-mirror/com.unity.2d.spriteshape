@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.0.2] - 2020-08-31
+
+### Fixed
+- 1267542 Sprite Variant Window does not appear in Sprite Shape Controller Component when selecting a Spline pivot point.
+- 1265846 Dragging Sprite Shape Profile to Hierarchy creates a Game Object in main Scene when being in Prefab Mode
+
 ## [5.0.1] - 2020-07-17
 ### Changed
 - If Geometry is baked using SpriteShapeGeometryCache, do not check for dirty once data is updated to prevent GC.

@@ -43,6 +43,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent optimizeColliderLabel = new GUIContent("Optimize Collider", "Cleanup planar self-intersections and optimize collider points");
             public static readonly GUIContent optimizeGeometryLabel = new GUIContent("Optimize Geometry", "Simplify geometry");
             public static readonly GUIContent cacheGeometryLabel = new GUIContent("Cache Geometry", "Bake geometry data. This will save geometry data on editor and load it on runtime instead of generating.");
+            // public static readonly GUIContent uTess2DLabel = new GUIContent("Fill Tessellation (C# Job)", "Use C# Jobs to generate Fill Geometry. (Edge geometry always uses C# Jobs)");
         }
 
         private SerializedProperty m_SpriteShapeProp;
@@ -63,9 +64,9 @@ namespace UnityEditor.U2D
         private SerializedProperty m_OptimizeGeometryProp;
         private SerializedProperty m_EnableTangentsProp;
         private SerializedProperty m_GeometryCachedProp;
-
+        // private SerializedProperty m_UTess2DGeometryProp;
+        
         private int m_CollidersCount = 0;
-
         private int[] m_QualityValues = new int[] { (int)QualityDetail.High, (int)QualityDetail.Mid, (int)QualityDetail.Low };
         readonly AnimBool m_ShowStretchOption = new AnimBool();
         readonly AnimBool m_ShowNonStretchOption = new AnimBool();
@@ -87,6 +88,7 @@ namespace UnityEditor.U2D
         int m_SelectedPoint = -1;
         int m_SelectedAngleRange = -1;
         int m_SpriteShapeHashCode = 0;
+        int m_SplineHashCode = 0;
         List<ShapeSegment> m_ShapeSegments = new List<ShapeSegment>();
         SpriteSelector spriteSelector = new SpriteSelector();
 
@@ -117,6 +119,7 @@ namespace UnityEditor.U2D
             m_OptimizeGeometryProp = serializedObject.FindProperty("m_OptimizeGeometry");
             m_EnableTangentsProp = serializedObject.FindProperty("m_EnableTangents");
             m_GeometryCachedProp = serializedObject.FindProperty("m_GeometryCached");
+            // m_UTess2DGeometryProp = serializedObject.FindProperty("m_UTess2D");
 
             m_ShowStretchOption.valueChanged.AddListener(Repaint);
             m_ShowStretchOption.value = ShouldShowStretchOption();
@@ -279,11 +282,12 @@ namespace UnityEditor.U2D
             var sc = target as SpriteShapeController;
 
             // Either SpriteShape Asset or SpriteShape Data has changed. 
-            if (m_SpriteShapeHashCode != sc.spriteShapeHashCode)
+            if (m_SpriteShapeHashCode != sc.spriteShapeHashCode || m_SplineHashCode != sc.splineHashCode)
             {
                 List<ShapeAngleRange> angleRanges = GetAngleRangeSorted(sc.spriteShape);
                 GenerateSegments(sc, angleRanges);
                 m_SpriteShapeHashCode = sc.spriteShapeHashCode;
+                m_SplineHashCode = sc.splineHashCode;
                 m_SelectedPoint = -1;
             }
         }
@@ -449,6 +453,12 @@ namespace UnityEditor.U2D
                 m_CornerAngleThresholdProp.floatValue = threshold;
                 updateCollider = true;
             }
+
+            /*
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PropertyField(m_UTess2DGeometryProp, Contents.uTess2DLabel);
+            EditorGUI.indentLevel--;
+            */
 
             EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);

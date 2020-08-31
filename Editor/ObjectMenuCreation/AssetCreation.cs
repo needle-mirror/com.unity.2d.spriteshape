@@ -9,8 +9,7 @@ namespace UnityEditor.U2D.SpriteShape
 {
     internal static class AssetCreation
     {
-        const int k_AssetMenuPriority = 81;
-        const int k_SpriteShapeAssetMenuPriority = k_AssetMenuPriority + 2;
+        const int k_SpriteShapeAssetMenuPriority = 9;
         static internal Action<int, ProjectWindowCallback.EndNameEditAction, string, Texture2D, string> StartNewAssetNameEditingDelegate = ProjectWindowUtil.StartNameEditingIfProjectWindowExists;
         
         [MenuItem("Assets/Create/2D/Sprite Shape Profile", priority = k_SpriteShapeAssetMenuPriority)]

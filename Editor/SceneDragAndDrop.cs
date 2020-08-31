@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.U2D;
 using System.Collections.Generic;
+using UnityEditor.Experimental.SceneManagement;
 using UnityEditor.U2D.SpriteShape;
 using Object = UnityEngine.Object;
 
@@ -124,8 +125,18 @@ namespace UnityEditor.U2D
                                     PositionSceneDragObjects(s_SceneDragObjects, sceneView, evt.mousePosition);
                             }
 
+                            var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+
                             foreach (GameObject dragGO in s_SceneDragObjects)
                             {
+                                if (prefabStage != null)
+                                {
+                                    var parTransform = Selection.activeTransform != null
+                                        ? Selection.activeTransform
+                                        : prefabStage.prefabContentsRoot.transform;
+                                    dragGO.transform.SetParent(parTransform, true);
+                                }
+
                                 Undo.RegisterCreatedObjectUndo(dragGO, "Create Shape");
                                 dragGO.hideFlags = HideFlags.None;
                             }
