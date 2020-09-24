@@ -18,13 +18,17 @@ Sprite Shapes comprise of two parts - the [Sprite Shape Profile](SSProfile.md) A
 
 ## Importing Sprites for Sprite Shapes
 
-We recommend using the following settings when importing Sprites for a Sprite Shape:
+When importing Sprites, use the following [property settings](https://docs.unity3d.com/Manual/TextureTypes.html#Sprite) to ensure that the Sprites are compatible for use with Sprite Shape:
 
-1. [Texture Type](https://docs.unity3d.com/Manual/TextureTypes.html#Sprite) - Set this to __Sprite (2D and UI)__. Other texture types are not supported for Sprite Shapes.
-2. __Sprite Mode__ - Set this to __Single__ if the texture contains only a single Sprite.
-3. __Mesh Type__ - Set this to __Full Rect__. 
+1. [Texture Type](https://docs.unity3d.com/Manual/TextureTypes.html#Sprite) - Set this to ‘Sprite (2D and UI)’. Other Texture types are not supported for Sprite Shapes.
+2. **Sprite Mode** - Set this to ‘Single’ if the Texture contains only a single Sprite.
+3. __Mesh Type__ - This must be set to __Full Rect__ for the Sprite to be used with Sprite Shape.
 
-## Sprite Shape Workflow
+In addition, if the Sprites used for the Sprite Shape are part of a Sprite Atlas, disable both **Allow Rotation** and **Tight Packing** options under the Sprite Atlas’ properties so that the Sprites can be used by the Sprite Shape.
+
+![](images/SpriteAtlas_properties.png)
+
+## Sprite Shape workflow
 
 Create __Sprite Shapes__ in following the steps:
 

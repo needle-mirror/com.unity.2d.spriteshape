@@ -216,6 +216,12 @@ namespace UnityEngine.U2D
             get { return m_VertexDataCount; }
         }
 
+        // Return final Vertex Array Count
+        private int vertexArrayCount
+        {
+            get { return m_VertexArrayCount; }
+        }
+        
         // Return Index Data Count
         private int indexDataCount
         {
@@ -1215,10 +1221,9 @@ namespace UnityEngine.U2D
         void CalculateBoundingBox()
         {
             Bounds bounds = new Bounds();
-
-            if (vertexDataCount > 0)
+            
             { 
-                for (int i = 0; i < vertexDataCount; ++i)
+                for (int i = 0; i < vertexArrayCount; ++i)
                 {
                     Vector3 pos = m_PosArray[i];
                     bounds.Encapsulate(pos);

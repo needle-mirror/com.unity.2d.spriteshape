@@ -39,19 +39,20 @@ namespace UnityEditor.U2D.SpriteShape
             string resourceFile = "";
             string destName = "";
             int instanceId = 0;
+            string fileName = "";
             if (obj != null)
             {
                 resourceFile = AssetDatabase.GetAssetPath(obj);
-                var fileName = System.IO.Path.GetFileName(resourceFile);
-                destName = AssetDatabase.GenerateUniqueAssetPath(System.IO.Path.Combine(path, fileName));
+                fileName = System.IO.Path.GetFileName(resourceFile);
             }
             else
             {
-                var asset = Activator.CreateInstance<T>();
-                instanceId = asset.GetInstanceID();
-                destName = "Sprite Shape Profile.asset";
+                obj = ObjectFactory.CreateInstance<T>();
+                instanceId = obj.GetInstanceID();
+                fileName = "Sprite Shape Profile.asset";
             }
-            var icon = InternalEditorBridge.GetIconContent<T>().image as Texture2D;
+            destName = AssetDatabase.GenerateUniqueAssetPath(System.IO.Path.Combine(path, fileName));
+            var icon = AssetPreview.GetMiniThumbnail(obj);
             StartNewAssetNameEditing(resourceFile, destName, icon, instanceId);
             return Selection.activeObject as T;
         }
@@ -67,7 +68,10 @@ namespace UnityEditor.U2D.SpriteShape
             public override void Action(int instanceId, string pathName, string resourceFile)
             {
                 var uniqueName = AssetDatabase.GenerateUniqueAssetPath(pathName);
-                if (instanceId == 0 && !string.IsNullOrEmpty(resourceFile))
+                // ProjectWindowUtil.StartNameEditingIfProjectWindowExists(int instanceID, EndNameEditAction endAction, string pathName, Texture2D icon, string resourceFile)
+                // will reset the instanceId to Int32.MaxValue - 1 if its 0. Looks like a new trunk change ?
+                var validInstanceId = (instanceId != 0 && instanceId != InternalEditorBridge.GetAssetCreationInstanceID_ForNonExistingAssets());
+                if (!validInstanceId && !string.IsNullOrEmpty(resourceFile))
                 {
                     AssetDatabase.CopyAsset(resourceFile, uniqueName);
                 }
@@ -76,6 +80,7 @@ namespace UnityEditor.U2D.SpriteShape
                     var obj = EditorUtility.InstanceIDToObject(instanceId);
                     AssetDatabase.CreateAsset(obj, uniqueName);
                 }
+                
             }
         }
     }

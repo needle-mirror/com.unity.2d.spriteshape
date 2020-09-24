@@ -1,7 +1,18 @@
 # Changelog
 
-## [5.0.2] - 2020-08-31
+## [5.1.0] - 2020-09-24
+### Added
+- Added C# Job Tessellation support for Fill Area of SpriteShape.
 
+### Fixed
+- 1274400 SpriteShape Bounding Box does not take into account certain vertices
+- 1273705 Assertion failed exception is thrown on undoing after clicking on Create Range button
+- 1273635 Errors occurs when adding range on Reset-ed Preset of the SpriteShapeProfile
+- 1271817 Icon is missing on creating SpriteShapeProfile at the time of creating
+- 1280016 Unable to create Sprite Shape Profile along with ArgumentNullException thrown in the Project window
+- 1274776 NullReferenceException thrown on performing Redo operation after creating Range property in the SpriteShape profiler preset
+
+## [5.0.2] - 2020-08-31
 ### Fixed
 - 1267542 Sprite Variant Window does not appear in Sprite Shape Controller Component when selecting a Spline pivot point.
 - 1265846 Dragging Sprite Shape Profile to Hierarchy creates a Game Object in main Scene when being in Prefab Mode
