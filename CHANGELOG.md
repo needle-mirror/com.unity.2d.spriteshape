@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.0.0-pre.1] - 2020-10-30
+### Changed
+- Version bump for Unity 2021.1
+- Height is interpolated linearly between control points that are both linear and smoothly if otherwise.  
+
 ## [5.1.0] - 2020-09-24
 ### Added
 - Added C# Job Tessellation support for Fill Area of SpriteShape.

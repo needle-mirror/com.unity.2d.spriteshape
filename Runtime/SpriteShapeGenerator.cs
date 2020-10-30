@@ -638,7 +638,7 @@ namespace UnityEngine.U2D
                 shapePoint.tangentRt = (sp.mode == kModeLinear) ? zero : new float2(sp.rightTangent.x, sp.rightTangent.y);
                 shapePoint.cpInfo = new float2(md.height, 0);
                 shapePoint.cpData = new int4((int)md.spriteIndex, md.cornerMode, sp.mode, 0);
-                shapePoint.exData = new int4(-1, 0, 0, 0);
+                shapePoint.exData = new int4(-1, 0, 0, sp.mode);
                 m_ControlPoints[i] = shapePoint;
             }
             m_ControlPointCount = shapePoints.Length;
@@ -988,7 +988,8 @@ namespace UnityEngine.U2D
                 int j = i + 1;
                 JobControlPoint cp = GetControlPoint(i);
                 JobControlPoint pp = GetControlPoint(j);
-
+                var smoothInterp = cp.exData.w == kModeContinous || pp.exData.w == kModeContinous;
+                
                 float2 p0 = cp.position;
                 float2 p1 = pp.position;
                 float2 sp = p0;
@@ -1007,13 +1008,13 @@ namespace UnityEngine.U2D
                     m_ContourPoints[ap++] = xp;
                     sp = bp;
                 }
-
                 sp = p0;
+                
                 for (int n = 0; n < splineDetail; ++n)
                 {
                     JobContourPoint xp = m_ContourPoints[cap];
                     cpd += math.distance(xp.position, sp);
-                    xp.ptData.x = math.lerp(cp.cpInfo.x, pp.cpInfo.x, cpd / spd);
+                    xp.ptData.x = smoothInterp ? InterpolateSmooth(cp.cpInfo.x, pp.cpInfo.x, cpd / spd) : InterpolateLinear(cp.cpInfo.x, pp.cpInfo.x, cpd / spd);
                     m_ContourPoints[cap++] = xp;
                     sp = xp.position;
                 }
@@ -1530,6 +1531,17 @@ namespace UnityEngine.U2D
             return skip;
         }
 
+        float InterpolateLinear(float a, float b, float t)
+        {
+            return math.lerp(a, b, t);
+        }        
+        
+        float InterpolateSmooth(float a, float b, float t)
+        {
+            float mu2 = (1.0f - math.cos(t * math.PI)) / 2.0f;
+            return (a * (1 - mu2) + b * mu2);
+        }
+        
         void TessellateSegments()
         {
 
@@ -1647,7 +1659,7 @@ namespace UnityEngine.U2D
                             hl = hl + math.length(ip - sp);
 
                             isv.pos = ip;
-                            isv.meta.x = math.lerp(sh, eh, hl / al);
+                            isv.meta.x = InterpolateLinear(sh, eh, hl / al);
                             isv.sprite.x = sprIx;
                             if (math.any(m_VertexData[vertexCount - 1].pos - isv.pos))
                                 m_VertexData[vertexCount++] = isv;
