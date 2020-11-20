@@ -1,5 +1,10 @@
 # Changelog
 
+## [4.1.5] - 2020-11-20
+### Fixed
+
+- 1242518 InvalidOperationException thrown continuously on adding "Sprite Shape Controller" Component to a Sprite object
+
 ## [4.1.4] - 2020-08-31
 ### Fixed
 
