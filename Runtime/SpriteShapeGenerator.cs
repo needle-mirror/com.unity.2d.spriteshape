@@ -207,6 +207,12 @@ namespace UnityEngine.U2D
             get { return m_VertexDataCount; }
         }
 
+        // Return final Vertex Array Count
+        private int vertexArrayCount
+        {
+            get { return m_VertexArrayCount; }
+        }
+        
         // Return Index Data Count
         private int indexDataCount
         {
@@ -1058,10 +1064,9 @@ namespace UnityEngine.U2D
         void CalculateBoundingBox()
         {
             Bounds bounds = new Bounds();
-
-            if (vertexDataCount > 0)
+            
             { 
-                for (int i = 0; i < vertexDataCount; ++i)
+                for (int i = 0; i < vertexArrayCount; ++i)
                 {
                     Vector3 pos = m_PosArray[i];
                     bounds.Encapsulate(pos);
@@ -1781,7 +1786,7 @@ namespace UnityEngine.U2D
                 Vector3 pos = m_PosArray[ic];
                 Vector2 uv0 = m_Uv0Array[ic];
                 bool ccw = (corner <= kCornerTypeOuterBottomRight);
-                int vertexArrayCount = m_VertexArrayCount;
+                int vArrayCount = m_VertexArrayCount;
 
                 for (int i = 0; i < m_CornerCount; ++i)
                 {
@@ -1834,7 +1839,7 @@ namespace UnityEngine.U2D
 
                 if (m_TanArray.Length > 1)
                 {
-                    for (int i = vertexArrayCount; i < m_VertexArrayCount; ++i)
+                    for (int i = vArrayCount; i < m_VertexArrayCount; ++i)
                         m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
                 }
 

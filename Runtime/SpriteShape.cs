@@ -259,6 +259,7 @@ namespace UnityEngine.U2D
 
         void ResetCornerList()
         {
+            m_CornerSprites.Clear();
             m_CornerSprites.Insert(0, GetCornerSprite(CornerType.OuterTopLeft));
             m_CornerSprites.Insert(1, GetCornerSprite(CornerType.OuterTopRight));
             m_CornerSprites.Insert(2, GetCornerSprite(CornerType.OuterBottomLeft));
@@ -277,6 +278,7 @@ namespace UnityEngine.U2D
 
         void Reset()
         {
+            m_Angles.Clear();
             ResetCornerList();
         }
 

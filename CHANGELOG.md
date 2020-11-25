@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.15] - 2020-11-25
+### Fixed
+
+- 1295137 Fixed error when adding AngleRange to SpriteShapeProfile Preset that was reset before.
+- 1242531 Fixed InvalidOperationException thrown continuously on adding SpriteShapeController component to a GameObject with SpriteRenderer.
+- 1293739 Fixed ArgumentException when tangents and cache geometry are enabled on SpriteShapeController component.
+
 ## [3.0.14] - 2020-08-31
 ### Fixed
 

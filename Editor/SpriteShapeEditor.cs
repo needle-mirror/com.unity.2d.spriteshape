@@ -125,7 +125,7 @@ namespace UnityEditor.U2D
 
         public void OnEnable()
         {
-            if (target == null)
+            if (targets == null || targets.Length == 0)
                 return;
 
             m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), m_PreviewAngle);
@@ -402,7 +402,9 @@ namespace UnityEditor.U2D
 
                 EditorGUILayout.Space();
 
-                if (m_AngleRangeSpriteList != null && angleRanges.Count > 0)
+                var arSize = m_AngleRangesProp.arraySize;
+                
+                if (m_AngleRangeSpriteList != null && arSize > 0)
                     m_AngleRangeSpriteList.DoLayoutList();
                 else
                     m_EmptySpriteList.DoLayoutList();
@@ -568,7 +570,7 @@ namespace UnityEditor.U2D
             serializedObject.UpdateIfRequiredOrScript();
 
             Debug.Assert(angleRanges.Count == m_AngleRangesProp.arraySize);
-            Debug.Assert(selectedIndex < angleRanges.Count);
+            Debug.Assert(selectedIndex < angleRanges.Count || selectedIndex == 0);
 
             if (targets.Length == 1 && isSelectedIndexValid)
             {
