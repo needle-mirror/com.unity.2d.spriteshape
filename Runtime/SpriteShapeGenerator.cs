@@ -2445,7 +2445,21 @@ namespace UnityEngine.U2D
                     if (kOptimizeCollider > 0)
                     { 
                         OptimizePoints(kColliderQuality, ref m_ColliderPoints, ref m_ColliderPointCount);
-                        TrimOverlaps();
+                        if (m_ControlPointCount > 4)
+                            TrimOverlaps();
+                        else
+                        {
+                            float2 prev = m_TempPoints[0];
+                            int i = 0;
+                            for (int j = 1; j < m_ColliderPointCount; ++j)
+                            {
+                                float dist = math.length(m_TempPoints[j] - prev);
+                                if (dist > kEpsilon)
+                                    m_ColliderPoints[i++] = m_TempPoints[j];
+                                prev = m_TempPoints[j];
+                            }
+                            m_ColliderPointCount = i;
+                        }
                     }
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);

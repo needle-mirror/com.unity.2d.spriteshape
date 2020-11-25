@@ -402,7 +402,9 @@ namespace UnityEditor.U2D
 
                 EditorGUILayout.Space();
 
-                if (m_AngleRangeSpriteList != null && angleRanges.Count > 0)
+                var arSize = m_AngleRangesProp.arraySize;
+                
+                if (m_AngleRangeSpriteList != null && arSize > 0)
                     m_AngleRangeSpriteList.DoLayoutList();
                 else
                     m_EmptySpriteList.DoLayoutList();

@@ -1,5 +1,15 @@
 # Changelog
 
+## [6.0.0-pre.2] - 2020-11-25
+### Changed
+- Update license file
+
+### Fixed
+- 1273635 Fixed error when adding AngleRange to SpriteShapeProfile Preset that was reset before.
+- 1287237 Fixed ArgumentException when tangents and cache geometry are enabled on SpriteShapeController component.
+- 1240514 Fixed InvalidOperationException thrown continuously on adding SpriteShapeController component to a GameObject with SpriteRenderer.
+- 1284920 Fixed PolygonCollider2D generated with a single vertex when a GameObject has a SpriteShapeController with just 3 vertices.
+
 ## [6.0.0-pre.1] - 2020-10-30
 ### Changed
 - Version bump for Unity 2021.1

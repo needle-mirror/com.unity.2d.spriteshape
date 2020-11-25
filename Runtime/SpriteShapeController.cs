@@ -41,6 +41,7 @@ namespace UnityEngine.U2D
         // Hash Check.
         int m_ActiveSplineHash = 0;
         int m_ActiveSpriteShapeHash = 0;
+        JobHandle m_JobHandle;
         SpriteShapeParameters m_ActiveShapeParameters;
 
         // Serialized Data.
@@ -86,6 +87,7 @@ namespace UnityEngine.U2D
         internal bool geometryCached
         {
             get { return m_GeometryCached; }
+            set { m_GeometryCached = value; }
         }
 
         internal int splineHashCode
@@ -404,9 +406,13 @@ namespace UnityEngine.U2D
             return false;
         }
 
-        void OnWillRenderObject()
+        void LateUpdate()
         {
             BakeCollider();
+        }
+
+        void OnWillRenderObject()
+        {
             BakeMesh();
         }
 
@@ -701,8 +707,10 @@ namespace UnityEngine.U2D
 
                 var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
                 spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray, m_UTess2D);
-                jobHandle = spriteShapeJob.Schedule();
-                spriteShapeRenderer.Prepare(jobHandle, m_ActiveShapeParameters, m_SpriteArray);
+                // Only update Handle for an actual Job is scheduled.
+                m_JobHandle = spriteShapeJob.Schedule();
+                spriteShapeRenderer.Prepare(m_JobHandle, m_ActiveShapeParameters, m_SpriteArray);
+                jobHandle = m_JobHandle;
 
 #if UNITY_EDITOR
                 if (spriteShapeGeometryCache && geometryCached)
@@ -724,6 +732,10 @@ namespace UnityEngine.U2D
 
         public void BakeCollider()
         {
+            // Previously this must be explicitly called if using BakeMesh.
+            // But now we do it internally. BakeCollider_CanBeCalledMultipleTimesWithoutJobComplete
+            m_JobHandle.Complete();
+            
             if (m_ColliderData.IsCreated)
             {
                 if (autoUpdateCollider)
@@ -750,7 +762,7 @@ namespace UnityEngine.U2D
                 // Dispose Collider as its no longer needed.
                 m_ColliderData.Dispose();
 #if UNITY_EDITOR
-                if (UnityEditor.SceneView.lastActiveSceneView != null)
+                if (UnityEditor.SceneView.lastActiveSceneView)
                     UnityEditor.SceneView.lastActiveSceneView.Repaint();
 #endif
             }

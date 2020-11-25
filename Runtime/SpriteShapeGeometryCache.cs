@@ -100,12 +100,12 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
 
             m_PosArray = new Vector3[vertexCount];
             m_Uv0Array = new Vector2[vertexCount];
-            m_TanArray = new Vector4[m_TanArrayCache.Length];
+            m_TanArray = new Vector4[vertexCount];
             m_IndexArray = new ushort[indexCount];
 
             SpriteShapeCopyUtility<Vector3>.Copy(m_PosArray, m_PosArrayCache, vertexCount);
             SpriteShapeCopyUtility<Vector2>.Copy(m_Uv0Array, m_Uv0ArrayCache, vertexCount);
-            SpriteShapeCopyUtility<Vector4>.Copy(m_TanArray, m_TanArrayCache, m_TanArrayCache.Length);
+            SpriteShapeCopyUtility<Vector4>.Copy(m_TanArray, m_TanArrayCache, vertexCount);
             SpriteShapeCopyUtility<ushort>.Copy(m_IndexArray, m_IndexArrayCache, indexCount);
 
             m_MaxArrayCount = (vertexCount > indexCount) ? vertexCount : indexCount;
