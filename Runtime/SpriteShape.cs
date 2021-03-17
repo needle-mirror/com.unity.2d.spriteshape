@@ -262,7 +262,10 @@ namespace UnityEngine.U2D
 
         [SerializeField]
         bool m_UseSpriteBorders = true;
-
+        
+#if UNITY_EDITOR        
+        internal static event Action<SpriteShape> onReset = null;
+#endif        
         private CornerSprite GetCornerSprite(CornerType cornerType)
         {
             var cornerSprite = new CornerSprite();
@@ -295,6 +298,9 @@ namespace UnityEngine.U2D
         {
             m_Angles.Clear();
             ResetCornerList();
+#if UNITY_EDITOR
+            onReset?.Invoke(this);
+#endif            
         }
 
         internal static int GetSpriteShapeHashCode(SpriteShape spriteShape)

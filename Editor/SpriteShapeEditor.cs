@@ -27,7 +27,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent spritesLabel = new GUIContent("Sprites");
             public static readonly GUIContent angleRangeLabel = new GUIContent("Angle Range ({0})");
             public static readonly GUIContent wrapModeErrorLabel = new GUIContent("Fill texture must have wrap modes set to Repeat. Please re-import.");
-
+            public static readonly GUIContent createRangeButtonLabel = new GUIContent("Create Range");
             public static readonly Color proBackgroundColor = new Color32(49, 77, 121, 255);
             public static readonly Color proBackgroundRangeColor = new Color32(25, 25, 25, 128);
             public static readonly Color proColor1 = new Color32(10, 46, 42, 255);
@@ -123,6 +123,17 @@ namespace UnityEditor.U2D
             EditorUtility.SetDirty(spriteShape);
         }
 
+        void OnReset(UnityEngine.U2D.SpriteShape obj)
+        {
+            InitCache();
+        }
+
+        void InitCache()
+        {
+            selectedIndex = SpriteShapeEditorUtility.GetRangeIndexFromAngle(angleRanges, m_PreviewAngle);
+            SetupAngleRangeController();
+        }
+        
         public void OnEnable()
         {
             if (targets == null || targets.Length == 0)
@@ -136,11 +147,15 @@ namespace UnityEditor.U2D
             m_CornerSpritesProp = this.serializedObject.FindProperty("m_CornerSprites");
             m_FillOffsetProp = this.serializedObject.FindProperty("m_FillOffset");
 
-            selectedIndex = SpriteShapeEditorUtility.GetRangeIndexFromAngle(angleRanges, m_PreviewAngle);
-
-            SetupAngleRangeController();
+            InitCache();
 
             Undo.undoRedoPerformed += UndoRedoPerformed;
+            UnityEngine.U2D.SpriteShape.onReset += OnReset;
+        }
+
+        public void OnDisable()
+        {
+            UnityEngine.U2D.SpriteShape.onReset -= OnReset;
         }
 
         public override bool RequiresConstantRepaint()
@@ -188,13 +203,14 @@ namespace UnityEditor.U2D
         private void OnDestroy()
         {
             if (m_PreviewSpriteMesh)
-                Object.DestroyImmediate(m_PreviewSpriteMesh);
+                UnityEngine.Object.DestroyImmediate(m_PreviewSpriteMesh);
 
             Undo.undoRedoPerformed -= UndoRedoPerformed;
         }
 
         private void UndoRedoPerformed()
         {
+            InitCache();
             OnSelectionChange();
         }
 
@@ -380,6 +396,8 @@ namespace UnityEditor.U2D
                 order = m_CurrentAngleRange.order;
             }
 
+            var arSize = m_AngleRangesProp.arraySize;
+            
             using (new EditorGUI.DisabledGroupScope(m_CurrentAngleRange == null))
             {
                 DrawHeader(new GUIContent(string.Format(Contents.angleRangeLabel.text, (end - start))));
@@ -402,8 +420,6 @@ namespace UnityEditor.U2D
 
                 EditorGUILayout.Space();
 
-                var arSize = m_AngleRangesProp.arraySize;
-                
                 if (m_AngleRangeSpriteList != null && arSize > 0)
                     m_AngleRangeSpriteList.DoLayoutList();
                 else
@@ -419,7 +435,7 @@ namespace UnityEditor.U2D
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Create Range", GUILayout.MaxWidth(100f)))
+            if (GUILayout.Button(Contents.createRangeButtonLabel, GUILayout.MaxWidth(100f)))
             {
                 RegisterUndo("Create Range");
                 controller.CreateRange();

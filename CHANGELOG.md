@@ -1,5 +1,17 @@
 # Changelog
 
+## [6.0.0] - 2021-03-17
+### Changed
+- Update version for release
+
+## [6.0.0-pre.3] - 2021-02-28
+### Fixed
+- 1294930 Exception thrown continuously on creating Range in the preset of Sprite Shape when Undo/Redo operation is performed earlier
+- 1303998 Enabling Fill Tessellation on controller and setting the profile's fill offset to negative causes errors
+- 1293760 Sprite Shape generates Edge Colliders with deformed corners     
+- 1305867 Sprite shape edge collider has a gap at end point if optimise collider is disabled
+- 1286378 Sprite Shape incorrect normal generation
+
 ## [6.0.0-pre.2] - 2020-11-25
 ### Changed
 - Update license file

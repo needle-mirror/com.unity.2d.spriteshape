@@ -88,7 +88,7 @@ namespace UnityEngine.U2D
             public float2 uv;
             public float4 tan;
             public float2 meta;                 // x : height y : -
-            public int2 sprite;                 // x : sprite y : is main Point.
+            public int4 sprite;                 // x : sprite y : is main Point z : is edgeCaps.
         }
 
         /// <summary>
@@ -874,16 +874,12 @@ namespace UnityEngine.U2D
             return res;
         }
 
-        bool GenerateControlPoints()
+        void GenerateControlPoints()
         {
             // Globals.
             int activePoint = 0, activeIndex = 0;
             int startPoint = 0, endPoint = controlPointCount, lastPoint = (controlPointCount - 1);
-
-            float2 rvxy = new float2(-1f, 1f);
             int2 sprData = new int2(0, 0);
-            bool useSlice = true;
-            int spriteCount = m_SpriteInfos.Length;
 
             // Calc and calculate Indices.
             for (int i = 0; i < controlPointCount; ++i)
@@ -955,9 +951,6 @@ namespace UnityEngine.U2D
                 sprData.y = resolved;
                 m_SpriteIndices[i] = sprData;
             }
-
-            // End
-            return useSlice;
         }
 
         float SegmentDistance(JobSegmentInfo isi)
@@ -1068,8 +1061,6 @@ namespace UnityEngine.U2D
             
             // Fill Geom. Generate in Native code until we have a reasonably fast enough Tessellation in NativeArray based Jobs.
             SpriteShapeSegment geom = m_GeomArray[0];
-            Vector3 pos = m_PosArray[0];
-
             geom.vertexCount = 0;
             geom.geomIndex = 0;
             geom.indexCount = 0;
@@ -1133,7 +1124,7 @@ namespace UnityEngine.U2D
 
                         for (m_ActiveVertexCount = 0; m_ActiveVertexCount < m_TessPointCount + 3; ++m_ActiveVertexCount)
                         {
-                            pos = new Vector3(m_TessPoints[m_ActiveVertexCount].x, m_TessPoints[m_ActiveVertexCount].y, 0);
+                            var pos = new Vector3(m_TessPoints[m_ActiveVertexCount].x, m_TessPoints[m_ActiveVertexCount].y, 0);
                             m_PosArray[m_ActiveVertexCount] = pos;
                         }
 
@@ -1162,8 +1153,6 @@ namespace UnityEngine.U2D
 
             // Fill Geom. Generate in Native code until we have a reasonably fast enough Tessellation in NativeArray based Jobs.
             SpriteShapeSegment geom = m_GeomArray[0];
-            Vector3 pos = m_PosArray[0];
-
             geom.vertexCount = 0;
             geom.geomIndex = 0;
             geom.indexCount = 0;
@@ -1199,7 +1188,7 @@ namespace UnityEngine.U2D
                         }
                         for (m_ActiveVertexCount = 0; m_ActiveVertexCount < m_VertexDataCount; ++m_ActiveVertexCount)
                         {
-                            pos = new Vector3(vertices[m_ActiveVertexCount].x, vertices[m_ActiveVertexCount].y, 0);
+                            var pos = new Vector3(vertices[m_ActiveVertexCount].x, vertices[m_ActiveVertexCount].y, 0);
                             m_PosArray[m_ActiveVertexCount] = pos;
                         }
 
@@ -1379,26 +1368,23 @@ namespace UnityEngine.U2D
             {
                 bool lc = (cms > 1) && (i == lcm);
                 bool im = (i != 0 && !lc);
-                bool sa = false, sb = false;
-
                 JobShapeVertex cs = vertices[i];
                 JobShapeVertex ns = vertices[i + 1];
 
                 float2 es = lc ? cs.pos : vertices[i + 2].pos;
                 lt = column1.pos;
                 lb = column3.pos;
-                sa = true;
 
                 if (im)
                 {
                     // Left from Previous.
-                    sb = GenerateColumnsTri(cs.pos, ns.pos, es, whsize, lc, ref rt, ref rb, ns.meta.x * 0.5f, pivot);
+                    GenerateColumnsTri(cs.pos, ns.pos, es, whsize, lc, ref rt, ref rb, ns.meta.x * 0.5f, pivot);
                 }
                 else
                 {
                     if (!lc)
                     {
-                        sa = GetSegmentBoundaryColumn(segment, sprInfo, whsize, cs.pos, ns.pos, false, ref lt, ref lb);
+                        GetSegmentBoundaryColumn(segment, sprInfo, whsize, cs.pos, ns.pos, false, ref lt, ref lb);
                     }
 
                     if (lc && useClosure)
@@ -1408,7 +1394,7 @@ namespace UnityEngine.U2D
                     }
                     else
                     {
-                        sb = GetSegmentBoundaryColumn(segment, sprInfo, whsize, ns.pos, es, lc, ref rt, ref rb);
+                        GetSegmentBoundaryColumn(segment, sprInfo, whsize, ns.pos, es, lc, ref rt, ref rb);
                     }
                 }
 
@@ -1447,12 +1433,14 @@ namespace UnityEngine.U2D
                     column0.uv.x = column0.uv.y = column1.uv.y = column2.uv.x = 0;
                     column1.uv.x = column3.uv.x = border.x / whsize.x;
                     column2.uv.y = column3.uv.y = 1.0f;
+                    column0.sprite.z = column2.sprite.z = 1;
                 }
                 else if (validTail && i == lcm)
                 {
                     column0.uv.y = column1.uv.y = 0;
                     column0.uv.x = column2.uv.x = (whsize.x - border.z) / whsize.x;
                     column1.uv.x = column2.uv.y = column3.uv.x = column3.uv.y = 1.0f;
+                    column1.sprite.z = column3.sprite.z = 1;
                 }
                 else
                 {
@@ -1547,10 +1535,7 @@ namespace UnityEngine.U2D
 
             JobControlPoint iscp = GetControlPoint(0);
             bool disableHead = (iscp.cpData.z == kModeContinous && isCarpet);
-
             float2 zero = new float2(0, 0);
-            float2 firstLT = zero;
-            float2 firstLB = zero;
             float2 ec = zero;
 
             for (int i = 0; i < segmentCount; ++i)
@@ -1574,10 +1559,13 @@ namespace UnityEngine.U2D
                 JobControlPoint _scp = GetControlPoint(isi.sgInfo.x);
                 JobControlPoint _ecp = GetControlPoint(isi.sgInfo.y);                
                 
-                bool validHead = hasSpriteBorder && (border.x > 0);
-                validHead = validHead && ( _scp.exData.z == 0 || (!isCarpet && i == 0) );
-                bool validTail = hasSpriteBorder && (border.z > 0);
-                validTail = validTail && ( _ecp.exData.z == 0 || (!isCarpet && i == segmentCount - 1) );
+                bool useClosure = (m_ControlPoints[0].cpData.z == kModeContinous) && (isi.sgInfo.y == controlPointCount - 1);
+                bool firstSegment = (i == 0);
+                bool validHead = hasSpriteBorder && (border.x > 0) && ((_scp.exData.z == 0) || firstSegment);
+                validHead = (m_ControlPoints[0].cpData.z == kModeContinous) ? (validHead && !isCarpet) : validHead;
+                bool finalSegment = (i == segmentCount - 1);
+                bool validTail = hasSpriteBorder && (border.z > 0) && ((_ecp.exData.z == 0) || (finalSegment && !isCarpet && !useClosure));
+                validTail = (m_ControlPoints[0].cpData.z == kModeContinous) ? (validTail && !isCarpet) : validTail;
 
                 // Generate the UV Increments.
                 float extendUV = 0;
@@ -1619,6 +1607,7 @@ namespace UnityEngine.U2D
                 // Generate the Strip.
                 float sl = 0;
                 int it = stIx, nt = 0;
+                isv.sprite.z = 0;
                 while (it < enIx)
                 {
                     nt = it + 1;
@@ -1699,7 +1688,6 @@ namespace UnityEngine.U2D
 
                 // Generate the Renderer Data.
                 int outputCount = 0;
-                bool useClosure = (m_ControlPoints[0].cpData.z == kModeContinous) && (isi.sgInfo.y == controlPointCount - 1);
                 TessellateSegment(i, ispr, isi, whsize, border, pxlWidth, useClosure, validHead, validTail, m_VertexData, vertexCount, ref m_OutputVertexData, ref outputCount);
                 if (outputCount == 0)
                     continue;
@@ -2350,17 +2338,19 @@ namespace UnityEngine.U2D
                 v0 = vertices[k].pos;
                 v2 = vertices[k + 2].pos;
                 cp = (v0 - v2) * pivot;
-                colliderPoints[colliderPointCount++] = (v2 + cp + v0 + cp) * 0.5f;
+                if (vertices[k].sprite.z == 0)
+                    colliderPoints[colliderPointCount++] = (v2 + cp + v0 + cp) * 0.5f;
             }
 
             float2 v1 = vertices[count - 1].pos;
             float2 v3 = vertices[count - 3].pos;
             cp = (v3 - v1) * pivot;
-            colliderPoints[colliderPointCount++] = (v1 + cp + v3 + cp) * 0.5f;
+            if (vertices[count - 1].sprite.z == 0)
+                colliderPoints[colliderPointCount++] = (v1 + cp + v3 + cp) * 0.5f;
             return cp;
         }
 
-        void TrimOverlaps()
+        void TrimOverlaps(int cpCount)
         {
             int kMinimumPointTolerance = 4;
             if (m_ColliderPointCount < kMinimumPointTolerance)
@@ -2370,7 +2360,8 @@ namespace UnityEngine.U2D
             int kColliderPointCountClamped = m_ColliderPointCount / 2;
             int kSplineDetailClamped = math.clamp(splineDetail * 3, 0, 8);
             int kNeighbors = kSplineDetailClamped > kColliderPointCountClamped ? kColliderPointCountClamped : kSplineDetailClamped;
-
+            kNeighbors = (kNeighbors > cpCount) ? cpCount : kNeighbors;
+            
             if (!isCarpet)
                 m_TempPoints[trimmedPointCount++] = m_ColliderPoints[0];
 
@@ -2428,11 +2419,16 @@ namespace UnityEngine.U2D
             }
             trimmedPointCount = i;
 
-            // Check intersection of first line Segment and last.
-            float2 vin = m_ColliderPoints[0];
-            bool endOverLaps =  LineIntersection(kEpsilonRelaxed, m_ColliderPoints[0], m_ColliderPoints[1], m_ColliderPoints[trimmedPointCount - 1], m_ColliderPoints[trimmedPointCount - 2], ref vin);
-            if (endOverLaps && IsPointOnLines(kEpsilonRelaxed, m_ColliderPoints[0], m_ColliderPoints[1], m_ColliderPoints[trimmedPointCount - 1], m_ColliderPoints[trimmedPointCount - 2], vin))
-                m_ColliderPoints[0] = vin;
+            if (trimmedPointCount > 4)
+            {
+                // Check intersection of first line Segment and last.
+                float2 vin = m_ColliderPoints[0];
+                bool endOverLaps = LineIntersection(kEpsilonRelaxed, m_ColliderPoints[0], m_ColliderPoints[1],
+                    m_ColliderPoints[trimmedPointCount - 1], m_ColliderPoints[trimmedPointCount - 2], ref vin);
+                if (endOverLaps)
+                    m_ColliderPoints[0] = vin;
+            }
+
             m_ColliderPointCount = trimmedPointCount;
         }
 
@@ -2442,25 +2438,8 @@ namespace UnityEngine.U2D
             {
                 if (kColliderQuality > 0)
                 {                    
-                    if (kOptimizeCollider > 0)
-                    { 
-                        OptimizePoints(kColliderQuality, ref m_ColliderPoints, ref m_ColliderPointCount);
-                        if (m_ControlPointCount > 4)
-                            TrimOverlaps();
-                        else
-                        {
-                            float2 prev = m_TempPoints[0];
-                            int i = 0;
-                            for (int j = 1; j < m_ColliderPointCount; ++j)
-                            {
-                                float dist = math.length(m_TempPoints[j] - prev);
-                                if (dist > kEpsilon)
-                                    m_ColliderPoints[i++] = m_TempPoints[j];
-                                prev = m_TempPoints[j];
-                            }
-                            m_ColliderPointCount = i;
-                        }
-                    }
+                    OptimizePoints(kColliderQuality, ref m_ColliderPoints, ref m_ColliderPointCount);
+                    TrimOverlaps(m_ControlPointCount - 1);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                 }

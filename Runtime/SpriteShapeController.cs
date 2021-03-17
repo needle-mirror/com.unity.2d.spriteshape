@@ -357,6 +357,16 @@ namespace UnityEngine.U2D
             return valid;
         }
 
+        bool ValidateUTess2D(bool uTess2D)
+        {
+            if (uTess2D && null != spriteShape)
+            {
+                // Check for all properties 
+                uTess2D = (spriteShape.fillOffset >= 0);
+            }
+            return uTess2D;
+        }
+
         bool HasSpriteShapeChanged()
         {
             bool changed = (m_ActiveSpriteShape != spriteShape);
@@ -705,8 +715,9 @@ namespace UnityEngine.U2D
                     spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
                 }
 
+                var uTess2D = ValidateUTess2D(m_UTess2D);
                 var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
-                spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray, m_UTess2D);
+                spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray, uTess2D);
                 // Only update Handle for an actual Job is scheduled.
                 m_JobHandle = spriteShapeJob.Schedule();
                 spriteShapeRenderer.Prepare(m_JobHandle, m_ActiveShapeParameters, m_SpriteArray);
@@ -757,14 +768,13 @@ namespace UnityEngine.U2D
                             edgeCollider.points = m_ColliderSegment.ToArray();
                         if (polygonCollider != null)
                             polygonCollider.points = m_ColliderSegment.ToArray();
+#if UNITY_EDITOR
+                        UnityEditor.SceneView.RepaintAll();
+#endif                        
                     }
                 }
                 // Dispose Collider as its no longer needed.
                 m_ColliderData.Dispose();
-#if UNITY_EDITOR
-                if (UnityEditor.SceneView.lastActiveSceneView)
-                    UnityEditor.SceneView.lastActiveSceneView.Repaint();
-#endif
             }
         }
 
