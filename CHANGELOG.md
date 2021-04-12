@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.0.16] - 2021-04-12
+### Fixed
+
+- 1320362 Disabling Edit Spline on Sprite Shape Controller while Cache Geometry is enabled throws an ArgumentException error
+
 ## [3.0.15] - 2020-11-25
 ### Fixed
 

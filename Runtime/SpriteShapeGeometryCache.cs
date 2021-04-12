@@ -51,6 +51,10 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
     NativeArray<ushort> m_IndexArrayCache;
     NativeArray<UnityEngine.U2D.SpriteShapeSegment> m_GeomArrayCache;
 
+    internal ushort[] indexArray
+    {
+        get { return m_IndexArray; }
+    }
     internal int maxArrayCount
     {
         get { return m_MaxArrayCount; }
@@ -103,10 +107,11 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
             m_TanArray = new Vector4[vertexCount];
             m_IndexArray = new ushort[indexCount];
 
+            SpriteShapeCopyUtility<ushort>.Copy(m_IndexArray, m_IndexArrayCache, indexCount);
             SpriteShapeCopyUtility<Vector3>.Copy(m_PosArray, m_PosArrayCache, vertexCount);
             SpriteShapeCopyUtility<Vector2>.Copy(m_Uv0Array, m_Uv0ArrayCache, vertexCount);
-            SpriteShapeCopyUtility<Vector4>.Copy(m_TanArray, m_TanArrayCache, vertexCount);
-            SpriteShapeCopyUtility<ushort>.Copy(m_IndexArray, m_IndexArrayCache, indexCount);
+            if (m_TanArrayCache.Length >= vertexCount)
+                SpriteShapeCopyUtility<Vector4>.Copy(m_TanArray, m_TanArrayCache, vertexCount);
 
             m_MaxArrayCount = (vertexCount > indexCount) ? vertexCount : indexCount;
             m_RequiresUpdate = false;

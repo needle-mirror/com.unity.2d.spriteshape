@@ -754,14 +754,13 @@ namespace UnityEngine.U2D
                             edgeCollider.points = m_ColliderSegment.ToArray();
                         if (polygonCollider != null)
                             polygonCollider.points = m_ColliderSegment.ToArray();
+#if UNITY_EDITOR
+                        UnityEditor.SceneView.RepaintAll();
+#endif                        
                     }
                 }
                 // Dispose Collider as its no longer needed.
-                m_ColliderData.Dispose();                
-#if UNITY_EDITOR
-                if (UnityEditor.SceneView.lastActiveSceneView != null)
-                    UnityEditor.SceneView.lastActiveSceneView.Repaint();
-#endif
+                m_ColliderData.Dispose();
             }
         }
 
