@@ -126,6 +126,9 @@ namespace UnityEditor.U2D
 
             m_ShowNonStretchOption.valueChanged.AddListener(Repaint);
             m_ShowNonStretchOption.value = !ShouldShowStretchOption();
+
+            m_CollidersCount += ((m_SpriteShapeController.edgeCollider != null) ? 1 : 0);
+            m_CollidersCount += ((m_SpriteShapeController.polygonCollider != null) ? 1 : 0);
         }
 
         private bool OnCollidersAddedOrRemoved()

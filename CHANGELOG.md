@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.1.2] - 2021-04-12
+### Fixed
+- 1321973 When SpriteShapeController has "Update Collider" set to true, it will dirty the scene every time it
+- 1320361 Disabling Edit Spline on Sprite Shape Controller while Cache Geometry is enabled throws an ArgumentException error
+
 ## [5.1.1] - 2020-11-25
 ### Fixed
 - 1293736 Fixed InvalidOperationException thrown continuously on adding SpriteShapeController component to a GameObject with SpriteRenderer.
