@@ -1,5 +1,23 @@
 # Changelog
 
+## [7.0.0-pre.2] - 2021-05-14
+### Changed
+- Update dependency version
+
+## [7.0.0-pre.1] - 2021-05-05
+### Fixed
+- 1274010 2D light is rendered in half in its Y-axis when two Sprite Shape objects with same Order In Layer are visible on the Screen
+- 1313579 SpriteShape Prefabs does not work properly when GeometryCache is enabled.
+- 1315086 When SpriteShapeController has "Update Collider" set to true, it will dirty the scene every time its selected
+- 1306434 PrefabStage is moving out of UnityEditor.SceneManagement.Experimental namepace in 2021.2
+- 1319096 At certain cases, vertex data allocation may not be enough and overflows.
+- 1321978 Edge collider 2D and polygon collider 2D creates different collision shapes during playmode
+- 1317728 On deselecting game object from the Inspector window leads to deselecting Sprite Shape Renderer
+- 1326983 SpriteShape Cache Geometry does not update when changing SpriteShape Profile.
+
+### Changed
+- Version bump for Unity 2021.2
+
 ## [6.0.0] - 2021-03-17
 ### Changed
 - Update version for release

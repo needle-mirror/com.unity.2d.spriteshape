@@ -41,6 +41,7 @@ namespace UnityEngine.U2D
         // Hash Check.
         int m_ActiveSplineHash = 0;
         int m_ActiveSpriteShapeHash = 0;
+        int m_MaxArrayCount = 0;
         JobHandle m_JobHandle;
         SpriteShapeParameters m_ActiveShapeParameters;
 
@@ -83,6 +84,12 @@ namespace UnityEngine.U2D
         bool m_UTess2D = false;
         
         #region GetSet
+
+        internal int maxArrayCount
+        {
+            get { return m_MaxArrayCount; }
+            set { m_MaxArrayCount = value; }
+        }
 
         internal bool geometryCached
         {
@@ -249,7 +256,6 @@ namespace UnityEngine.U2D
 
         void OnEnable()
         {
-            spriteShapeRenderer.enabled = true;
             m_DynamicOcclusionOverriden = true;
             m_DynamicOcclusionLocal = spriteShapeRenderer.allowOcclusionWhenDynamic;
             spriteShapeRenderer.allowOcclusionWhenDynamic = false;
@@ -258,7 +264,6 @@ namespace UnityEngine.U2D
 
         void OnDisable()
         {
-            spriteShapeRenderer.enabled = false;
             DisposeInternal();
         }
 
@@ -349,11 +354,11 @@ namespace UnityEngine.U2D
             {
                 // Warn that no SpriteShape is set.
                 Debug.LogWarningFormat(gameObject, "[SpriteShape] A valid SpriteShape profile has not been set for gameObject < {0} >.", gameObject.name);
-            }
 #if UNITY_EDITOR
-            // We allow null SpriteShape for rapid prototyping in Editor.
-            valid = true;
+                // We allow null SpriteShape for rapid prototyping in Editor.
+                valid = true;
 #endif
+            }                
             return valid;
         }
 
@@ -456,6 +461,14 @@ namespace UnityEngine.U2D
                 {
                     jobHandle = ScheduleBake();
                 }
+                
+#if UNITY_EDITOR
+                if (spriteShapeChanged && spriteShapeGeometryCache && geometryCached)
+                {
+                    jobHandle.Complete();
+                    spriteShapeGeometryCache.UpdateGeometryCache();
+                }
+#endif                
             }
             return jobHandle;
         }
@@ -637,6 +650,7 @@ namespace UnityEngine.U2D
 
         int CalculateMaxArrayCount(NativeArray<ShapeControlPoint> shapePoints)
         {
+            int maxVertexCount = 1024 * 64;
             bool hasSprites = false;
             float smallestWidth = 99999.0f;
 
@@ -653,16 +667,15 @@ namespace UnityEngine.U2D
                 }
             }
 
-            // Approximate vertex Array Count.
-            float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail * splineDetail) * 2.0f;
-            int adjustWidth = hasSprites ? ((int)(shapeLength / smallestWidth) * 6) + (shapePoints.Length * 6 * splineDetail) : 0;
+            // Approximate vertex Array Count. Include Corners and Wide Sprites into account.
+            float smallestSegment = smallestWidth;
+            float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail, ref smallestSegment) * 4.0f;
             int adjustShape = shapePoints.Length * 4 * splineDetail;
+            int adjustWidth = hasSprites ? ((int)(shapeLength / smallestSegment) * splineDetail) + adjustShape : 0;
             adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
-            var validFT = ValidateSpriteShapeTexture();
-#if !UNITY_EDITOR
-                adjustShape = validFT ? adjustShape : 0;
-#endif
-            int maxArrayCount = adjustShape + adjustWidth;
+            adjustShape = ValidateSpriteShapeTexture() ? adjustShape : 0;
+            maxArrayCount = adjustShape + adjustWidth;
+            maxArrayCount = math.min(maxArrayCount, maxVertexCount);
             return maxArrayCount;
         }
 
@@ -686,7 +699,7 @@ namespace UnityEngine.U2D
             int pointCount = spline.GetPointCount();
             NativeArray<ShapeControlPoint> shapePoints = GetShapeControlPoints();
             NativeArray<SplinePointMetaData> shapeMetaData = GetSplinePointMetaData();
-            int maxArrayCount = CalculateMaxArrayCount(shapePoints);
+            maxArrayCount = CalculateMaxArrayCount(shapePoints);
 
             if (maxArrayCount > 0 && enabled)
             {

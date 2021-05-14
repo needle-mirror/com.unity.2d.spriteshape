@@ -3,7 +3,7 @@ using System.Linq;
 using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
-using UnityEngine.U2D.UTess;
+using UnityEngine.U2D.Common.UTess;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.SpriteShape.External.LibTessDotNet;
 
@@ -310,59 +310,75 @@ namespace UnityEngine.U2D
         #region Safe Getters.
         JobSpriteInfo GetSpriteInfo(int index)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_SpriteInfos.Length)
-                throw new ArgumentException(string.Format("GetSpriteInfo accessed with invalid Index {0} / {1}", index, m_SpriteInfos.Length));
+                throw new ArgumentException($"GetSpriteInfo accessed with invalid Index {index} / {m_SpriteInfos.Length}");
+#endif            
             return m_SpriteInfos[index];
         }
 
         JobSpriteInfo GetCornerSpriteInfo(int index)
         {
             int ai = index - 1;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (ai >= m_CornerSpriteInfos.Length || index == 0)
-                throw new ArgumentException(string.Format("GetCornerSpriteInfo accessed with invalid Index {0} / {1}", index, m_CornerSpriteInfos.Length));
+                throw new ArgumentException($"GetCornerSpriteInfo accessed with invalid Index {index} / {m_CornerSpriteInfos.Length}");
+#endif            
             return m_CornerSpriteInfos[ai];
         }
 
         JobAngleRange GetAngleRange(int index)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_AngleRanges.Length)
-                throw new ArgumentException(string.Format("GetAngleRange accessed with invalid Index {0} / {1}", index, m_AngleRanges.Length));
+                throw new ArgumentException($"GetAngleRange accessed with invalid Index {index} / {m_AngleRanges.Length}");
+#endif            
             return m_AngleRanges[index];
         }
 
         JobControlPoint GetControlPoint(int index)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_ControlPoints.Length)
-                throw new ArgumentException(string.Format("GetControlPoint accessed with invalid Index {0} / {1}", index, m_ControlPoints.Length));
+                throw new ArgumentException($"GetControlPoint accessed with invalid Index {index} / {m_ControlPoints.Length}");
+#endif            
             return m_ControlPoints[index];
         }
 
         JobContourPoint GetContourPoint(int index)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_ContourPointCount)
-                throw new ArgumentException(string.Format("GetContourPoint accessed with invalid Index {0} / {1}", index, m_ContourPointCount));
+                throw new ArgumentException($"GetContourPoint accessed with invalid Index {index} / {m_ContourPointCount}");
+#endif            
             return m_ContourPoints[index];
         }
 
         JobSegmentInfo GetSegmentInfo(int index)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_SegmentCount)
-                throw new ArgumentException(string.Format("GetSegmentInfo accessed with invalid Index {0} / {1}", index, m_SegmentCount));
+                throw new ArgumentException($"GetSegmentInfo accessed with invalid Index {index} / {m_SegmentCount}");
+#endif            
             return m_Segments[index];
         }
 
         int GetContourIndex(int index)
         {
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_ControlPoints.Length)
-                throw new ArgumentException(string.Format("GetContourIndex accessed with invalid Index {0} / {1}", index, m_ControlPoints.Length));
+                throw new ArgumentException($"GetContourIndex accessed with invalid Index {index} / {m_ControlPoints.Length}");
+#endif            
             return index * m_ShapeParams.splineData.y;
         }
 
         int GetEndContourIndexOfSegment(JobSegmentInfo isi)
         {
             int contourIndex = GetContourIndex(isi.sgInfo.y) - 1;
+#if ENABLE_UNITY_COLLECTIONS_CHECKS            
             if (isi.sgInfo.y >= m_ControlPoints.Length || isi.sgInfo.y == 0)
-                throw new ArgumentException("GetEndContourIndexOfSegment accessed with invalid Index");
+                throw new ArgumentException($"GetEndContourIndexOfSegment accessed with invalid Index");
+#endif            
             return contourIndex;
         }
         #endregion
@@ -487,7 +503,7 @@ namespace UnityEngine.U2D
             corners[cornerCount++] = d;
         }
 
-        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
+        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderOffset, float colliderDetail)
         {
             kModeLinear = 0;
             kModeContinous = 1;
@@ -519,7 +535,7 @@ namespace UnityEngine.U2D
             kColliderQuality = math.clamp(colliderDetail, kLowestQualityTolerance, kHighestQualityTolerance);
             kOptimizeCollider = optimizeCollider ? 1 : 0;
             kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.002f;
-            colliderPivot = (colliderPivot == 0) ? kEpsilonRelaxed : -colliderPivot;
+            colliderOffset = (colliderOffset == 0) ? kEpsilonRelaxed : -colliderOffset;
 
             kOptimizeRender = optimizeGeometry ? 1 : 0;
             kRenderQuality = math.clamp(shapeParams.splineDetail, kLowestQualityTolerance, kHighestQualityTolerance);
@@ -527,7 +543,7 @@ namespace UnityEngine.U2D
 
             m_ShapeParams.shapeData = new int4(shapeParams.carpet ? 1 : 0, shapeParams.adaptiveUV ? 1 : 0, shapeParams.spriteBorders ? 1 : 0, shapeParams.fillTexture != null ? 1 : 0);
             m_ShapeParams.splineData = new int4(shapeParams.stretchUV ? 1 : 0, (shapeParams.splineDetail > 4) ? (int)shapeParams.splineDetail : 4, 0, updateCollider ? 1 : 0);
-            m_ShapeParams.curveData = new float4(colliderPivot, shapeParams.borderPivot, shapeParams.angleThreshold, 0);
+            m_ShapeParams.curveData = new float4(colliderOffset, shapeParams.borderPivot, shapeParams.angleThreshold, 0);
             float fx = 0, fy = 0;
             if (shapeParams.fillTexture != null)
             {
@@ -585,7 +601,9 @@ namespace UnityEngine.U2D
                     if (!math.any(spriteInfo.texRect))
                     {
                         Cleanup();
-                        throw new ArgumentException(string.Format("{0} is packed with Tight packing or mesh type set to Tight. Please check input sprites", spr.name));
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                        throw new ArgumentException($"{spr.name} is packed with Tight packing or mesh type set to Tight. Please check input sprites");
+#endif                        
                     }
                 }
                 spriteInfos[i] = spriteInfo;
@@ -1076,7 +1094,7 @@ namespace UnityEngine.U2D
                         OptimizePoints(kRenderQuality, ref m_TessPoints, ref m_TessPointCount);
 
                     int dataLength = m_TessPointCount;
-                    NativeArray<TessEdge> edges = new NativeArray<TessEdge>(dataLength - 1, Allocator.Temp);
+                    NativeArray<int2> edges = new NativeArray<int2>(dataLength - 1, Allocator.Temp);
                     NativeArray<float2> points = new NativeArray<float2>(dataLength - 1, Allocator.Temp);
 
                     for (int i = 0; i < points.Length; ++i)
@@ -1084,54 +1102,39 @@ namespace UnityEngine.U2D
                     
                     for (int i = 0; i < dataLength - 2; ++i)
                     {
-                        TessEdge te = edges[i];
-                        te.a = i;
-                        te.b = i + 1;
+                        int2 te = edges[i];
+                        te.x = i;
+                        te.y = i + 1;
                         edges[i] = te;
                     }
-                    TessEdge tee = edges[dataLength - 2];
-                    tee.a = dataLength - 2;
-                    tee.b = 0;
+                    int2 tee = edges[dataLength - 2];
+                    tee.x = dataLength - 2;
+                    tee.y = 0;
                     edges[dataLength - 2] = tee;
-                    
-                    Tessellator st = new Tessellator();
-                    st.Triangulate(points, edges);
-                    st.ApplyDelaunay(points, edges);
-                    NativeArray<TessCell> cellsOut = st.RemoveExterior(ref m_TessPointCount);
 
-                    for (int i = 0; i < m_TessPointCount; ++i)
+                    int ovc = 0, oic = 0, oec = 0;
+                    NativeArray<float2> ov = new NativeArray<float2>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
+                    NativeArray<int> oi = new NativeArray<int>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
+                    NativeArray<int2> oe = new NativeArray<int2>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
+                    UTess.Tessellate(Allocator.Temp, points, edges, ref ov, ref ovc, ref oi, ref oic,  ref oe, ref oec);
+
+                    if (oic > 0)
                     {
+                        for (m_ActiveIndexCount = 0; m_ActiveIndexCount < oic; ++m_ActiveIndexCount)
+                            m_IndexArray[m_ActiveIndexCount] = (ushort) oi[m_ActiveIndexCount];
 
-                        var a = (UInt16)cellsOut[i].a;
-                        var b = (UInt16)cellsOut[i].b;
-                        var c = (UInt16)cellsOut[i].c;
-                        if ( a != 0 || b != 0 || c != 0)
-                        {
-                            m_IndexArray[m_ActiveIndexCount++] = a;
-                            m_IndexArray[m_ActiveIndexCount++] = c;
-                            m_IndexArray[m_ActiveIndexCount++] = b;
-                        }
-                        
-                    }
-
-                    cellsOut.Dispose();
-                    points.Dispose();
-                    edges.Dispose();
-                    st.Cleanup();
-
-                    if (m_ActiveIndexCount > 0)
-                    {
-
-                        for (m_ActiveVertexCount = 0; m_ActiveVertexCount < m_TessPointCount + 3; ++m_ActiveVertexCount)
-                        {
-                            var pos = new Vector3(m_TessPoints[m_ActiveVertexCount].x, m_TessPoints[m_ActiveVertexCount].y, 0);
-                            m_PosArray[m_ActiveVertexCount] = pos;
-                        }
+                        for (m_ActiveVertexCount = 0; m_ActiveVertexCount < ovc; ++m_ActiveVertexCount)
+                            m_PosArray[m_ActiveVertexCount] = new Vector3(ov[m_ActiveVertexCount].x, ov[m_ActiveVertexCount].y, 0);
 
                         m_IndexDataCount = geom.indexCount = m_ActiveIndexCount;
                         m_VertexDataCount = geom.vertexCount = m_ActiveVertexCount;
-                        
                     }
+
+                    ov.Dispose();
+                    oi.Dispose();
+                    oe.Dispose();
+                    edges.Dispose();
+                    points.Dispose();
                 }
             }
 
@@ -1297,10 +1300,13 @@ namespace UnityEngine.U2D
                 return -1;
 
             int localVertex = 0;
-            int finalCount = indexCount + inCount;
+            int finalCount = indexCount + inCount + (inCount / 2);
+            
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (finalCount >= indexData.Length)
                 throw new InvalidOperationException(
-                    "Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
+                    $"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
+#endif            
 
             for (int i = 0; i < inCount; i = i + 4, outCount = outCount + 4, localVertex = localVertex + 4)
             {
@@ -1344,8 +1350,10 @@ namespace UnityEngine.U2D
             int expectedCount = outputCount + (cms * 4);
             var sprite = vertices[0].sprite;
 
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (expectedCount >= outputVertices.Length)
-                throw new InvalidOperationException("Mesh data has reached Limits. Please try dividing shape into smaller blocks.");            
+                throw new InvalidOperationException($"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
+#endif            
             
             float uvDist = 0;
             float uvStart = border.x;
@@ -1547,7 +1555,7 @@ namespace UnityEngine.U2D
                     continue;
 
                 // Internal Data : x, y : pos z : height w : renderIndex
-                JobShapeVertex isv = m_VertexData[0];
+                JobShapeVertex isv = new JobShapeVertex();
                 JobSpriteInfo ispr = GetSpriteInfo(isi.sgInfo.z);
 
                 int vertexCount = 0;
@@ -1581,7 +1589,9 @@ namespace UnityEngine.U2D
                 if (pxlWidth < kEpsilon)
                 {
                     Cleanup();
-                    throw new ArgumentException("One of the sprites seem to have Invalid Borders. Please check Input Sprites.");
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
+                    throw new ArgumentException($"One of the sprites seem to have Invalid Borders. Please check Input Sprites.");
+#endif                    
                 }
 
                 // Start the Generation.

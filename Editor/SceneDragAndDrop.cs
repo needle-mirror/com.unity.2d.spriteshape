@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.U2D;
 using System.Collections.Generic;
-using UnityEditor.Experimental.SceneManagement;
+using UnityEditor.SceneManagement;
 using UnityEditor.U2D.SpriteShape;
 using Object = UnityEngine.Object;
 
