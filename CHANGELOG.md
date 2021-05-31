@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.1.3] - 2021-05-31
+### Fixed
+- 1331740 Fixed an issue where Edge collider 2D and polygon collider 2D create different collision shapes during playmode.
+- 1331195 Fixed case where SpriteShape generates Edge Colliders with deformed corners.
+- 1339776 Fixed case where vertex data allocation may not be enough and overflows.
+
 ## [5.1.2] - 2021-04-12
 ### Fixed
 - 1321973 When SpriteShapeController has "Update Collider" set to true, it will dirty the scene every time it

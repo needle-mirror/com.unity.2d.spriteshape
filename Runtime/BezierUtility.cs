@@ -26,7 +26,8 @@ namespace UnityEngine.U2D
             float pxlWidth = enPixelU - stPixelU;
             return pxlWidth;
         }
-        internal static float BezierLength(NativeArray<ShapeControlPoint> shapePoints, int splineDetail)
+        
+        internal static float BezierLength(NativeArray<ShapeControlPoint> shapePoints, int splineDetail, ref float smallestSegment)
         {
             // Expand the Bezier.
             int controlPointContour = shapePoints.Length - 1;
@@ -44,11 +45,13 @@ namespace UnityEngine.U2D
                 Vector3 rt = p0 + cp.rightTangent;
                 Vector3 lt = p1 + pp.leftTangent;
 
-                for (int n = 0; n < splineDetail; ++n)
+                for (int n = 1; n < splineDetail; ++n)
                 {
                     float t = (float)n / fmax;
                     Vector3 bp = BezierPoint(rt, p0, p1, lt, t);
-                    spd += math.distance(bp, sp);
+                    float d = math.distance(bp, sp);
+                    smallestSegment = math.min(d, smallestSegment);
+                    spd += d;
                     sp = bp;
                 }
             }
