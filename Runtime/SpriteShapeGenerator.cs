@@ -487,7 +487,7 @@ namespace UnityEngine.U2D
             corners[cornerCount++] = d;
         }
 
-        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderPivot, float colliderDetail)
+        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderOffset, float colliderDetail)
         {
             kModeLinear = 0;
             kModeContinous = 1;
@@ -519,7 +519,7 @@ namespace UnityEngine.U2D
             kColliderQuality = math.clamp(colliderDetail, kLowestQualityTolerance, kHighestQualityTolerance);
             kOptimizeCollider = optimizeCollider ? 1 : 0;
             kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.002f;
-            colliderPivot = (colliderPivot == 0) ? kEpsilonRelaxed : -colliderPivot;
+            colliderOffset = (colliderOffset == 0) ? kEpsilonRelaxed : -colliderOffset;
 
             kOptimizeRender = optimizeGeometry ? 1 : 0;
             kRenderQuality = math.clamp(shapeParams.splineDetail, kLowestQualityTolerance, kHighestQualityTolerance);
@@ -527,7 +527,7 @@ namespace UnityEngine.U2D
 
             m_ShapeParams.shapeData = new int4(shapeParams.carpet ? 1 : 0, shapeParams.adaptiveUV ? 1 : 0, shapeParams.spriteBorders ? 1 : 0, shapeParams.fillTexture != null ? 1 : 0);
             m_ShapeParams.splineData = new int4(shapeParams.stretchUV ? 1 : 0, (shapeParams.splineDetail > 4) ? (int)shapeParams.splineDetail : 4, 0, updateCollider ? 1 : 0);
-            m_ShapeParams.curveData = new float4(colliderPivot, shapeParams.borderPivot, shapeParams.angleThreshold, 0);
+            m_ShapeParams.curveData = new float4(colliderOffset, shapeParams.borderPivot, shapeParams.angleThreshold, 0);
             float fx = 0, fy = 0;
             if (shapeParams.fillTexture != null)
             {
@@ -1297,7 +1297,7 @@ namespace UnityEngine.U2D
                 return -1;
 
             int localVertex = 0;
-            int finalCount = indexCount + inCount;
+            int finalCount = indexCount + inCount + (inCount / 2);
             if (finalCount >= indexData.Length)
                 throw new InvalidOperationException(
                     "Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
@@ -1547,7 +1547,7 @@ namespace UnityEngine.U2D
                     continue;
 
                 // Internal Data : x, y : pos z : height w : renderIndex
-                JobShapeVertex isv = m_VertexData[0];
+                JobShapeVertex isv = new JobShapeVertex();
                 JobSpriteInfo ispr = GetSpriteInfo(isi.sgInfo.z);
 
                 int vertexCount = 0;
