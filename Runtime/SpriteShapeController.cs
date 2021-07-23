@@ -186,6 +186,11 @@ namespace UnityEngine.U2D
             get { return m_OptimizeCollider; }
         }
 
+        internal bool optimizeColliderInternal
+        {
+            set { m_OptimizeCollider = value; }
+        }
+        
         public bool optimizeGeometry
         {
             get { return m_OptimizeGeometry; }

@@ -2437,12 +2437,12 @@ namespace UnityEngine.U2D
 
             if (trimmedPointCount > 4)
             {
-            // Check intersection of first line Segment and last.
-            float2 vin = m_ColliderPoints[0];
+                // Check intersection of first line Segment and last.
+                float2 vin = m_ColliderPoints[0];
                 bool endOverLaps = LineIntersection(kEpsilonRelaxed, m_ColliderPoints[0], m_ColliderPoints[1],
                     m_ColliderPoints[trimmedPointCount - 1], m_ColliderPoints[trimmedPointCount - 2], ref vin);
                 if (endOverLaps)
-                m_ColliderPoints[0] = vin;
+                    m_ColliderPoints[0] = vin;
             }
 
             m_ColliderPointCount = trimmedPointCount;
@@ -2459,7 +2459,8 @@ namespace UnityEngine.U2D
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                 }
-                if (m_ColliderPointCount <= 2)
+                // If the resulting Colliders don't have enough points including the last 2 'end-points', just use Contours as Colliders.
+                if (m_ColliderPointCount <= 4)
                 {
                     for (int i = 0; i < m_TessPointCount; ++i)
                         m_ColliderPoints[i] = m_TessPoints[i];

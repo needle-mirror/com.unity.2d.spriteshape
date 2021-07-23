@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.1.4] - 2021-07-23
+### Fixed
+- 1350020 Fix case where Triangular spriteshape with 0 offset collider does not generate collision shape.
+- 1349675 Fix case where all open Scenes were dirtied when editing a SpriteShape Spline.
+
 ## [5.1.3] - 2021-05-31
 ### Fixed
 - 1331740 Fixed an issue where Edge collider 2D and polygon collider 2D create different collision shapes during playmode.
