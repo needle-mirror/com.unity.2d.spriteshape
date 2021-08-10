@@ -4,6 +4,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Profiling;
 using Unity.SpriteShape.External.LibTessDotNet;
 
 // We will enable this once Burst gets a verified final version as this attribute keeps changing.
@@ -20,6 +21,8 @@ namespace UnityEngine.U2D
     public struct SpriteShapeGenerator : IJob
     {
 
+        public ProfilerMarker generateGeometry;
+        public ProfilerMarker generateCollider;
         struct JobParameters
         {
             public int4 shapeData;              // x : ClosedShape (bool) y : AdaptiveUV (bool) z : SpriteBorders (bool) w : Enable Fill Texture.
@@ -2452,7 +2455,8 @@ namespace UnityEngine.U2D
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                 }
-                if (m_ColliderPointCount <= 2)
+                // If the resulting Colliders don't have enough points including the last 2 'end-points', just use Contours as Colliders.
+                if (m_ColliderPointCount <= 4)
                 {
                     for (int i = 0; i < m_TessPointCount; ++i)
                         m_ColliderPoints[i] = m_TessPoints[i];
@@ -2508,15 +2512,23 @@ namespace UnityEngine.U2D
         public void Execute()
         {
             // BURST
-            if (0 != kModeUTess)
-                TessellateContour();
-            GenerateSegments();
-            UpdateSegments();
-            TessellateSegments();
-            TessellateCorners();
-            CalculateBoundingBox();
-            CalculateTexCoords();
-            OptimizeCollider();
+            generateGeometry.Begin();
+            {
+                if (0 != kModeUTess)
+                    TessellateContour();
+                GenerateSegments();
+                UpdateSegments();
+                TessellateSegments();
+                TessellateCorners();
+                CalculateTexCoords();
+            }
+            generateGeometry.End();
+            generateCollider.Begin();
+            {
+                CalculateBoundingBox();
+                OptimizeCollider();
+            }
+            generateCollider.End();
         }
 
         // Only needed if Burst is disabled.

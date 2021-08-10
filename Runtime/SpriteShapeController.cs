@@ -3,6 +3,7 @@ using Unity.Jobs;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Profiling;
 #if UNITY_EDITOR
 using UnityEditor.U2D;
 #endif
@@ -82,6 +83,9 @@ namespace UnityEngine.U2D
         bool m_GeometryCached = false;
         [SerializeField] 
         bool m_UTess2D = false;
+        
+        static readonly ProfilerMarker generateGeometry = new ProfilerMarker("SpriteShape.GenerateGeometry");
+        static readonly ProfilerMarker generateCollider = new ProfilerMarker("SpriteShape.GenerateCollider");        
         
         #region GetSet
 
@@ -186,6 +190,11 @@ namespace UnityEngine.U2D
             get { return m_OptimizeCollider; }
         }
 
+        internal bool optimizeColliderInternal
+        {
+            set { m_OptimizeCollider = value; }
+        }        
+        
         public bool optimizeGeometry
         {
             get { return m_OptimizeGeometry; }
@@ -730,6 +739,8 @@ namespace UnityEngine.U2D
 
                 var uTess2D = ValidateUTess2D(m_UTess2D);
                 var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
+                spriteShapeJob.generateCollider = generateCollider;
+                spriteShapeJob.generateGeometry = generateGeometry;
                 spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray, uTess2D);
                 // Only update Handle for an actual Job is scheduled.
                 m_JobHandle = spriteShapeJob.Schedule();

@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.0.0] - 2021-08-10
+### Fixed
+- 1350018 Fix case where Triangular spriteshape with 0 offset collider does not generate collision shape.
+- 1349674 Fix case where all open Scenes were dirtied when editing a SpriteShape Spline.
+- Update manual to reflect reorganization of menu item.
+
 ## [7.0.0-pre.3] - 2021-05-17
 ### Changed
 - Update dependency version
