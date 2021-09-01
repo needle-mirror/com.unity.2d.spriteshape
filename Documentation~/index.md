@@ -2,7 +2,7 @@
 
 ## Overview
 
-The __Sprite Shape__ is a flexible and powerful world building Asset that features Sprite tiling along a shape's outline that automatically deforms and swaps Sprites based on the angle of the outline.  Additionally, you can assign a Fill texture to a Sprite Shape to create filled shapes with tiled textures as backgrounds or other large level-building props. 
+The __Sprite Shape__ is a flexible and powerful world building Asset that features Sprite tiling along a shape's outline that automatically deforms and swaps Sprites based on the angle of the outline.  Additionally, you can assign a Fill texture to a Sprite Shape to create filled shapes with tiled textures as backgrounds or other large level-building props.
 
 The following are examples of Sprite Shapes used to construct different parts of various levels.
 
@@ -28,16 +28,18 @@ In addition, if the Sprites used for the Sprite Shape are part of a Sprite Atlas
 
 ![](images/SpriteAtlas_properties.png)
 
-## Sprite Shape workflow
+## Creating a Sprite Shape general workflow
 
-Create __Sprite Shapes__ in following the steps:
+Create __Sprite Shapes__ with the following steps:
 
-1. Create a __Sprite Shape Profile__ from the main menu (menu: __Assets > Create > Sprite Shape Profile__). Select from the two available options: 
-   - [Open Shape](SSProfile.html#open-shape)
-   - [Closed Shape](SSProfile.html#closed-shape)
-2. Create [Angle Ranges](SSProfile.html#creating-angle-ranges) and [assign Sprites](SSProfile.html#assigning-sprites) in the __Sprite Shape Profile__.
-3. Drag the __Sprite Shape Profile__ into the Scene to automatically generate a __Sprite Shape__ GameObject based on that Profile. 
-   - You can create a Sprite Shape GameObject without a Profile from the main menu (menu: __GameObject > 2D Object > Sprite Shape__). Then select a Sprite Shape Profile in the __Sprite Shape Controller__'s __Profile__ settings. The same Profile can be used by multiple Sprite Shapes.   
-4. Edit the outline of the Sprite Shape with the [Sprite Shape Controller](SSController.md) component settings.
-5. Enable [Physics2D](https://docs.unity3d.com/Manual/class-Physics2DManager.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
+1. Create a **Sprite Shape** GameObject from the main GameObject menu (menu: __GameObject > 2D Object > Sprite Shape__) and select from the two available options:
+   - [Open Shape](SSProfile.md#open-shape)
+   - [Closed Shape](SSProfile.md#closed-shape)
+2. Edit the outline of the Sprite Shape with the [Sprite Shape Controller](SSController.md) component settings.
+3. Enable [Physics2D](https://docs.unity3d.com/Manual/class-Physics2DManager.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
 
+To further customize the shape and outline of a __Sprite Shape__:
+
+1. Create a __Sprite Shape Profile__ from the main menu (menu: __Assets > Create > 2D > Sprite Shape Profile__).
+2. Create [Angle Ranges](SSProfile.md#creating-angle-ranges) and [assign Sprites](SSProfile.md#assigning-sprites) in the __Sprite Shape Profile__.
+3. Assign the __Sprite Shape Profile__ to a __Sprite Shape Controller__'s __Profile__ settings. The same Profile can be used by multiple Sprite Shapes.

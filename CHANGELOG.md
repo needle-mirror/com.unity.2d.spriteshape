@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.0.2] - 2021-09-01
+### Fixed
+- Update manual to reflect reorganization of menu item.
+
+
 ## [6.0.1] - 2021-06-08
 ### Fixed
 - 1331739 Fixed an issue where Edge collider 2D and polygon collider 2D create different collision shapes during playmode.
