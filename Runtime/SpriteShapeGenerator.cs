@@ -418,8 +418,44 @@ namespace UnityEngine.U2D
             return IsPointOnLine(epsilon, p1, p2, r) && IsPointOnLine(epsilon, p3, p4, r);
         }
 
+        static bool Colinear(float2 p, float2 q, float2 r)
+        {
+            return (q.x <= math.max(p.x, r.x) && q.x >= math.min(p.x, r.x) && q.y <= math.max(p.y, r.y) && q.y >= math.min(p.y, r.y));
+        }
+
+        
+        static int Det(float epsilon, float2 p, float2 q, float2 r)
+        {
+            float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
+            if (val > -epsilon && val < epsilon) return 0;
+            return (val > 0)? 1: 2;
+        }
+        
+        static bool LineIntersectionTest(float epsilon, float2 p1, float2 q1, float2 p2, float2 q2)
+        {
+            int o1 = Det(epsilon, p1, q1, p2);
+            int o2 = Det(epsilon, p1, q1, q2);
+            int o3 = Det(epsilon, p2, q2, p1);
+            int o4 = Det(epsilon, p2, q2, q1);
+            if (o1 != o2 && o3 != o4)
+                return true;
+ 
+            // Special Cases
+            if (o1 == 0 && Colinear(p1, p2, q1)) return true;
+            if (o2 == 0 && Colinear(p1, q2, q1)) return true;
+            if (o3 == 0 && Colinear(p2, p1, q2)) return true;
+            if (o4 == 0 && Colinear(p2, q1, q2)) return true;
+            return false;
+        }
+
+        
         static bool LineIntersection(float epsilon, float2 p1, float2 p2, float2 p3, float2 p4, ref float2 result)
         {
+            if (!LineIntersectionTest(epsilon, p1, p2, p3, p4))
+            {
+                return false;
+            }
+
             float bx = p2.x - p1.x;
             float by = p2.y - p1.y;
             float dx = p4.x - p3.x;
@@ -1227,23 +1263,31 @@ namespace UnityEngine.U2D
 
         void CalculateBoundingBox()
         {
-            Bounds bounds = new Bounds();
+            if (vertexArrayCount == 0 && contourPointCount == 0)
+                return;
+            
+            var bounds = new Bounds();
+            var min = vertexArrayCount != 0 ? new float2(m_PosArray[0].x, m_PosArray[0].y) : new float2(m_ContourPoints[0].position.x, m_ContourPoints[0].position.y);
+            var max = min;
             
             { 
                 for (int i = 0; i < vertexArrayCount; ++i)
                 {
-                    Vector3 pos = m_PosArray[i];
-                    bounds.Encapsulate(pos);
+                    float3 pos = m_PosArray[i];
+                    min = math.min(min, pos.xy);
+                    max = math.max(max, pos.xy);
                 }
             }            
             {
                 for (int i = 0; i < contourPointCount; ++i)
                 {
-                    Vector3 pos = new Vector3(m_ContourPoints[i].position.x, m_ContourPoints[i].position.y, 0);
-                    bounds.Encapsulate(pos);
+                    float2 pos = new float2(m_ContourPoints[i].position.x, m_ContourPoints[i].position.y);
+                    min = math.min(min, pos);
+                    max = math.max(max, pos);
                 }
             }
 
+            bounds.SetMinMax(new Vector3(min.x, min.y, 0), new Vector3(max.x, max.y, 0));
             m_Bounds[0] = bounds;
         }
 
@@ -1347,8 +1391,8 @@ namespace UnityEngine.U2D
         }
 
         void TessellateSegment(int segmentIndex, JobSpriteInfo sprInfo, JobSegmentInfo segment, float2 whsize, float4 border,
-            float pxlWidth, bool useClosure, bool validHead, bool validTail, NativeArray<JobShapeVertex> vertices,
-            int vertexCount, ref NativeArray<JobShapeVertex> outputVertices, ref int outputCount)
+            float pxlWidth, NativeArray<JobShapeVertex> vertices, int vertexCount, bool useClosure, bool validHead, bool validTail,  
+            bool firstSegment, bool finalSegment, ref NativeArray<JobShapeVertex> outputVertices, ref int outputCount)
         {
             int outputVertexCount = 0;
             float2 zero = float2.zero;
@@ -1455,14 +1499,14 @@ namespace UnityEngine.U2D
                     column0.uv.x = column0.uv.y = column1.uv.y = column2.uv.x = 0;
                     column1.uv.x = column3.uv.x = border.x / whsize.x;
                     column2.uv.y = column3.uv.y = 1.0f;
-                    column0.sprite.z = column2.sprite.z = 1;
+                    column0.sprite.z = column2.sprite.z = firstSegment ? 0 : 1;
                 }
                 else if (validTail && i == lcm)
                 {
                     column0.uv.y = column1.uv.y = 0;
                     column0.uv.x = column2.uv.x = (whsize.x - border.z) / whsize.x;
                     column1.uv.x = column2.uv.y = column3.uv.x = column3.uv.y = 1.0f;
-                    column1.sprite.z = column3.sprite.z = 1;
+                    column1.sprite.z = column3.sprite.z = finalSegment ? 0 : 1;
                 }
                 else
                 {
@@ -1574,11 +1618,11 @@ namespace UnityEngine.U2D
                 JobControlPoint _ecp = GetControlPoint(isi.sgInfo.y);                
                 
                 bool useClosure = (m_ControlPoints[0].cpData.z == kModeContinous) && (isi.sgInfo.y == controlPointCount - 1);
-                bool firstSegment = (i == 0);
+                bool firstSegment = (i == 0) && !isCarpet && !useClosure;
                 bool validHead = hasSpriteBorder && (border.x > 0) && ((_scp.exData.z == 0) || firstSegment);
                 validHead = (m_ControlPoints[0].cpData.z == kModeContinous) ? (validHead && !isCarpet) : validHead;
-                bool finalSegment = (i == segmentCount - 1);
-                bool validTail = hasSpriteBorder && (border.z > 0) && ((_ecp.exData.z == 0) || (finalSegment && !isCarpet && !useClosure));
+                bool finalSegment = (i == segmentCount - 1) && !isCarpet && !useClosure;
+                bool validTail = hasSpriteBorder && (border.z > 0) && ((_ecp.exData.z == 0) || finalSegment);
                 validTail = (m_ControlPoints[0].cpData.z == kModeContinous) ? (validTail && !isCarpet) : validTail;
 
                 // Generate the UV Increments.
@@ -1704,7 +1748,7 @@ namespace UnityEngine.U2D
 
                 // Generate the Renderer Data.
                 int outputCount = 0;
-                TessellateSegment(i, ispr, isi, whsize, border, pxlWidth, useClosure, validHead, validTail, m_VertexData, vertexCount, ref m_OutputVertexData, ref outputCount);
+                TessellateSegment(i, ispr, isi, whsize, border, pxlWidth, m_VertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref m_OutputVertexData, ref outputCount);
                 if (outputCount == 0)
                     continue;
                 var z = ((float)(i + 1) * kEpsilonOrder) + ((float)isi.sgInfo.z * kEpsilonOrder * 0.001f);
@@ -1720,7 +1764,7 @@ namespace UnityEngine.U2D
                     stPixelU = border.x;
                     enPixelU = whsize.x - border.z;
                     pxlWidth = enPixelU - stPixelU;
-                    TessellateSegment(i, isprc, isi, whsize, border, pxlWidth, useClosure, validHead, validTail, m_VertexData, vertexCount, ref m_OutputVertexData, ref outputCount);
+                    TessellateSegment(i, isprc, isi, whsize, border, pxlWidth, m_VertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref m_OutputVertexData, ref outputCount);
                     ec = UpdateCollider(isi, isprc, m_OutputVertexData, outputCount, ref m_ColliderPoints, ref m_ColliderDataCount);
                 }
 
@@ -2174,7 +2218,7 @@ namespace UnityEngine.U2D
                 Vector3 pos = m_PosArray[ic];
                 Vector2 uv0 = m_Uv0Array[ic];
                 bool ccw = (corner <= kCornerTypeOuterBottomRight);
-                int vertexArrayCount = m_VertexArrayCount;
+                int vArrayCount = m_VertexArrayCount;
 
                 for (int i = 0; i < m_CornerCount; ++i)
                 {
@@ -2227,7 +2271,7 @@ namespace UnityEngine.U2D
 
                 if (m_TanArray.Length > 1)
                 {
-                    for (int i = vertexArrayCount; i < m_VertexArrayCount; ++i)
+                    for (int i = vArrayCount; i < m_VertexArrayCount; ++i)
                         m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
                 }
 
@@ -2442,7 +2486,7 @@ namespace UnityEngine.U2D
                 bool endOverLaps = LineIntersection(kEpsilonRelaxed, m_ColliderPoints[0], m_ColliderPoints[1],
                     m_ColliderPoints[trimmedPointCount - 1], m_ColliderPoints[trimmedPointCount - 2], ref vin);
                 if (endOverLaps)
-                    m_ColliderPoints[0] = vin;
+                    m_ColliderPoints[0] = m_ColliderPoints[trimmedPointCount - 1] = vin;
             }
 
             m_ColliderPointCount = trimmedPointCount;

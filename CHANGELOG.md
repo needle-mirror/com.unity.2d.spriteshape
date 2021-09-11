@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.5] - 2021-09-11
+### Fixed
+- Update manual to reflect reorganization of menu item.
+- 1364350 Fix case where colliders do not extend to the end of the sprite texture when Sprite Borders are enabled.
+- 1364349 Fix case where Edge and Polygon colliders have missing edges on certain open-ended shapes.
+- 1364348 Fix case where enabling Fill Tessellation and setting profile's fill offset to positive causes errors.
+
 ## [5.1.4] - 2021-07-23
 ### Fixed
 - 1350020 Fix case where Triangular spriteshape with 0 offset collider does not generate collision shape.

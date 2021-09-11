@@ -9,6 +9,10 @@ using UnityEditor.U2D;
 
 namespace UnityEngine.U2D
 {
+
+    /// <summary>
+    /// SpriteShapeController component contains Spline and SpriteShape Profile information that is used when generating SpriteShape geometry.
+    /// </summary>
     [ExecuteInEditMode]
     [RequireComponent(typeof(SpriteShapeRenderer))]
     [DisallowMultipleComponent]
@@ -367,12 +371,13 @@ namespace UnityEngine.U2D
             return valid;
         }
 
-        bool ValidateUTess2D(bool uTess2D)
+        internal bool ValidateUTess2D()
         {
-            if (uTess2D && null != spriteShape)
+            bool uTess2D = m_UTess2D;
+            // Check for all properties that can create overlaps/intersections.
+            if (m_UTess2D && null != spriteShape)
             {
-                // Check for all properties 
-                uTess2D = (spriteShape.fillOffset >= 0);
+                uTess2D = (spriteShape.fillOffset == 0);
             }
             return uTess2D;
         }
@@ -436,6 +441,10 @@ namespace UnityEngine.U2D
             BakeMesh();
         }
 
+        /// <summary>
+        /// Generate geometry on a Job. 
+        /// </summary>
+        /// <returns>JobHandle for the SpriteShape geometry generation job.</returns>
         public JobHandle BakeMesh()
         {
             JobHandle jobHandle = default;
@@ -482,6 +491,10 @@ namespace UnityEngine.U2D
 
 #region UpdateData
 
+        /// <summary>
+        /// Force update SpriteShape parameters. 
+        /// </summary>
+        /// <returns>Returns true if there are changes</returns>
         public bool UpdateSpriteShapeParameters()
         {
             bool carpet = !spline.isOpenEnded;
@@ -733,7 +746,7 @@ namespace UnityEngine.U2D
                     spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
                 }
 
-                var uTess2D = ValidateUTess2D(m_UTess2D);
+                var uTess2D = ValidateUTess2D();
                 var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
                 spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray, uTess2D);
                 // Only update Handle for an actual Job is scheduled.
