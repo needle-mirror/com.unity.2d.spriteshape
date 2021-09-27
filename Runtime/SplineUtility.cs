@@ -5,8 +5,17 @@ using Unity.Collections.LowLevel.Unsafe;
 
 namespace UnityEngine.U2D
 {
+    /// <summary>
+    /// Utility functions for Spline. 
+    /// </summary>
     public class SplineUtility
     {
+        /// <summary>
+        /// Calculate angle between direction vectors.
+        /// </summary>
+        /// <param name="start">Start Vector</param>
+        /// <param name="end">End Vector</param>
+        /// <returns>Angle</returns>
         public static float SlopeAngle(Vector2 start, Vector2 end)
         {
             Vector2 dir = start - end;
@@ -25,6 +34,17 @@ namespace UnityEngine.U2D
             an = (du != -1f) ? an : -180f;
             return an;
         }
+        
+        /// <summary>
+        /// Calculate Left and Right Tangents for the given Control Point.
+        /// </summary>
+        /// <param name="point">Position of current point</param>
+        /// <param name="prevPoint">Position of previous point.</param>
+        /// <param name="nextPoint">Position of next point.</param>
+        /// <param name="forward">Forward vector.</param>
+        /// <param name="scale">Scale.</param>
+        /// <param name="rightTangent">Right Tangent (out Value)</param>
+        /// <param name="leftTangent">Left Tangent (out Value)</param>
         public static void CalculateTangents(Vector3 point, Vector3 prevPoint, Vector3 nextPoint, Vector3 forward, float scale, out Vector3 rightTangent, out Vector3 leftTangent)
         {
             Vector3 v1 = (prevPoint - point).normalized;

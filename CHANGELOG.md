@@ -1,5 +1,16 @@
 # Changelog
 
+## [7.0.2] - 2021-09-27
+### Fixed
+- Fix 7.0.1 changelog.
+
+## [7.0.1] - 2021-09-21
+### Fixed
+- 1364344 Fix case where enabling Fill Tessellation and setting profile's fill offset to positive causes errors.
+- 1364343 Fix case where Edge and Polygon colliders have missing edges on certain open-ended shapes.
+- 1364342 Fix case where colliders do not extend to the end of the sprite texture when Sprite Borders are enabled.
+- 1364339 Fix case where Sprite Shapes appear only when their pivot is revealed in the Scene view.
+
 ## [7.0.0] - 2021-08-10
 ### Fixed
 - 1350018 Fix case where Triangular spriteshape with 0 offset collider does not generate collision shape.

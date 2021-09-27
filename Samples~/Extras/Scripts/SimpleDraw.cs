@@ -5,6 +5,8 @@ using UnityEngine.U2D;
 
 // Dynamic modification of spline to follow the path of mouse movement.
 // This script is just a simplified demo to demonstrate the idea.
+namespace SpriteShapeExtras
+{
 
 public class SimpleDraw : MonoBehaviour
 {
@@ -17,11 +19,27 @@ public class SimpleDraw : MonoBehaviour
 
     }
 
+        private static int NextIndex(int index, int pointCount)
+        {
+            return Mod(index + 1, pointCount);
+        }
+    
+        private static int PreviousIndex(int index, int pointCount)
+        {
+            return Mod(index - 1, pointCount);
+        }
+    
+        private static int Mod(int x, int m)
+        {
+            int r = x % m;
+            return r < 0 ? r + m : r;
+        }
+    
     private void Smoothen(SpriteShapeController sc, int pointIndex)
     {
         Vector3 position = sc.spline.GetPosition(pointIndex);
-        Vector3 positionNext = sc.spline.GetPosition(SplineUtility.NextIndex(pointIndex, sc.spline.GetPointCount()));
-        Vector3 positionPrev = sc.spline.GetPosition(SplineUtility.PreviousIndex(pointIndex, sc.spline.GetPointCount()));
+            Vector3 positionNext = sc.spline.GetPosition(NextIndex(pointIndex, sc.spline.GetPointCount()));
+            Vector3 positionPrev = sc.spline.GetPosition(PreviousIndex(pointIndex, sc.spline.GetPointCount()));
         Vector3 forward = gameObject.transform.forward;
 
         float scale = Mathf.Min((positionNext - position).magnitude, (positionPrev - position).magnitude) * 0.33f;
@@ -56,4 +74,5 @@ public class SimpleDraw : MonoBehaviour
             lastPosition = mp;
         }
     }
+}
 }

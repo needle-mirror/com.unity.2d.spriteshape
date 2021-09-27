@@ -10,6 +10,10 @@ using UnityEditor.U2D;
 
 namespace UnityEngine.U2D
 {
+
+    /// <summary>
+    /// SpriteShapeController component contains Spline and SpriteShape Profile information that is used when generating SpriteShape geometry.
+    /// </summary>
     [ExecuteInEditMode]
     [RequireComponent(typeof(SpriteShapeRenderer))]
     [DisallowMultipleComponent]
@@ -268,6 +272,7 @@ namespace UnityEngine.U2D
             m_DynamicOcclusionOverriden = true;
             m_DynamicOcclusionLocal = spriteShapeRenderer.allowOcclusionWhenDynamic;
             spriteShapeRenderer.allowOcclusionWhenDynamic = false;
+            InitBounds();
             UpdateSpriteData();
         }
 
@@ -322,6 +327,22 @@ namespace UnityEngine.U2D
 
         #region HashAndDataCheck
 
+        void InitBounds()
+        {
+            var pointCount = spline.GetPointCount();
+            if (pointCount > 1)
+            {
+                Bounds bounds = new Bounds(spline.GetPosition(0), spline.GetPosition(0));
+                for (int i = 1; i < pointCount; ++i)
+                    bounds.Encapsulate(spline.GetPosition(i));
+                bounds.Encapsulate(spriteShapeRenderer.bounds);
+                spriteShapeRenderer.SetLocalAABB(bounds);
+            }
+        }
+        
+        /// <summary>
+        /// Refresh SpriteShape Hash so its force generated again on the next frame if its visible.
+        /// </summary>
         public void RefreshSpriteShape()
         {
             m_ActiveSplineHash = 0;
@@ -371,12 +392,13 @@ namespace UnityEngine.U2D
             return valid;
         }
 
-        bool ValidateUTess2D(bool uTess2D)
+        internal bool ValidateUTess2D()
         {
-            if (uTess2D && null != spriteShape)
+            bool uTess2D = m_UTess2D;
+            // Check for all properties that can create overlaps/intersections.
+            if (m_UTess2D && null != spriteShape)
             {
-                // Check for all properties 
-                uTess2D = (spriteShape.fillOffset >= 0);
+                uTess2D = (spriteShape.fillOffset == 0);
             }
             return uTess2D;
         }
@@ -440,6 +462,10 @@ namespace UnityEngine.U2D
             BakeMesh();
         }
 
+        /// <summary>
+        /// Generate geometry on a Job. 
+        /// </summary>
+        /// <returns>JobHandle for the SpriteShape geometry generation job.</returns>
         public JobHandle BakeMesh()
         {
             JobHandle jobHandle = default;
@@ -486,6 +512,10 @@ namespace UnityEngine.U2D
 
 #region UpdateData
 
+        /// <summary>
+        /// Force update SpriteShape parameters. 
+        /// </summary>
+        /// <returns>Returns true if there are changes</returns>
         public bool UpdateSpriteShapeParameters()
         {
             bool carpet = !spline.isOpenEnded;
@@ -737,7 +767,7 @@ namespace UnityEngine.U2D
                     spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
                 }
 
-                var uTess2D = ValidateUTess2D(m_UTess2D);
+                var uTess2D = ValidateUTess2D();
                 var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
                 spriteShapeJob.generateCollider = generateCollider;
                 spriteShapeJob.generateGeometry = generateGeometry;

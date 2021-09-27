@@ -4,14 +4,26 @@ using Unity.Mathematics;
 
 namespace UnityEngine.U2D
 {
+    /// <summary>
+    /// Utility functions for Bezier.
+    /// </summary>
     public static class BezierUtility
     {
         static Vector3[] s_TempPoints = new Vector3[3];
         
-        public static Vector3 BezierPoint(Vector3 startPosition, Vector3 startTangent, Vector3 endTangent, Vector3 endPosition, float t)
+        /// <summary>
+        /// Get the BezierPoint position between two control points.
+        /// </summary>
+        /// <param name="startRightTangent">Right tangent of the first control point.</param>
+        /// <param name="startPosition">Position of the first control point.</param>
+        /// <param name="endPosition">Position of the second control point</param>
+        /// <param name="endLeftTangent">Left tangent of the second control point.</param>
+        /// <param name="t">Interval in the range of (0, 1)</param>
+        /// <returns>Intermediate position</returns>
+        public static Vector3 BezierPoint(Vector3 startRightTangent, Vector3 startPosition, Vector3 endPosition, Vector3 endLeftTangent, float t)
         {
             float s = 1.0f - t;
-            return s * s * s * startPosition + 3.0f * s * s * t * startTangent + 3.0f * s * t * t * endTangent + t * t * t * endPosition;
+            return s * s * s * startRightTangent + 3.0f * s * s * t * startPosition + 3.0f * s * t * t * endPosition + t * t * t * endLeftTangent;
         }        
         internal static float GetSpritePixelWidth(Sprite sprite)
         {
