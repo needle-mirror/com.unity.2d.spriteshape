@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor;
-using UnityEditor.U2D.Path;
+using UnityEditor.U2D.Common.Path;
 using UnityEditor.EditorTools;
 using UnityEditor.ShortcutManagement;
 using UnityEditor.U2D.Common;
@@ -30,9 +30,9 @@ namespace UnityEditor.U2D.SpriteShapeInternal
             Handles.DrawAAPolyLine(null, width, Handles.MakeBezierPoints(p1, p4, p2, p3, GetSubDivisionCount()));
         }
 
-        void IDrawer.DrawCreatePointPreview(Vector3 position)
+        void IDrawer.DrawCreatePointPreview(Vector3 position, Color color)
         {
-            m_Drawer.DrawCreatePointPreview(position);
+            m_Drawer.DrawCreatePointPreview(position, color);
         }
 
         void IDrawer.DrawLine(Vector3 p1, Vector3 p2, float width, Color color)
@@ -40,24 +40,24 @@ namespace UnityEditor.U2D.SpriteShapeInternal
             m_Drawer.DrawLine(p1, p2, width, color);
         }
 
-        void IDrawer.DrawPoint(Vector3 position)
+        void IDrawer.DrawPoint(Vector3 position, Color color)
         {
-            m_Drawer.DrawPoint(position);
+            m_Drawer.DrawPoint(position, color);
         }
 
-        void IDrawer.DrawPointHovered(Vector3 position)
+        void IDrawer.DrawPointHovered(Vector3 position, Color color)
         {
-            m_Drawer.DrawPointHovered(position);
+            m_Drawer.DrawPointHovered(position, color);
         }
 
-        void IDrawer.DrawPointSelected(Vector3 position)
+        void IDrawer.DrawPointSelected(Vector3 position, Color color)
         {
-            m_Drawer.DrawPointSelected(position);
+            m_Drawer.DrawPointSelected(position, color);
         }
 
-        void IDrawer.DrawTangent(Vector3 position, Vector3 tangent)
+        void IDrawer.DrawTangent(Vector3 position, Vector3 tangent, Color color)
         {
-            m_Drawer.DrawTangent(position, tangent);
+            m_Drawer.DrawTangent(position, tangent, color);
         }
     }
 

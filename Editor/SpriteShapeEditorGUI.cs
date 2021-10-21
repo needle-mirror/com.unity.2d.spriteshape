@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace UnityEditor.U2D
 {
-    public class SpriteShapeEditorGUI
+    internal class SpriteShapeEditorGUI
     {
         private const float kSpacingSubLabel = 2.0f;
         private const float kMiniLabelW = 13;

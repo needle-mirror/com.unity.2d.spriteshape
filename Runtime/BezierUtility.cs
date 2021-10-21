@@ -62,16 +62,18 @@ namespace UnityEngine.U2D
                     float t = (float)n / fmax;
                     Vector3 bp = BezierPoint(rt, p0, p1, lt, t);
                     float d = math.distance(bp, sp);
-                    smallestSegment = math.min(d, smallestSegment);
                     spd += d;
                     sp = bp;
                 }
             }
 
+            float ssc = fmax * controlPointContour;
+            float ssl = spd / (ssc * 1.08f);
+            smallestSegment = math.min(ssl, smallestSegment);
             return spd;
         }
 
-        public static Vector3 ClosestPointOnCurve(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, out float t)
+        internal static Vector3 ClosestPointOnCurve(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, out float t)
         {
             Vector3 startToEnd = endPosition - startPosition;
             Vector3 startToTangent = (startTangent - startPosition);
@@ -114,7 +116,7 @@ namespace UnityEngine.U2D
             return pointRight;
         }
 
-        public static Vector3 ClosestPointOnCurveFast(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, out float t)
+        internal static Vector3 ClosestPointOnCurveFast(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, out float t)
         {
             float sqrError = 0.001f;
             float startT = 0f;
@@ -194,7 +196,7 @@ namespace UnityEngine.U2D
             return endPosition;
         }
 
-        public static void SplitBezier(float t, Vector3 startPosition, Vector3 endPosition, Vector3 startRightTangent, Vector3 endLeftTangent,
+        internal static void SplitBezier(float t, Vector3 startPosition, Vector3 endPosition, Vector3 startRightTangent, Vector3 endLeftTangent,
             out Vector3 leftStartPosition, out Vector3 leftEndPosition, out Vector3 leftStartTangent, out Vector3 leftEndTangent,
             out Vector3 rightStartPosition, out Vector3 rightEndPosition, out Vector3 rightStartTangent, out Vector3 rightEndTangent)
         {

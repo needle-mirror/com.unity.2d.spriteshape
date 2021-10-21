@@ -15,10 +15,26 @@ using Unity.Burst;
 namespace UnityEngine.U2D
 {
 
+    internal enum SpriteShapeGeneratorResult
+    {
+        ErrorDefaultQuadCreated = -5,
+        ErrorNativeDataOverflow = -4,
+        ErrorSpritesWrongBorder = -3,
+        ErrorSpritesTightPacked = -2,
+        ErrorVertexLimitReached = -1,
+        Success = 0,
+    }
+    
+    // Generator Stats. 
+    internal struct SpriteShapeGeneratorStats
+    {
+        public SpriteShapeGeneratorResult status;            // Adds any error Status
+    }
+    
 #if ENABLE_SPRITESHAPE_BURST
     [BurstCompile]
 #endif
-    public struct SpriteShapeGenerator : IJob
+    internal struct SpriteShapeGenerator : IJob
     {
 
         public ProfilerMarker generateGeometry;
@@ -173,6 +189,7 @@ namespace UnityEngine.U2D
         private int m_ColliderPointCount;
         public NativeArray<float2> m_ColliderPoints;
         public NativeArray<Bounds> m_Bounds;
+        public NativeArray<SpriteShapeGeneratorStats> m_Stats;
 
         int m_IndexDataCount;
         int m_VertexDataCount;
@@ -314,7 +331,11 @@ namespace UnityEngine.U2D
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_SpriteInfos.Length)
-                throw new ArgumentException($"GetSpriteInfo accessed with invalid Index {index} / {m_SpriteInfos.Length}");
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
+                throw new ArgumentException(
+                    $"GetSpriteInfo accessed with invalid Index {index} / {m_SpriteInfos.Length}");
+            }
 #endif            
             return m_SpriteInfos[index];
         }
@@ -324,7 +345,11 @@ namespace UnityEngine.U2D
             int ai = index - 1;
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (ai >= m_CornerSpriteInfos.Length || index == 0)
-                throw new ArgumentException($"GetCornerSpriteInfo accessed with invalid Index {index} / {m_CornerSpriteInfos.Length}");
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
+                throw new ArgumentException(
+                    $"GetCornerSpriteInfo accessed with invalid Index {index} / {m_CornerSpriteInfos.Length}");
+            }
 #endif            
             return m_CornerSpriteInfos[ai];
         }
@@ -333,7 +358,11 @@ namespace UnityEngine.U2D
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_AngleRanges.Length)
-                throw new ArgumentException($"GetAngleRange accessed with invalid Index {index} / {m_AngleRanges.Length}");
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
+                throw new ArgumentException(
+                    $"GetAngleRange accessed with invalid Index {index} / {m_AngleRanges.Length}");
+            }
 #endif            
             return m_AngleRanges[index];
         }
@@ -342,7 +371,11 @@ namespace UnityEngine.U2D
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_ControlPoints.Length)
-                throw new ArgumentException($"GetControlPoint accessed with invalid Index {index} / {m_ControlPoints.Length}");
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
+                throw new ArgumentException(
+                    $"GetControlPoint accessed with invalid Index {index} / {m_ControlPoints.Length}");
+            }
 #endif            
             return m_ControlPoints[index];
         }
@@ -351,7 +384,11 @@ namespace UnityEngine.U2D
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_ContourPointCount)
-                throw new ArgumentException($"GetContourPoint accessed with invalid Index {index} / {m_ContourPointCount}");
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
+                throw new ArgumentException(
+                    $"GetContourPoint accessed with invalid Index {index} / {m_ContourPointCount}");
+            }
 #endif            
             return m_ContourPoints[index];
         }
@@ -360,7 +397,10 @@ namespace UnityEngine.U2D
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_SegmentCount)
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
                 throw new ArgumentException($"GetSegmentInfo accessed with invalid Index {index} / {m_SegmentCount}");
+            }
 #endif            
             return m_Segments[index];
         }
@@ -369,7 +409,11 @@ namespace UnityEngine.U2D
         {
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (index >= m_ControlPoints.Length)
-                throw new ArgumentException($"GetContourIndex accessed with invalid Index {index} / {m_ControlPoints.Length}");
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
+                throw new ArgumentException(
+                    $"GetContourIndex accessed with invalid Index {index} / {m_ControlPoints.Length}");
+            }
 #endif            
             return index * m_ShapeParams.splineData.y;
         }
@@ -377,12 +421,26 @@ namespace UnityEngine.U2D
         int GetEndContourIndexOfSegment(JobSegmentInfo isi)
         {
             int contourIndex = GetContourIndex(isi.sgInfo.y) - 1;
-#if ENABLE_UNITY_COLLECTIONS_CHECKS            
+#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (isi.sgInfo.y >= m_ControlPoints.Length || isi.sgInfo.y == 0)
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
                 throw new ArgumentException($"GetEndContourIndexOfSegment accessed with invalid Index");
+            }
 #endif            
             return contourIndex;
         }
+
+        void SetResult(SpriteShapeGeneratorResult result)
+        {
+            if (m_Stats.IsCreated)
+            {
+                var stats = m_Stats[0];
+                stats.status = result;
+                m_Stats[0] = stats;
+            }
+        }
+        
         #endregion
 
         #region Utility
@@ -419,7 +477,7 @@ namespace UnityEngine.U2D
         {
             return IsPointOnLine(epsilon, p1, p2, r) && IsPointOnLine(epsilon, p3, p4, r);
         }
-
+        
         static bool Colinear(float2 p, float2 q, float2 r)
         {
             return (q.x <= math.max(p.x, r.x) && q.x >= math.min(p.x, r.x) && q.y <= math.max(p.y, r.y) && q.y >= math.min(p.y, r.y));
@@ -638,7 +696,7 @@ namespace UnityEngine.U2D
 
                     if (!math.any(spriteInfo.texRect))
                     {
-                        Cleanup();
+                        SetResult(SpriteShapeGeneratorResult.ErrorSpritesTightPacked);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                         throw new ArgumentException($"{spr.name} is packed with Tight packing or mesh type set to Tight. Please check input sprites");
 #endif                        
@@ -1167,6 +1225,10 @@ namespace UnityEngine.U2D
                         m_IndexDataCount = geom.indexCount = m_ActiveIndexCount;
                         m_VertexDataCount = geom.vertexCount = m_ActiveVertexCount;
                     }
+                    else
+                    {
+                        SetResult(SpriteShapeGeneratorResult.ErrorDefaultQuadCreated);
+                    }
 
                     ov.Dispose();
                     oi.Dispose();
@@ -1348,11 +1410,14 @@ namespace UnityEngine.U2D
             int localVertex = 0;
             int finalCount = indexCount + inCount + (inCount / 2);
             
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
             if (finalCount >= indexData.Length)
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorVertexLimitReached);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS                
                 throw new InvalidOperationException(
                     $"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
-#endif            
+#endif                
+            }
 
             for (int i = 0; i < inCount; i = i + 4, outCount = outCount + 4, localVertex = localVertex + 4)
             {
@@ -1395,12 +1460,16 @@ namespace UnityEngine.U2D
             int lcm = cms - 1;
             int expectedCount = outputCount + (cms * 4);
             var sprite = vertices[0].sprite;
-
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-            if (expectedCount >= outputVertices.Length)
-                throw new InvalidOperationException($"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
-#endif            
             
+            if (expectedCount >= outputVertices.Length)
+            {
+                SetResult(SpriteShapeGeneratorResult.ErrorVertexLimitReached);
+#if ENABLE_UNITY_COLLECTIONS_CHECKS                
+                throw new InvalidOperationException(
+                    $"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
+#endif                
+            }
+
             float uvDist = 0;
             float uvStart = border.x;
             float uvEnd = whsize.x - border.z;
@@ -1634,7 +1703,7 @@ namespace UnityEngine.U2D
                 // Check for any invalid Sizes.
                 if (pxlWidth < kEpsilon)
                 {
-                    Cleanup();
+                    SetResult(SpriteShapeGeneratorResult.ErrorSpritesWrongBorder);
 #if ENABLE_UNITY_COLLECTIONS_CHECKS
                     throw new ArgumentException($"One of the sprites seem to have Invalid Borders. Please check Input Sprites.");
 #endif                    
@@ -2556,6 +2625,8 @@ namespace UnityEngine.U2D
         public void Execute()
         {
             // BURST
+            SetResult(SpriteShapeGeneratorResult.Success);
+            
             generateGeometry.Begin();
             {
                 if (0 != kModeUTess)
@@ -2573,6 +2644,7 @@ namespace UnityEngine.U2D
                 OptimizeCollider();
             }
             generateCollider.End();
+            
         }
 
         // Only needed if Burst is disabled.

@@ -1,13 +1,13 @@
 {
     "name": "Unity.2D.SpriteShape.Editor",
+    "rootNamespace": "",
     "references": [
         "Unity.InternalAPIEditorBridge.001",
         "Unity.2D.Common.Editor",
         "Unity.2D.Common.Runtime",
         "Unity.2D.SpriteShape.Runtime",
-        "Unity.2D.Path.Editor"
+        "Unity.2D.Common.Path.Editor"
     ],
-    "optionalUnityReferences": [],
     "includePlatforms": [
         "Editor"
     ],
@@ -17,5 +17,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": []
+    "versionDefines": [],
+    "noEngineReferences": false
 }

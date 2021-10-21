@@ -38,6 +38,7 @@ namespace UnityEngine.U2D
         // Required for Generation.
         NativeArray<float2> m_ColliderData;
         NativeArray<Vector4> m_TangentData;
+        NativeArray<SpriteShapeGeneratorStats> m_Statistics;
 
         // Renderer Stuff.
         bool m_DynamicOcclusionLocal;
@@ -87,9 +88,13 @@ namespace UnityEngine.U2D
         bool m_GeometryCached = false;
         [SerializeField] 
         bool m_UTess2D = false;
-        
-        static readonly ProfilerMarker generateGeometry = new ProfilerMarker("SpriteShape.GenerateGeometry");
-        static readonly ProfilerMarker generateCollider = new ProfilerMarker("SpriteShape.GenerateCollider");        
+        [SerializeField] 
+        SpriteShapeGeometryCreator m_Creator;
+        [SerializeField] 
+        List<SpriteShapeGeometryModifier> m_Modifiers = new List<SpriteShapeGeometryModifier>();
+
+        internal static readonly ProfilerMarker generateGeometry = new ProfilerMarker("SpriteShape.GenerateGeometry");
+        internal static readonly ProfilerMarker generateCollider = new ProfilerMarker("SpriteShape.GenerateCollider");
         
         #region GetSet
 
@@ -130,96 +135,150 @@ namespace UnityEngine.U2D
             }
         }
 
+        internal bool optimizeColliderInternal
+        {
+            set { m_OptimizeCollider = value; }
+        }
+        
+        internal Sprite[] cornerSpriteArray
+        {
+            get { return m_CornerSpriteArray; }
+        }        
+
+        internal Sprite[] edgeSpriteArray
+        {
+            get { return m_EdgeSpriteArray; }
+        }
+
+        /// <summary> Angle Ranges </summary>
+        public AngleRangeInfo[] angleRangeInfoArray
+        {
+            get { return m_AngleRangeInfoArray; }
+        }
+
+        /// <summary>Get/Set SpriteShape Geometry Creator. </summary>
+        public SpriteShapeGeometryCreator spriteShapeCreator
+        {
+            get
+            {
+                if (m_Creator == null)
+                    m_Creator = SpriteShapeDefaultCreator.defaultInstance;
+                return m_Creator;
+            }
+            set
+            {
+                if (value != null)
+                    m_Creator = value;
+            }
+        }
+        
+        /// <summary>Get a list of Modifiers. </summary>
+        public List<SpriteShapeGeometryModifier> modifiers
+        {
+            get { return m_Modifiers; }
+        }
+
+        /// <summary>Hash code for SpriteShape used to check for changes. </summary>
         public int spriteShapeHashCode
         {
             get { return m_ActiveSpriteShapeHash; }
         }
 
+        /// <summary>Defines whether UV for fill geometry uses local or global space. </summary>
         public bool worldSpaceUVs
         {
             get { return m_WorldSpaceUV; }
             set { m_WorldSpaceUV = value; }
         }
-
+        
+        /// <summary>Defines pixel per unit for fill geometry UV generation. </summary>
         public float fillPixelsPerUnit
         {
             get { return m_FillPixelPerUnit; }
             set { m_FillPixelPerUnit = value; }
         }
-
+        
+        /// <summary>Enable tangent channel when generating SpriteShape geometry (used in Shaders) </summary>
         public bool enableTangents
         {
             get { return m_EnableTangents; }
             set { m_EnableTangents = value; }
         }
 
+        /// <summary>Stretch tiling for inner fill geometry UV generation. </summary>
         public float stretchTiling
         {
             get { return m_StretchTiling; }
             set { m_StretchTiling = value; }
         }
 
+        /// <summary>Level of detail for generated geometry. </summary>
         public int splineDetail
         {
             get { return m_SplineDetail; }
             set { m_SplineDetail = Mathf.Max(0, value); }
         }
 
+        /// <summary>Level of detail for geometry generated for colliders. </summary>
         public int colliderDetail
         {
             get { return m_ColliderDetail; }
             set { m_ColliderDetail = Mathf.Max(0, value); }
         }
 
+        /// <summary>Offset for colliders. </summary>
         public float colliderOffset
         {
             get { return m_ColliderOffset; }
             set { m_ColliderOffset = value; }
         }
 
+        /// <summary>Angle threshold within which corners are enabled. </summary>
         public float cornerAngleThreshold
         {
             get { return m_CornerAngleThreshold; }
             set { m_CornerAngleThreshold = value; }
         }
 
+        /// <summary>Auto update colliders on any change to SpriteShape geometry. </summary>
         public bool autoUpdateCollider
         {
             get { return m_UpdateCollider; }
             set { m_UpdateCollider = value; }
         }
 
+        /// <summary>Optimize generated collider geometry. </summary>
         public bool optimizeCollider
         {
             get { return m_OptimizeCollider; }
         }
 
-        internal bool optimizeColliderInternal
-        {
-            set { m_OptimizeCollider = value; }
-        }        
-        
+        /// <summary>Optimize generated SpriteShape geometry. </summary>
         public bool optimizeGeometry
         {
             get { return m_OptimizeGeometry; }
         }
 
+        /// <summary>Does this SpriteShapeController object has colliders ?</summary>
         public bool hasCollider
         {
             get { return (edgeCollider != null) || (polygonCollider != null); }
         }
 
+        /// <summary>Spline object that has data to create the Bezier curve of this SpriteShape Controller. </summary>
         public Spline spline
         {
             get { return m_Spline; }
         }
 
+        /// <summary>SpriteShape Profile asset that contains information on how to generate/render SpriteShapes. </summary>
         public SpriteShape spriteShape
         {
             get { return m_SpriteShape; }
             set { m_SpriteShape = value; }
         }
 
+        /// <summary>EdgeCollider2D component attached to this Object.</summary>
         public EdgeCollider2D edgeCollider
         {
             get
@@ -230,6 +289,7 @@ namespace UnityEngine.U2D
             }
         }
 
+        /// <summary>PolygonCollider2D component attached to this Object.</summary>
         public PolygonCollider2D polygonCollider
         {
             get
@@ -240,6 +300,7 @@ namespace UnityEngine.U2D
             }
         }
 
+        /// <summary>SpriteShapeRenderer component of this Object. </summary>
         public SpriteShapeRenderer spriteShapeRenderer
         {
             get
@@ -247,6 +308,16 @@ namespace UnityEngine.U2D
                 if (!m_SpriteShapeRenderer)
                     m_SpriteShapeRenderer = GetComponent<SpriteShapeRenderer>();
                 return m_SpriteShapeRenderer;
+            }
+        }
+
+        internal NativeArray<SpriteShapeGeneratorStats> stats
+        {
+            get
+            {
+                if (!m_Statistics.IsCreated)
+                    m_Statistics = new NativeArray<SpriteShapeGeneratorStats>(1, Allocator.Persistent);
+                return m_Statistics;
             }
         }
 
@@ -260,6 +331,8 @@ namespace UnityEngine.U2D
                 m_ColliderData.Dispose();
             if (m_TangentData.IsCreated)
                 m_TangentData.Dispose();
+            if (m_Statistics.IsCreated)
+                m_Statistics.Dispose();
         }
 
         void OnApplicationQuit()
@@ -327,17 +400,19 @@ namespace UnityEngine.U2D
 
         #region HashAndDataCheck
 
-        void InitBounds()
+        internal Bounds InitBounds()
         {
             var pointCount = spline.GetPointCount();
             if (pointCount > 1)
             {
-                Bounds bounds = new Bounds(spline.GetPosition(0), spline.GetPosition(0));
+                Bounds bounds = new Bounds(spline.GetPosition(0), Vector3.zero);
                 for (int i = 1; i < pointCount; ++i)
                     bounds.Encapsulate(spline.GetPosition(i));
-                bounds.Encapsulate(spriteShapeRenderer.bounds);
+                bounds.Encapsulate(spriteShapeRenderer.localBounds);
                 spriteShapeRenderer.SetLocalAABB(bounds);
+                return bounds;
             }
+            return new Bounds();
         }
         
         /// <summary>
@@ -395,7 +470,7 @@ namespace UnityEngine.U2D
         internal bool ValidateUTess2D()
         {
             bool uTess2D = m_UTess2D;
-            // Check for all properties that can create overlaps/intersections.
+            // Check for all properties that can create overlaps/intersections.            
             if (m_UTess2D && null != spriteShape)
             {
                 uTess2D = (spriteShape.fillOffset == 0);
@@ -656,7 +731,7 @@ namespace UnityEngine.U2D
             }
         }
 
-        NativeArray<ShapeControlPoint> GetShapeControlPoints()
+        internal NativeArray<ShapeControlPoint> GetShapeControlPoints()
         {
             int pointCount = spline.GetPointCount();
             NativeArray<ShapeControlPoint> shapePoints = new NativeArray<ShapeControlPoint>(pointCount, Allocator.Temp);
@@ -672,7 +747,7 @@ namespace UnityEngine.U2D
             return shapePoints;
         }
 
-        NativeArray<SplinePointMetaData> GetSplinePointMetaData()
+        internal NativeArray<SplinePointMetaData> GetSplinePointMetaData()
         {
             int pointCount = spline.GetPointCount();
             NativeArray<SplinePointMetaData> shapeMetaData = new NativeArray<SplinePointMetaData>(pointCount, Allocator.Temp);
@@ -687,7 +762,7 @@ namespace UnityEngine.U2D
             return shapeMetaData;
         }
 
-        int CalculateMaxArrayCount(NativeArray<ShapeControlPoint> shapePoints)
+        internal int CalculateMaxArrayCount(NativeArray<ShapeControlPoint> shapePoints)
         {
             int maxVertexCount = 1024 * 64;
             bool hasSprites = false;
@@ -734,14 +809,13 @@ namespace UnityEngine.U2D
                     if (spriteShapeGeometryCache.maxArrayCount != 0)
                         return spriteShapeGeometryCache.Upload(spriteShapeRenderer, this);
             }
-
-            int pointCount = spline.GetPointCount();
-            NativeArray<ShapeControlPoint> shapePoints = GetShapeControlPoints();
-            NativeArray<SplinePointMetaData> shapeMetaData = GetSplinePointMetaData();
-            maxArrayCount = CalculateMaxArrayCount(shapePoints);
-
+            maxArrayCount = spriteShapeCreator.GetVertexArrayCount(this);
+            
             if (maxArrayCount > 0 && enabled)
             {
+                // Complate previos
+                m_JobHandle.Complete();
+                
                 // Collider Data
                 if (m_ColliderData.IsCreated)
                     m_ColliderData.Dispose();
@@ -754,8 +828,7 @@ namespace UnityEngine.U2D
                 NativeArray<ushort> indexArray;
                 NativeSlice<Vector3> posArray;
                 NativeSlice<Vector2> uv0Array;
-                NativeArray<Bounds> bounds = spriteShapeRenderer.GetBounds();
-                NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(shapePoints.Length * 8);
+                NativeArray<SpriteShapeSegment> geomArray = spriteShapeRenderer.GetSegments(spline.GetPointCount() * 8);
                 NativeSlice<Vector4> tanArray = new NativeSlice<Vector4>(m_TangentData);
 
                 if (m_EnableTangents)
@@ -767,16 +840,14 @@ namespace UnityEngine.U2D
                     spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array);
                 }
 
-                var uTess2D = ValidateUTess2D();
-                var spriteShapeJob = new SpriteShapeGenerator() { m_Bounds = bounds, m_PosArray = posArray, m_Uv0Array = uv0Array, m_TanArray = tanArray, m_GeomArray = geomArray, m_IndexArray = indexArray, m_ColliderPoints = m_ColliderData };
-                spriteShapeJob.generateCollider = generateCollider;
-                spriteShapeJob.generateGeometry = generateGeometry;
-                spriteShapeJob.Prepare(this, m_ActiveShapeParameters, maxArrayCount, shapePoints, shapeMetaData, m_AngleRangeInfoArray, m_EdgeSpriteArray, m_CornerSpriteArray, uTess2D);
-                // Only update Handle for an actual Job is scheduled.
-                m_JobHandle = spriteShapeJob.Schedule();
+                m_JobHandle = jobHandle = spriteShapeCreator.MakeCreatorJob(this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
+                foreach(var geomMod in m_Modifiers)
+                    m_JobHandle = geomMod.MakeModifierJob(m_JobHandle, this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
+                    
+                // Prepare Renderer.
                 spriteShapeRenderer.Prepare(m_JobHandle, m_ActiveShapeParameters, m_SpriteArray);
-                jobHandle = m_JobHandle;
-
+                jobHandle = m_JobHandle;                
+                
 #if UNITY_EDITOR
                 if (spriteShapeGeometryCache && geometryCached)
                     spriteShapeGeometryCache.SetGeometryCache(maxArrayCount, posArray, uv0Array, tanArray, indexArray, geomArray);
@@ -790,11 +861,12 @@ namespace UnityEngine.U2D
                 spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
                 m_DynamicOcclusionOverriden = false;
             }
-            shapePoints.Dispose();
-            shapeMetaData.Dispose();
             return jobHandle;
         }
 
+        /// <summary>
+        /// Update Collider of this Object.
+        /// </summary>
         public void BakeCollider()
         {
             // Previously this must be explicitly called if using BakeMesh.
@@ -829,6 +901,30 @@ namespace UnityEngine.U2D
                 }
                 // Dispose Collider as its no longer needed.
                 m_ColliderData.Dispose();
+                
+                // Print Once.
+                if (m_Statistics.IsCreated)
+                {
+                    var stats = m_Statistics[0];
+                    switch (stats.status)
+                    {
+                        case SpriteShapeGeneratorResult.ErrorNativeDataOverflow:
+                            Debug.LogWarningFormat(gameObject, "NativeArray access not within range. Please submit a bug report.");
+                            break;
+                        case SpriteShapeGeneratorResult.ErrorSpritesTightPacked:
+                            Debug.LogWarningFormat(gameObject, "Sprites used in SpriteShape profile must use FullRect.");
+                            break;
+                        case SpriteShapeGeneratorResult.ErrorSpritesWrongBorder:
+                            Debug.LogWarningFormat(gameObject, "Sprites used in SpriteShape profile have invalid borders. Please check SpriteShape profile."); 
+                            break;
+                        case SpriteShapeGeneratorResult.ErrorVertexLimitReached:
+                            Debug.LogWarningFormat(gameObject, "Mesh data has reached Limits. Please try dividing shape into smaller blocks."); 
+                            break;
+                        case SpriteShapeGeneratorResult.ErrorDefaultQuadCreated:
+                            Debug.LogWarningFormat(gameObject, "Fill tessellation (C# Job) encountered errors. Please disable it to use default tessellation for fill geometry."); 
+                            break;                        
+                    }
+                }                
             }
         }
 
@@ -837,7 +933,7 @@ namespace UnityEngine.U2D
             if (spriteShapeRenderer != null)
             {
                 var hasSplineChanged = HasSplineDataChanged();
-                if (!spriteShapeRenderer.isVisible && hasSplineChanged)
+                if (hasSplineChanged)
                 {
                     BakeMesh();
                     Rendering.CommandBuffer rc = new Rendering.CommandBuffer();

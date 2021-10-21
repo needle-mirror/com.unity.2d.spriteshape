@@ -6,7 +6,7 @@ using UnityEngine.U2D;
 
 namespace UnityEditor.U2D.SpriteShape
 {
-    public interface IAngleRangeCache
+    internal interface IAngleRangeCache
     {
         List<AngleRange> angleRanges { get; }
         int selectedIndex { get; set; }
@@ -14,7 +14,7 @@ namespace UnityEditor.U2D.SpriteShape
         void RegisterUndo(string name);
     }
 
-    public class AngleRangeController
+    internal class AngleRangeController
     {
         public event Action selectionChanged = () => { };
         public IAngleRangeCache cache { get; set; }

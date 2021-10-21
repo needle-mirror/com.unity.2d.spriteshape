@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace UnityEditor.U2D
 {
-    public class AngleRangeGUI
+    internal class AngleRangeGUI
     {
         public static readonly int kLeftHandleHashCode = "LeftHandle".GetHashCode();
         public static readonly int kRightHandleHashCode = "RightHandle".GetHashCode();

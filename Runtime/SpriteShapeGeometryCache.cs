@@ -49,7 +49,7 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
     NativeSlice<Vector2> m_Uv0ArrayCache;
     NativeSlice<Vector4> m_TanArrayCache;
     NativeArray<ushort> m_IndexArrayCache;
-    NativeArray<UnityEngine.U2D.SpriteShapeSegment> m_GeomArrayCache;
+    NativeArray<SpriteShapeSegment> m_GeomArrayCache;
 
     internal ushort[] indexArray
     {

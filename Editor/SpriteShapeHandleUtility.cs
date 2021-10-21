@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace UnityEditor.U2D
 {
-    public class SpriteShapeHandleUtility
+    internal class SpriteShapeHandleUtility
     {
         private class Styles
         {

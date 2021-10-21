@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace UnityEditor.U2D
 {
-    public enum AngleRangeAction
+    internal enum AngleRangeAction
     {
         SelectRange,
         ModifyRange,
@@ -15,7 +15,7 @@ namespace UnityEditor.U2D
         RemoveRange,
     }
 
-    public interface IAngleRangeView
+    internal interface IAngleRangeView
     {
         int hoveredRangeIndex { get; }
 
@@ -35,7 +35,7 @@ namespace UnityEditor.U2D
         void DrawAngleRangeOutline(Rect rect, float start, float end, float angleOffset, float radius);
     }
 
-    public class AngleRangeView : IAngleRangeView
+    internal class AngleRangeView : IAngleRangeView
     {
         const string kDeleteCommandName = "Delete";
         const string kSoftDeleteCommandName = "SoftDelete";

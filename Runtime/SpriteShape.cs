@@ -81,10 +81,6 @@ namespace UnityEngine.U2D
         public ShapeTangentMode mode;
         /// <summary>Height of control point used when generating SpriteShape geometry.</summary>
         public float height = 1f;
-        /// <summary>Bevel cutoff for control Point. </summary>
-        public float bevelCutoff;
-        /// <summary>Bevel size. </summary>
-        public float bevelSize;
         /// <summary>Sprite index used for rendering at start of this control point along the edge. </summary>
         public int spriteIndex;
         /// <summary>Enable corners of control point.</summary>
@@ -153,7 +149,7 @@ namespace UnityEngine.U2D
         int m_Order;
         [SerializeField]
         List<Sprite> m_Sprites = new List<Sprite>();
-
+        
         /// <summary>
         /// Clone object.
         /// </summary>
@@ -192,7 +188,7 @@ namespace UnityEngine.U2D
 
             return true;
         }
-
+        
         /// <summary>
         /// Get hash code for this AngleRange.
         /// </summary>

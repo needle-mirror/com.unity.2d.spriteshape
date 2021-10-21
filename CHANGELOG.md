@@ -1,21 +1,40 @@
 # Changelog
 
-## [7.0.2] - 2021-09-27
-### Fixed
-- Fix 7.0.1 changelog.
+## [8.0.0-pre.4] - 2021-10-21
+### Changed
+- Update to latest com.unity.2d.common package
 
-## [7.0.1] - 2021-09-21
+## [8.0.0-pre.3] - 2021-10-18
 ### Fixed
-- 1364344 Fix case where enabling Fill Tessellation and setting profile's fill offset to positive causes errors.
-- 1364343 Fix case where Edge and Polygon colliders have missing edges on certain open-ended shapes.
-- 1364342 Fix case where colliders do not extend to the end of the sprite texture when Sprite Borders are enabled.
-- 1364339 Fix case where Sprite Shapes appear only when their pivot is revealed in the Scene view.
+- Fixed package.json to remove com.unity.2d.path dependency.
 
-## [7.0.0] - 2021-08-10
+## [8.0.0-pre.2] - 2021-10-11
 ### Fixed
-- 1350018 Fix case where Triangular spriteshape with 0 offset collider does not generate collision shape.
-- 1349674 Fix case where all open Scenes were dirtied when editing a SpriteShape Spline.
+- 1368107 Fix case where Bounds can cause spriteshape not load in when running Player.
+- 1364012 Fix crash when optimizing the geometry of the SpriteShape in certain cases.
+
+## [8.0.0-pre.1] - 2021-08-06
+### Added
+- Add actionable console log when encounter vertex count limit exception
+- Improved estimation of vertices required for geometry to minimize memory alloction.
+- Added user preferences for Controlpoint/Tangent/Spline color.
+- Added support for Global Grid Snapping. 
+
+### Changed
+- Remove dependency to path package
+- Moved Control point specific data from Inspector to a Scene Overlay Window.
+
+### Fixed
+- Fixed Bounds of SpriteShapeRenderer.
 - Update manual to reflect reorganization of menu item.
+- 1346430 Fix case where all open Scenes were dirtied when editing a SpriteShape Spline.
+- 1343836 Fix case where triangular spriteshape with 0 offset collider does not generate collision shape.
+- 1356204 Fix case where Sprite Shapes appear only when their pivot is revealed in the Scene view.
+- 1348701 Fix case where colliders do not extend to the end of the sprite texture when Sprite Borders are enabled.
+- 1362440 Fix case where Edge and Polygon colliders have missing edges on certain open-ended shapes.
+- 1363215 Fix case where enabling Fill Tessellation and setting profile's fill offset to positive causes errors.
+- 1368129 Fix case where Sprite Shape default materials were not initialized correctly.
+
 
 ## [7.0.0-pre.3] - 2021-05-17
 ### Changed

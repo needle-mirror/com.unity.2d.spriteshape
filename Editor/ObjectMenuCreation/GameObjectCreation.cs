@@ -7,7 +7,7 @@ using UnityEngine.U2D;
 
 namespace UnityEditor.U2D.SpriteShape
 {
-    class GameObjectCreation
+    internal class GameObjectCreation
     {
         const int k_MenuPriority = 4;
         [MenuItem("GameObject/2D Object/Sprite Shape/Open Shape", false, k_MenuPriority)]
@@ -16,13 +16,12 @@ namespace UnityEditor.U2D.SpriteShape
             var asset = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.unity.2d.spriteshape/Editor/ObjectMenuCreation/DefaultAssets/Sprite Shapes/Open Sprite Shape.prefab") as GameObject;
             var preset = new PresetType(asset.GetComponent<SpriteShapeController>());
             var defaults = Preset.GetDefaultPresetsForType(preset).Count(x => x.enabled);
-            if(defaults == 0)
-                CreateGameObjectFromTemplate(asset, menuCommand);
-            else
-            {
-                var go = CreateGameObject("Open Sprite Shape", menuCommand, new []{typeof(SpriteShapeController)});
-                go.GetComponent<SpriteShapeController>().spline.isOpenEnded = true;
-            }
+
+            var go = CreateGameObject("Open Sprite Shape", menuCommand, new []{typeof(SpriteShapeController)});
+            go.GetComponent<SpriteShapeController>().spline.isOpenEnded = true;
+
+            if (defaults == 0)
+                EditorUtility.CopySerialized(asset.GetComponent<SpriteShapeController>(), go.GetComponent<SpriteShapeController>());
         }
 
         [MenuItem("GameObject/2D Object/Sprite Shape/Closed Shape", false, k_MenuPriority)]
@@ -31,28 +30,15 @@ namespace UnityEditor.U2D.SpriteShape
             var asset = AssetDatabase.LoadAssetAtPath<GameObject>("Packages/com.unity.2d.spriteshape/Editor/ObjectMenuCreation/DefaultAssets/Sprite Shapes/Closed Sprite Shape.prefab") as GameObject;
             var preset = new PresetType(asset.GetComponent<SpriteShapeController>());
             var defaults = Preset.GetDefaultPresetsForType(preset).Count(x => x.enabled);
-            if(defaults == 0)
-                CreateGameObjectFromTemplate(asset, menuCommand);
-            else
-            {
-                var go = CreateGameObject("Closed Sprite Shape", menuCommand, new []{typeof(SpriteShapeController)});
-                go.GetComponent<SpriteShapeController>().spline.isOpenEnded = false;
-            }
+
+            var go = CreateGameObject("Closed Sprite Shape", menuCommand, new []{typeof(SpriteShapeController)});
+            go.GetComponent<SpriteShapeController>().spline.isOpenEnded = false;
+
+            if (defaults == 0)
+                EditorUtility.CopySerialized(asset.GetComponent<SpriteShapeController>(), go.GetComponent<SpriteShapeController>());
         }
-        
-        static public GameObject CreateGameObjectFromTemplate(GameObject template, MenuCommand menuCommand)
-        {
-            var parent = menuCommand.context as GameObject;
-            var fileName = System.IO.Path.GetFileNameWithoutExtension(AssetDatabase.GetAssetPath(template));
-            var newGO = GameObject.Instantiate(template);
-            newGO.name = fileName;
-            Selection.activeObject = newGO;
-            Place(newGO, parent);
-            Undo.RegisterCreatedObjectUndo(newGO, string.Format("Create {0}", fileName));
-            return newGO;
-        }
-        
-        static public GameObject CreateGameObject(string name, MenuCommand menuCommand, params Type[] components)
+
+        internal static GameObject CreateGameObject(string name, MenuCommand menuCommand, params Type[] components)
         {
             var parent = menuCommand.context as GameObject;
             var newGO = ObjectFactory.CreateGameObject(name, components);

@@ -70,12 +70,12 @@ namespace UnityEngine.U2D
             leftTangent = -rightTangent;
         }
 
-        public static int NextIndex(int index, int pointCount)
+        internal static int NextIndex(int index, int pointCount)
         {
             return Mod(index + 1, pointCount);
         }
 
-        public static int PreviousIndex(int index, int pointCount)
+        internal static int PreviousIndex(int index, int pointCount)
         {
             return Mod(index - 1, pointCount);
         }

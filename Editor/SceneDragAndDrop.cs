@@ -8,7 +8,7 @@ using Object = UnityEngine.Object;
 namespace UnityEditor.U2D
 {
     [InitializeOnLoad]
-    public static class SceneDragAndDrop
+    internal static class SceneDragAndDrop
     {
         static SceneDragAndDrop()
         {

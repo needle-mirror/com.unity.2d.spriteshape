@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace UnityEditor.U2D
 {
-    public static class EditorSpriteGUIUtility
+    internal static class EditorSpriteGUIUtility
     {
         public enum FitMode
         {

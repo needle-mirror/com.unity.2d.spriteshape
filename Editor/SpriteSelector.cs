@@ -1,4 +1,6 @@
 ﻿using System;
+using UnityEditor.U2D.Common;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace UnityEditor.U2D
@@ -9,12 +11,35 @@ namespace UnityEditor.U2D
         Sprite[] m_SpriteList = null;
         Texture[] m_Thumbnails;
         Vector2 m_ScrollPos;
+        int m_WindowSize = 0;
+        int m_ImageSize = 4; 
+        bool m_Inspector = true;
 
+        public bool inspector
+        {
+            get => m_Inspector;
+            set => m_Inspector = value;
+        }
+        public int imageSize
+        {
+            get { return m_ImageSize; }
+            set { m_ImageSize = value; }
+        }
+        public int windowSize
+        {
+            get { return m_WindowSize; }
+            set { m_WindowSize = value; }
+        }
         public int selectedIndex 
         {
             get { return m_SelectedSprite; } 
-            set {  m_SelectedSprite = value; }
+            set { m_SelectedSprite = value; }
         }
+        public bool hasSprites
+        {
+            get { return (m_SpriteList != null) && (m_SpriteList.Length != 0); }
+        }
+        
         internal static class Styles
         {
             public static GUIStyle gridList = "GridList";
@@ -22,11 +47,26 @@ namespace UnityEditor.U2D
             public static GUIContent missingSprites = EditorGUIUtility.TrTextContent("No brushes defined.");
             public static GUIStyle localGrid = null;
         }
+        
         public SpriteSelector()
         {
             m_SpriteList = null;
         }
 
+        public void SetCustomSize(int windowSizer, int imageSizer)
+        {
+            m_WindowSize = windowSizer;
+            m_ImageSize = imageSizer;
+            m_Inspector = false;
+        }
+        
+        public void ResetSize()
+        {
+            m_WindowSize = 0;
+            m_ImageSize = 64;
+            m_Inspector = true;
+        }
+        
         public void UpdateSprites(Sprite[] sprites)
         {
             m_SpriteList = sprites;
@@ -46,7 +86,8 @@ namespace UnityEditor.U2D
                 return Mathf.Max(firstStyle.margin.right, lastStyle.margin.left);
 
             int internalSpace = Mathf.Max(midStyle.margin.left, midStyle.margin.right);
-            return Mathf.Max(firstStyle.margin.right, midStyle.margin.left) + Mathf.Max(midStyle.margin.right, lastStyle.margin.left) + internalSpace * (xCount - 3);
+            int horizSpace = Mathf.Max(firstStyle.margin.right, midStyle.margin.left) + Mathf.Max(midStyle.margin.right, lastStyle.margin.left) + internalSpace * (xCount - 3);
+            return horizSpace;
         }
 
         // Helper function: Get all mouse rects
@@ -244,30 +285,34 @@ namespace UnityEditor.U2D
             if (m_SpriteList == null || m_SpriteList.Length == 0)
                 return false;
             int approxSize = 64;
-            int approxHolderSize = 66;
+            int approxHolderSize = approxSize + 2;
 
             if (Styles.localGrid == null)
             {
                 Styles.localGrid = new GUIStyle(Styles.gridList);
-                Styles.localGrid.fixedWidth = approxSize;
-                Styles.localGrid.fixedHeight = approxSize;
             }
+            // 64, 56, 36, 28
+            int[] actualSizes = new int[] {0, 64, 48, 32, 24};
+            int clamped = Math.Min(imageSize, 4);
+            int actualSize = actualSizes[clamped];
+            Styles.localGrid.fixedWidth = actualSize;
+            Styles.localGrid.fixedHeight = actualSize;            
             m_SelectedSprite = (selectedIndex > m_SpriteList.Length) ? 0 : selectedIndex;
+            int wwidth = m_WindowSize == 0 ? (int)InternalEditorBridge.GetEditorGUILayoutLastRect().width : (int)m_WindowSize;
+            int viewwidth = (int)(wwidth - EditorGUIUtility.labelWidth - approxSize);
+            int columns = (int)(viewwidth) / actualSize;
+            columns = columns <= 0 ? 1 : columns;
+            int rows = (int)Mathf.Ceil((m_SpriteList.Length + columns - 1) / columns);
+            int lyColumns = inspector ? (approxHolderSize) : approxHolderSize;
 
-            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.BeginHorizontal("box");
             {
                 GUILayout.Label(Styles.spriteList, EditorStyles.label, GUILayout.Width(EditorGUIUtility.labelWidth - 5));
-
-                int cviewwidth = (int)(EditorGUIUtility.currentViewWidth - EditorGUIUtility.labelWidth - approxSize);
-                int columns = (int)(cviewwidth) / approxSize;
-                columns = columns == 0 ? 1 : columns;
-                int rows = (int)Mathf.Ceil((m_SpriteList.Length + columns - 1) / columns);
-                int lyColumns = (rows == 1) ? (approxHolderSize): (approxHolderSize * 2);
 
                 GUILayout.BeginVertical("box", new GUILayoutOption[] { GUILayout.Height(lyColumns) } );
                 {
                     m_ScrollPos = EditorGUILayout.BeginScrollView(m_ScrollPos, new GUILayoutOption[] { GUILayout.Height(lyColumns) });
-                    int newBrush = SpriteSelectionGrid(m_SelectedSprite, m_SpriteList, approxSize, Styles.localGrid, Styles.missingSprites, columns, rows);
+                    int newBrush = SpriteSelectionGrid(m_SelectedSprite, m_SpriteList, actualSize, Styles.localGrid, Styles.missingSprites, columns, rows);
                     if (newBrush != m_SelectedSprite)
                     {
                         UpdateSelection(newBrush);
@@ -293,13 +338,12 @@ namespace UnityEditor.U2D
                     evt.Use();
 
                 m_Thumbnails = PreviewTexturesFromSprites(sprites);
-                retval = DoButtonGrid(r, selected, Temp(m_Thumbnails), null, (int)columns, style, style, style, style, GUI.ToolbarButtonSize.FitToContents);
+                retval = DoButtonGrid(r, selected, Temp(m_Thumbnails), null, (int)columns, style, style, style, style, GUI.ToolbarButtonSize.Fixed);
             }
             else
                 GUILayout.Label(emptyString);
             return retval;
         }
-
 
         internal static Texture[] PreviewTexturesFromSprites(Sprite[] sprites)
         {

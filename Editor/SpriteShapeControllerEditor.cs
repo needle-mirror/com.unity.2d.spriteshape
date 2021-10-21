@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -6,8 +7,10 @@ using UnityEditor;
 using UnityEditor.U2D.SpriteShapeInternal;
 using UnityEditor.U2D.Common;
 using UnityEditor.AnimatedValues;
-using UnityEditor.U2D.Path;
+using UnityEditor.Overlays;
+using UnityEditor.U2D.Common.Path;
 using UnityEngine.SceneManagement;
+using Object = UnityEngine.Object;
 
 namespace UnityEditor.U2D
 {
@@ -44,6 +47,8 @@ namespace UnityEditor.U2D
             public static readonly GUIContent optimizeGeometryLabel = new GUIContent("Optimize Geometry", "Simplify geometry");
             public static readonly GUIContent cacheGeometryLabel = new GUIContent("Cache Geometry", "Bake geometry data. This will save geometry data on editor and load it on runtime instead of generating.");
             public static readonly GUIContent uTess2DLabel = new GUIContent("Fill Tessellation (C# Job)", "Use C# Jobs to generate Fill Geometry. (Edge geometry always uses C# Jobs)");
+            public static readonly GUIContent creatorLabel = new GUIContent("Custom Geometry Creator", "Allows over-riding default geometry calculations with a custom one.");
+            public static readonly GUIContent modifiersLabel = new GUIContent("Custom Geometry Modifier", "Allows processing / modifying generated vertices geometry.");
         }
 
         private SerializedProperty m_SpriteShapeProp;
@@ -65,6 +70,10 @@ namespace UnityEditor.U2D
         private SerializedProperty m_EnableTangentsProp;
         private SerializedProperty m_GeometryCachedProp;
         private SerializedProperty m_UTess2DGeometryProp;
+        private SerializedProperty m_CreatorProp;
+        private SerializedProperty m_ModifierListProp;
+        
+        public static SpriteShapeControllerEditor spriteshapeControllerEditor;
         
         private int m_CollidersCount = 0;
         private int[] m_QualityValues = new int[] { (int)QualityDetail.High, (int)QualityDetail.Mid, (int)QualityDetail.Low };
@@ -84,7 +93,8 @@ namespace UnityEditor.U2D
             public int order;
             public int index;
         };
-
+        
+        int m_ButtonSize = 4;
         int m_SelectedPoint = -1;
         int m_SelectedAngleRange = -1;
         int m_SpriteShapeHashCode = 0;
@@ -120,6 +130,8 @@ namespace UnityEditor.U2D
             m_EnableTangentsProp = serializedObject.FindProperty("m_EnableTangents");
             m_GeometryCachedProp = serializedObject.FindProperty("m_GeometryCached");
             m_UTess2DGeometryProp = serializedObject.FindProperty("m_UTess2D");
+            m_CreatorProp = serializedObject.FindProperty("m_Creator");
+            m_ModifierListProp = serializedObject.FindProperty("m_Modifiers");
 
             m_ShowStretchOption.valueChanged.AddListener(Repaint);
             m_ShowStretchOption.value = ShouldShowStretchOption();
@@ -129,6 +141,12 @@ namespace UnityEditor.U2D
 
             m_CollidersCount += ((m_SpriteShapeController.edgeCollider != null) ? 1 : 0);
             m_CollidersCount += ((m_SpriteShapeController.polygonCollider != null) ? 1 : 0);
+            spriteshapeControllerEditor = this;
+        }
+
+        private void OnDisable()
+        {
+            spriteshapeControllerEditor = null;
         }
 
         private bool OnCollidersAddedOrRemoved()
@@ -346,20 +364,11 @@ namespace UnityEditor.U2D
             return GetAngleRange(sc, index, ref startPoint);
         }
 
-        public override void OnInspectorGUI()
+        public void OnOverlayGUI()
         {
-            var updateCollider = false;
-            EditorGUI.BeginChangeCheck();
-
-            serializedObject.Update();
-            EditorGUILayout.PropertyField(m_SpriteShapeProp, Contents.spriteShapeProfile);
-
-            var hasEditToolChanged = DoEditButton<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
-            if (hasEditToolChanged && !UnityEditor.EditorTools.ToolManager.activeToolType.Equals(typeof(SpriteShapeEditorTool)))
-                SpriteShapeUpdateCache.UpdateCache(targets);
-
-            DoPathInspector<SpriteShapeEditorTool>();
             var pathTool = SpriteShapeEditorTool.activeSpriteShapeEditorTool;
+            serializedObject.Update();
+            DoPathInspector<SpriteShapeEditorTool>();
 
             if (Selection.gameObjects.Length == 1 && pathTool != null)
             {
@@ -385,9 +394,10 @@ namespace UnityEditor.U2D
                         if (spriteIndexValue != -1)
                         {
                             EditorGUI.BeginChangeCheck();
-
-                            spriteSelector.ShowGUI(spriteIndexValue);
-
+                            spriteSelector.SetCustomSize(0, m_ButtonSize);
+                            bool shown = spriteSelector.ShowGUI(spriteIndexValue);
+                            spriteSelector.ResetSize();
+                            
                             if (EditorGUI.EndChangeCheck())
                             {
                                 foreach (var index in startPoints)
@@ -398,14 +408,29 @@ namespace UnityEditor.U2D
                                 }
                                 pathTool.SetPath(target);
                             }
+                            if (spriteSelector.hasSprites)
+                                m_ButtonSize = (int)GUI.HorizontalSlider(new Rect(InternalEditorBridge.GetEditorGUILayoutLastRect().width - 64, InternalEditorBridge.GetEditorGUILayoutLastRect().y + 100, 64, 100 ), m_ButtonSize, 1, 4);
                         }
                         EditorGUILayout.Space();
                     }
                 }
             }
+            
+            serializedObject.ApplyModifiedProperties();
+        }
 
-            DoSnappingInspector<SpriteShapeEditorTool>();
+        public override void OnInspectorGUI()
+        {
+            var updateCollider = false;
+            EditorGUI.BeginChangeCheck();
 
+            serializedObject.Update();
+            EditorGUILayout.PropertyField(m_SpriteShapeProp, Contents.spriteShapeProfile);
+
+            var hasEditToolChanged = DoEditButton<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
+            if (hasEditToolChanged && !UnityEditor.EditorTools.ToolManager.activeToolType.Equals(typeof(SpriteShapeEditorTool)))
+                SpriteShapeUpdateCache.UpdateCache(targets);
+            
             EditorGUILayout.Space();
             DrawHeader(Contents.splineLabel);
 
@@ -456,11 +481,15 @@ namespace UnityEditor.U2D
                 m_CornerAngleThresholdProp.floatValue = threshold;
                 updateCollider = true;
             }
+
+            Debug.Assert(null != m_SpriteShapeController.spriteShapeCreator);
             
             EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);
             EditorGUILayout.PropertyField(m_UTess2DGeometryProp, Contents.uTess2DLabel);
             EditorGUILayout.PropertyField(m_StretchUVProp, Contents.stretchUVLabel);
+            EditorGUILayout.PropertyField(m_CreatorProp, Contents.creatorLabel);
+            EditorGUILayout.PropertyField(m_ModifierListProp, Contents.modifiersLabel);
 
             if (ShouldShowStretchOption())
             {
@@ -561,6 +590,48 @@ namespace UnityEditor.U2D
         }
     }
 
+    [Overlay(typeof(SceneView), k_OverlayId, k_DisplayName)]
+    class SceneViewPathOverlay : IMGUIOverlay, ITransientOverlay
+    {
+        const string k_OverlayId = "Scene View/Path";
+        const string k_DisplayName = "Element Inspector";
+
+        public bool visible
+        {
+            get
+            {
+                var pathTool = SpriteShapeEditorTool.activeSpriteShapeEditorTool;
+                var valid= SpriteShapeControllerEditor.spriteshapeControllerEditor != null && pathTool != null;
+                if (valid)
+                {
+                    if (pathTool.targets != null)
+                    {
+                        foreach (var t in pathTool.targets)
+                        {
+                            var s = pathTool.GetPath(t);
+                            if (null != s && s.selection.Count != 0)
+                                return true;
+                        }
+                    }
+                    else if (pathTool.target != null)
+                    {
+                        var s1 = pathTool.GetPath(pathTool.target);
+                        if (null != s1 && s1.selection.Count != 0)
+                            return true;                       
+                    }
+                }
+                return false;
+            }
+        }
+
+        public override void OnGUI()
+        {
+            if (SpriteShapeControllerEditor.spriteshapeControllerEditor == null)
+                return;
+            SpriteShapeControllerEditor.spriteshapeControllerEditor.OnOverlayGUI();
+        }
+    }     
+    
     [UnityEditor.InitializeOnLoad]
     internal static class SpriteShapeUpdateCache
     {

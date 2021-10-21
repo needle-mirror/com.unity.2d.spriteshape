@@ -10,7 +10,7 @@ using UnityEditor.U2D.SpriteShape;
 namespace UnityEditor.U2D
 {
     [CustomEditor(typeof(UnityEngine.U2D.SpriteShape)), CanEditMultipleObjects]
-    public class SpriteShapeEditor : Editor, IAngleRangeCache
+    internal class SpriteShapeEditor : Editor, IAngleRangeCache
     {
         private static class Contents
         {

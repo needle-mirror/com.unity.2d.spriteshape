@@ -270,23 +270,6 @@ namespace UnityEngine.U2D
             m_ControlPoints[index].cornerMode = value ? Corner.Automatic : Corner.Disable;
         }
 
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                int hashCode = (int)2166136261;
-
-                for (int i = 0; i < GetPointCount(); ++i)
-                {
-                    hashCode = hashCode * 16777619 ^ m_ControlPoints[i].GetHashCode();
-                }
-
-                hashCode = hashCode * 16777619 ^ m_IsOpenEnded.GetHashCode();
-
-                return hashCode;
-            }
-        }
-        
         internal void SetCornerMode(int index, Corner value)
         {
             m_ControlPoints[index].corner = (value != Corner.Disable);
@@ -305,6 +288,27 @@ namespace UnityEngine.U2D
                 }
             }
             return m_ControlPoints[index].cornerMode;
+        }
+
+        /// <summary>
+        /// Get hash code for this Spline to test for changes.
+        /// </summary>
+        /// <returns>Hash code as int.</returns>
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hashCode = (int)2166136261;
+
+                for (int i = 0; i < GetPointCount(); ++i)
+                {
+                    hashCode = hashCode * 16777619 ^ m_ControlPoints[i].GetHashCode();
+                }
+
+                hashCode = hashCode * 16777619 ^ m_IsOpenEnded.GetHashCode();
+
+                return hashCode;
+            }
         }        
     }
 }
