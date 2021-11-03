@@ -1,5 +1,9 @@
 # Changelog
 
+## [5.1.6] - 2021-11-03
+### Fixed
+- 1371084 Fix case where it crashes when disable Optimizing the geometry of SpriteShape.
+
 ## [5.1.5] - 2021-09-11
 ### Fixed
 - Update manual to reflect reorganization of menu item.

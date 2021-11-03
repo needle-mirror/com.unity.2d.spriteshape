@@ -1129,7 +1129,7 @@ namespace UnityEngine.U2D
                         OptimizePoints(kRenderQuality, ref m_TessPoints, ref m_TessPointCount);
 
                     int dataLength = m_TessPointCount;
-                    NativeArray<TessEdge> edges = new NativeArray<TessEdge>(dataLength - 1, Allocator.Temp);
+                    NativeArray<int2> edges = new NativeArray<int2>(dataLength - 1, Allocator.Temp);
                     NativeArray<float2> points = new NativeArray<float2>(dataLength - 1, Allocator.Temp);
 
                     for (int i = 0; i < points.Length; ++i)
@@ -1137,40 +1137,35 @@ namespace UnityEngine.U2D
                     
                     for (int i = 0; i < dataLength - 2; ++i)
                     {
-                        TessEdge te = edges[i];
-                        te.a = i;
-                        te.b = i + 1;
+                        int2 te = edges[i];
+                        te.x = i;
+                        te.y = i + 1;
                         edges[i] = te;
                     }
-                    TessEdge tee = edges[dataLength - 2];
-                    tee.a = dataLength - 2;
-                    tee.b = 0;
+                    int2 tee = edges[dataLength - 2];
+                    tee.x = dataLength - 2;
+                    tee.y = 0;
                     edges[dataLength - 2] = tee;
                     
-                    Tessellator st = new Tessellator();
-                    st.Triangulate(points, edges);
-                    st.ApplyDelaunay(points, edges);
-                    NativeArray<TessCell> cellsOut = st.RemoveExterior(ref m_TessPointCount);
+                    int ovc = 0, oic = 0;
+                    NativeArray<float2> ov = new NativeArray<float2>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
+                    NativeArray<int> oi = new NativeArray<int>(m_TessPointCount * m_TessPointCount, Allocator.Temp); 
+                    Tessellator.Tessellate(Allocator.Temp, points, points.Length, edges, edges.Length, ref ov, ref ovc, ref oi, ref oic);
 
-                    for (int i = 0; i < m_TessPointCount; ++i)
+                    if (oic > 0)
                     {
+                        for (m_ActiveIndexCount = 0; m_ActiveIndexCount < oic; ++m_ActiveIndexCount)
+                            m_IndexArray[m_ActiveIndexCount] = (ushort) oi[m_ActiveIndexCount];
 
-                        var a = (UInt16)cellsOut[i].a;
-                        var b = (UInt16)cellsOut[i].b;
-                        var c = (UInt16)cellsOut[i].c;
-                        if ( a != 0 || b != 0 || c != 0)
-                        {
-                            m_IndexArray[m_ActiveIndexCount++] = a;
-                            m_IndexArray[m_ActiveIndexCount++] = c;
-                            m_IndexArray[m_ActiveIndexCount++] = b;
-                        }
-                        
+                        for (m_ActiveVertexCount = 0; m_ActiveVertexCount < ovc; ++m_ActiveVertexCount)
+                            m_PosArray[m_ActiveVertexCount] = new Vector3(ov[m_ActiveVertexCount].x, ov[m_ActiveVertexCount].y, 0);
+
+                        m_IndexDataCount = geom.indexCount = m_ActiveIndexCount;
+                        m_VertexDataCount = geom.vertexCount = m_ActiveVertexCount;
                     }
-
-                    cellsOut.Dispose();
+                    
                     points.Dispose();
                     edges.Dispose();
-                    st.Cleanup();
 
                     if (m_ActiveIndexCount > 0)
                     {
