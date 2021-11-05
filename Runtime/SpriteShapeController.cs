@@ -327,17 +327,19 @@ namespace UnityEngine.U2D
 
         #region HashAndDataCheck
 
-        void InitBounds()
+        internal Bounds InitBounds()
         {
             var pointCount = spline.GetPointCount();
             if (pointCount > 1)
             {
-                Bounds bounds = new Bounds(spline.GetPosition(0), spline.GetPosition(0));
+                Bounds bounds = new Bounds(spline.GetPosition(0), Vector3.zero);
                 for (int i = 1; i < pointCount; ++i)
                     bounds.Encapsulate(spline.GetPosition(i));
-                bounds.Encapsulate(spriteShapeRenderer.bounds);
+                bounds.Encapsulate(spriteShapeRenderer.localBounds);
                 spriteShapeRenderer.SetLocalAABB(bounds);
+                return bounds;
             }
+            return new Bounds();
         }
         
         /// <summary>
@@ -837,7 +839,7 @@ namespace UnityEngine.U2D
             if (spriteShapeRenderer != null)
             {
                 var hasSplineChanged = HasSplineDataChanged();
-                if (!spriteShapeRenderer.isVisible && hasSplineChanged)
+                if (hasSplineChanged)
                 {
                     BakeMesh();
                     Rendering.CommandBuffer rc = new Rendering.CommandBuffer();

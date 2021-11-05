@@ -1,5 +1,10 @@
 # Changelog
 
+## [7.0.3] - 2021-11-05
+### Fixed
+- 1368906 Fix case where Bounds can cause spriteshape not load in when running Player.
+- 1369368 Fix crash when optimizing the geometry of the SpriteShape in certain cases.
+
 ## [7.0.2] - 2021-09-27
 ### Fixed
 - Fix 7.0.1 changelog.
