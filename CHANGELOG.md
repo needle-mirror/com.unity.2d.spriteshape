@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.0.18] - 2021-11-22
+### Fixed
+- 1381504 Fixed cae where SpriteShape Corner is not set when setting multiple corners
+
 ## [3.0.17] - 2021-08-03
 ### Fixed
 - 1350003 Fix case where all open Scenes were dirtied when editing a SpriteShape Spline.

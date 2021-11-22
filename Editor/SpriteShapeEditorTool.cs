@@ -99,19 +99,81 @@ namespace UnityEditor.U2D.SpriteShapeInternal
             m_CornerProperty = m_Data.FindPropertyRelative("corner");
         }
 
+        internal void OnHeightChanged(UnityEngine.Object[] targets, float height)
+        {
+            foreach (var t in targets)
+            {
+                var shapeData = t as ScriptableSpriteShapeData;
+                var path = SpriteShapeEditorTool.activeSpriteShapeEditorTool.GetPath(shapeData.owner);
+
+                if (path.selection.Count == 0)
+                    continue;
+
+                path.undoObject.RegisterUndo("Set Height");
+
+                for (var i = 0; i < path.pointCount; ++i)
+                {
+                    if (!path.selection.Contains(i))
+                        continue;
+
+                    var data = path.data[i] as SpriteShapeData;
+                    data.height = height;
+                }
+
+                SpriteShapeEditorTool.activeSpriteShapeEditorTool.SetPath(shapeData.owner);
+            }
+        }
+
+        internal void OnCornerModeChanged(UnityEngine.Object[] targets, bool cornerValue)
+        {
+            foreach (var t in targets)
+            {
+                var shapeData = t as ScriptableSpriteShapeData;
+                var path = SpriteShapeEditorTool.activeSpriteShapeEditorTool.GetPath(shapeData.owner);
+
+                if (path.selection.Count == 0)
+                    continue;
+
+                path.undoObject.RegisterUndo("Set Corner Mode");
+
+                for (var i = 0; i < path.pointCount; ++i)
+                {
+                    if (!path.selection.Contains(i))
+                        continue;
+
+                    var data = path.data[i] as SpriteShapeData;
+                    data.corner = cornerValue;
+                }
+
+                SpriteShapeEditorTool.activeSpriteShapeEditorTool.SetPath(shapeData.owner);
+            }
+        }
+
         public override void OnInspectorGUI()
         {
+            var scriptableSpriteShapeData = target as ScriptableSpriteShapeData;
+            if (!scriptableSpriteShapeData)
+                return;
+            
             serializedObject.Update();
 
             EditorGUI.BeginChangeCheck();
             var heightValue = EditorGUILayout.Slider(Contents.heightLabel, m_HeightProperty.floatValue, 0.1f, 4.0f);
             if (EditorGUI.EndChangeCheck())
+            {
                 m_HeightProperty.floatValue = heightValue;
+                if (serializedObject.isEditingMultipleObjects)
+                    OnHeightChanged(targets, heightValue);
+            }
 
             EditorGUI.BeginChangeCheck();
             var cornerValue = EditorGUILayout.IntPopup(Contents.cornerLabel, m_CornerProperty.boolValue ? 1 : 0, Contents.cornerOptions, Contents.cornerValues) > 0;
             if (EditorGUI.EndChangeCheck())
+            {
                 m_CornerProperty.boolValue = cornerValue;
+                if (serializedObject.isEditingMultipleObjects)
+                    OnCornerModeChanged(targets, cornerValue);
+            }
 
             serializedObject.ApplyModifiedProperties();
         }
