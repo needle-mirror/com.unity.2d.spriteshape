@@ -1,5 +1,9 @@
 # Changelog
 
+## [5.1.7] - 2021-11-24
+### Fixed
+- 1381502 Fixed cae where SpriteShape Corner is not set when setting multiple corners
+
 ## [5.1.6] - 2021-11-03
 ### Fixed
 - 1371084 Fix case where it crashes when disable Optimizing the geometry of SpriteShape.
