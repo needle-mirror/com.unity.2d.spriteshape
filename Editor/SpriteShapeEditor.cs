@@ -336,6 +336,7 @@ namespace UnityEditor.U2D
                 }
             }
 
+            var labelWidth = EditorGUIUtility.labelWidth; 
             EditorGUIUtility.labelWidth = EditorGUIUtility.labelWidth + 20f;
 
             for (int i = 0; i < m_CornerSpritesProp.arraySize; ++i)
@@ -344,7 +345,7 @@ namespace UnityEditor.U2D
                 var m_CornerType = m_CornerProp.FindPropertyRelative("m_CornerType");
                 var m_CornerSprite = m_CornerProp.FindPropertyRelative("m_Sprites").GetArrayElementAtIndex(0);
 
-                EditorGUILayout.PropertyField(m_CornerSprite, new GUIContent(m_CornerType.enumDisplayNames[m_CornerType.intValue]));
+                m_CornerSprite.objectReferenceValue = EditorGUILayout.ObjectField(new GUIContent(m_CornerType.enumDisplayNames[m_CornerType.intValue]), m_CornerSprite.objectReferenceValue, typeof(Sprite), false, GUILayout.Height(18.0f) );
 
                 var sprite = m_CornerSprite.objectReferenceValue as Sprite;
                 if (sprite != null)
@@ -381,6 +382,8 @@ namespace UnityEditor.U2D
             }
 
             controller.view.DoCreateRangeTooltip();
+            
+            EditorGUIUtility.labelWidth = labelWidth;
         }
 
         private void DoRangeInspector()

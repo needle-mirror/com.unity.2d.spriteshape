@@ -8,7 +8,7 @@ The default component settings below are displayed when Edit Spline is not enabl
 
 ![Sprite Shape Controller property settings](images/SpriteShapeController_propUpdate.png)
 
- 
+
 
 | __Property__                                                 | __Function__                                                 |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -30,7 +30,7 @@ The default component settings below are displayed when Edit Spline is not enabl
 
 Enable __Edit Spline__ in the Controller settings to make Control Points on the Sprite Shape visible and editable. Selecting a Control Point enables the following additional Controller settings.
 
-![With a Control Point selected](images/enable_tangents.png)
+![With a Control Point selected](images/SpriteShape_InspectorOverlay.png)<br/>A: Global snap toggle
 
 | __Point__                                               | -                                                            |
 | ------------------------------------------------------- | ------------------------------------------------------------ |
@@ -45,7 +45,7 @@ Enable __Edit Spline__ in the Controller settings to make Control Points on the 
 | &nbsp;&nbsp; __Automatic__                              | The Control Point displays the assigned Corner Sprite, if both it and its neighbors are in __Linear Point Mode__. |
 | &nbsp;&nbsp;__Stretched__                               | The Corner Sprite at the selected Control Point is connected to its adjacent neighbors, stretching the Sprite. See the [list of required criteria](#stretched-corners) below to use this feature. |
 | __Sprite Variant__                                      | Select the __Sprite Variant__ from the visual Variant selector. Press __N__ to cycle through all available Variants for the Control Point. |
-| __Snapping__                                            | Enable to snap Control Points according the Project's Snap settings. |
+| __Global snapping__                                             | When [Edit Spline](#editing-the-spline) is enabled, select the **Global Snap** icon (see **A** in screenshot above) to toggle Grid Snapping on or off. |
 
 ### Stretched Corners
 
@@ -54,7 +54,7 @@ This feature allows the Sprite Shape to form corners with stretched Sprites betw
 1. Both the selected and adjacent points have the same __Height__.
 2. Sprites rendered at the Corner point and its neighboring points must have the same Sprite pivot position.
 
-Please note that scripting support for this new Corner mode will be available in a later release. 
+Please note that scripting support for this new Corner mode will be available in a later release.
 
 ### Additional Collider settings
 
@@ -91,11 +91,11 @@ All shortcut keys can be rebound under the Shortcut menu (menu: __Edit > Shortcu
 
 When a Control Point is selected, its __Point Mode__ can be one of three modes- __Linear__, __Mirrored__, and __Non-Mirrored__.
 
-The __Point Mode__ determines the behavior of the tangents that are used to adjust the spline between Control Points. Each Control Point can be set to a specific Point Mode and contain its own settings. 
+The __Point Mode__ determines the behavior of the tangents that are used to adjust the spline between Control Points. Each Control Point can be set to a specific Point Mode and contain its own settings.
 
 ### Linear Point Mode
 
-In __Linear Point Mode__, there are no tangents to control the curve between the Control Point and its neighbors, curves are not formed between Control Points and Sprites may overlap if they intersect. 
+In __Linear Point Mode__, there are no tangents to control the curve between the Control Point and its neighbors, curves are not formed between Control Points and Sprites may overlap if they intersect.
 
 Adjust which Sprite is displayed when two or more intersect by adjusting their __Order__ value in the [Sprite Shape Profile's](SSProfile.md) __Angle Range__ settings.
 
@@ -103,7 +103,7 @@ Adjust which Sprite is displayed when two or more intersect by adjusting their _
 
 ### Continuous Mirrored Point Mode
 
-In __Continuous Mirrored Point Mode__, tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the angle between the tangents is always maintained at 180 degrees although their lengths from the can vary. 
+In __Continuous Mirrored Point Mode__, tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the angle between the tangents is always maintained at 180 degrees although their lengths from the can vary.
 
 Press __B__ to mirror the length of the last edited tangent onto the opposite tangent.
 
@@ -111,7 +111,7 @@ Press __B__ to mirror the length of the last edited tangent onto the opposite ta
 
 ### Broken Mirrored Point Mode
 
-In __Broken Mirrored Point Mode__,  tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the length and angle of each tangent can be adjusted independently. 
+In __Broken Mirrored Point Mode__,  tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the length and angle of each tangent can be adjusted independently.
 
 Press __B__ to mirror the length of the last edited tangent onto the opposite tangent. In this mode, pressing __B__ also causes the angle of the opposite tangent to become exactly 180 degrees from the last edited tangent.
 

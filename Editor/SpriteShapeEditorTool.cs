@@ -79,8 +79,6 @@ namespace UnityEditor.U2D.SpriteShapeInternal
         private static class Contents
         {
             public static readonly GUIContent heightLabel = new GUIContent("Height", "Height override for control point.");
-            public static readonly GUIContent spriteIndexLabel = new GUIContent("Sprite Variant", "Index of the sprite variant at this control point");
-            public static readonly GUIContent invalidSpriteLabel = new GUIContent("No sprite defined");
             public static readonly GUIContent cornerLabel = new GUIContent("Corner", "Set if Corner is automatic or disabled.");
 
             public static readonly int[] cornerValues = { 0, 1, 2 };
@@ -88,28 +86,85 @@ namespace UnityEditor.U2D.SpriteShapeInternal
         }
 
         private SerializedProperty m_Data;
-        private SerializedProperty m_SpriteIndexProperty;
         private SerializedProperty m_HeightProperty;
         private SerializedProperty m_CornerProperty;
-        private SerializedProperty m_CornerModeProperty;
-
+        private SerializedProperty m_CornerModeProperty;        
+        
         private void OnEnable()
         {
             m_Data = serializedObject.FindProperty("m_Data");
-            m_SpriteIndexProperty = m_Data.FindPropertyRelative("spriteIndex");
             m_HeightProperty = m_Data.FindPropertyRelative("height");
             m_CornerProperty = m_Data.FindPropertyRelative("corner");
             m_CornerModeProperty = m_Data.FindPropertyRelative("cornerMode");
         }
 
+        internal void OnHeightChanged(UnityEngine.Object[] targets, float height)
+        {
+            foreach (var t in targets)
+            {
+                var shapeData = t as ScriptableSpriteShapeData;
+                var path = SpriteShapeEditorTool.activeSpriteShapeEditorTool.GetPath(shapeData.owner);
+
+                if (path.selection.Count == 0)
+                    continue;
+
+                path.undoObject.RegisterUndo("Set Height");
+
+                for (var i = 0; i < path.pointCount; ++i)
+                {
+                    if (!path.selection.Contains(i))
+                        continue;
+
+                    var data = path.data[i] as SpriteShapeData;
+                    data.height = height;
+                }
+
+                SpriteShapeEditorTool.activeSpriteShapeEditorTool.SetPath(shapeData.owner);
+            }
+        }
+
+        internal void OnCornerModeChanged(UnityEngine.Object[] targets, int cornerValue)
+        {
+            foreach (var t in targets)
+            {
+                var shapeData = t as ScriptableSpriteShapeData;
+                var path = SpriteShapeEditorTool.activeSpriteShapeEditorTool.GetPath(shapeData.owner);
+
+                if (path.selection.Count == 0)
+                    continue;
+
+                path.undoObject.RegisterUndo("Set Corner Mode");
+
+                for (var i = 0; i < path.pointCount; ++i)
+                {
+                    if (!path.selection.Contains(i))
+                        continue;
+
+                    var data = path.data[i] as SpriteShapeData;
+                    data.cornerMode = cornerValue;
+                    data.corner = cornerValue != 0 ? 1 : 0;
+                }
+
+                SpriteShapeEditorTool.activeSpriteShapeEditorTool.SetPath(shapeData.owner);
+            }
+        }
+
         public override void OnInspectorGUI()
         { 
+            var scriptableSpriteShapeData = target as ScriptableSpriteShapeData;
+            if (!scriptableSpriteShapeData)
+                return;
+            
             serializedObject.Update();
 
             EditorGUI.BeginChangeCheck();
             var heightValue = EditorGUILayout.Slider(Contents.heightLabel, m_HeightProperty.floatValue, 0.1f, 4.0f);
             if (EditorGUI.EndChangeCheck())
+            {
                 m_HeightProperty.floatValue = heightValue;
+                if (serializedObject.isEditingMultipleObjects)
+                    OnHeightChanged(targets, heightValue);
+            }
 
             EditorGUI.BeginChangeCheck();
             var cornerValue = EditorGUILayout.IntPopup(Contents.cornerLabel, m_CornerModeProperty.intValue, Contents.cornerOptions, Contents.cornerValues);
@@ -117,6 +172,8 @@ namespace UnityEditor.U2D.SpriteShapeInternal
             {
                 m_CornerModeProperty.intValue = cornerValue;
                 m_CornerProperty.intValue = cornerValue != 0 ? 1 : 0;
+                if (serializedObject.isEditingMultipleObjects)
+                    OnCornerModeChanged(targets, cornerValue);
             }
 
             serializedObject.ApplyModifiedProperties();
@@ -298,6 +355,18 @@ namespace UnityEditor.U2D.SpriteShapeInternal
         private void UnregisterShortcuts()
         {
             InternalEditorBridge.UnregisterShortcutContext(m_ShortcutContext);
+            m_ShortcutContext = null;
+        }
+
+        internal static void OnSpriteShapeControllerInspectorDisable(Editor editor, UnityEngine.Object target)
+        {
+            if (activeSpriteShapeEditorTool != null)
+            {
+                if (EditorToolManager.IsAvailable<SpriteShapeEditorTool>() && EditorToolManager.IsActiveTool<SpriteShapeEditorTool>())
+                {
+                    ToolManager.RestorePreviousTool();
+                }
+            }
         }
 
         [Shortcut("SpriteShape Editing/Cycle Tangent Mode", typeof(InternalEditorBridge.ShortcutContext), KeyCode.M)]

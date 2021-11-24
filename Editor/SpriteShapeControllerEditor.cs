@@ -146,6 +146,7 @@ namespace UnityEditor.U2D
 
         private void OnDisable()
         {
+            SpriteShapeEditorTool.OnSpriteShapeControllerInspectorDisable(this, target);
             spriteshapeControllerEditor = null;
         }
 

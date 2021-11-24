@@ -1,5 +1,11 @@
 # Changelog
 
+## [8.0.0-pre.5] - 2021-11-24
+### Fixed
+- 1367509 Fix case where SpriteShapeProfile corner fields disappear when a field above has been deleted in the Inspector.
+- 1363468 Fix case where shortcut keys do not work after editing sprite variant list in SpriteShape Controller.
+- 1382718 Fix Case when setting SpriteShape corners to Disabled, the first corner does not visually change
+
 ## [8.0.0-pre.4] - 2021-10-21
 ### Changed
 - Update to latest com.unity.2d.common package

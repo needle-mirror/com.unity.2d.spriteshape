@@ -12,7 +12,7 @@ By default, the fill geometry is generated as job in the main thread using [LibN
 
 To enable **Fill Tessellation (C# Job)**, select a Sprite Shape and go to its Inspector window, then go to **Fill > Fill Tessellation (C# Job)** and select its check box. The Sprite Shape must also fulfill the following requirements for this option to work:
 
-1. The Sprite Shape cannot have any duplicate points in the same location. Duplicate points can occur if you drag a point over another point.
+1. The Sprite Shape cannot have any duplicate points or points that are too close to each other. Duplicate points can occur if you drag a point over another point.
 2. The Sprite Shape’s edges cannot intersect or overlap each other.
 
 **Note:** If **Fill Tessellation (C# Job)** is enabled but the Sprite Shape does not fulfill these requirements, then the Sprite Shape’s Fill geometry will not be generated. Disable **Fill Tessellation (C# Job) **to enable the default tessellation method to generate the geometry.
