@@ -1,5 +1,9 @@
 # Changelog
 
+## [5.2.0] - 2022-01-06
+### Changed
+- Update minimum Unity release version
+
 ## [5.1.7] - 2021-11-24
 ### Fixed
 - 1381502 Fixed cae where SpriteShape Corner is not set when setting multiple corners
