@@ -7,6 +7,7 @@ using UnityEditor;
 using UnityEditor.U2D.SpriteShapeInternal;
 using UnityEditor.U2D.Common;
 using UnityEditor.AnimatedValues;
+using UnityEditor.EditorTools;
 using UnityEditor.Overlays;
 using UnityEditor.U2D.Common.Path;
 using UnityEngine.SceneManagement;
@@ -146,7 +147,7 @@ namespace UnityEditor.U2D
 
         private void OnDisable()
         {
-            SpriteShapeEditorTool.OnSpriteShapeControllerInspectorDisable(this, target);
+            SpriteShapeUpdateCache.UpdateCache(targets);
             spriteshapeControllerEditor = null;
         }
 
@@ -427,10 +428,7 @@ namespace UnityEditor.U2D
 
             serializedObject.Update();
             EditorGUILayout.PropertyField(m_SpriteShapeProp, Contents.spriteShapeProfile);
-
-            var hasEditToolChanged = DoEditButton<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
-            if (hasEditToolChanged && !UnityEditor.EditorTools.ToolManager.activeToolType.Equals(typeof(SpriteShapeEditorTool)))
-                SpriteShapeUpdateCache.UpdateCache(targets);
+            DoEditButton<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
             
             EditorGUILayout.Space();
             DrawHeader(Contents.splineLabel);
@@ -646,7 +644,7 @@ namespace UnityEditor.U2D
                     UpdateSpriteShapeCacheInOpenScenes();
             };
         }
-
+        
         static void UpdateSpriteShapeCacheInOpenScenes()
         {
             for (int i = 0; s_cacheGeometrySet && (i < SceneManager.sceneCount); ++i)

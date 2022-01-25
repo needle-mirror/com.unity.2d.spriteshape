@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.0] - 2022-01-25
+### Changed
+- Package release version.
+
+### Fixed
+- 1392653 Fix case where SpriteShapeGeometry Cache does not update when n selecting a different Object when EditTool is active.
+
 ## [8.0.0-pre.5] - 2021-11-24
 ### Fixed
 - 1367509 Fix case where SpriteShapeProfile corner fields disappear when a field above has been deleted in the Inspector.

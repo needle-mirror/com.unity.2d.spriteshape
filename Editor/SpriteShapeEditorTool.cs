@@ -88,7 +88,7 @@ namespace UnityEditor.U2D.SpriteShapeInternal
         private SerializedProperty m_Data;
         private SerializedProperty m_HeightProperty;
         private SerializedProperty m_CornerProperty;
-        private SerializedProperty m_CornerModeProperty;        
+        private SerializedProperty m_CornerModeProperty;
         
         private void OnEnable()
         {
@@ -280,12 +280,12 @@ namespace UnityEditor.U2D.SpriteShapeInternal
 
         protected override void OnActivate()
         {
-            RegisterShortcuts();
+            
         }
 
         protected override void OnDeactivate()
         {
-            UnregisterShortcuts();
+            
         }
         
         private void CycleSpriteIndex()
@@ -357,16 +357,15 @@ namespace UnityEditor.U2D.SpriteShapeInternal
             InternalEditorBridge.UnregisterShortcutContext(m_ShortcutContext);
             m_ShortcutContext = null;
         }
-
-        internal static void OnSpriteShapeControllerInspectorDisable(Editor editor, UnityEngine.Object target)
+        
+        public override void OnActivated()
         {
-            if (activeSpriteShapeEditorTool != null)
-            {
-                if (EditorToolManager.IsAvailable<SpriteShapeEditorTool>() && EditorToolManager.IsActiveTool<SpriteShapeEditorTool>())
-                {
-                    ToolManager.RestorePreviousTool();
-                }
-            }
+            RegisterShortcuts();
+        }
+
+        public override void OnWillBeDeactivated()
+        {
+            UnregisterShortcuts();
         }
 
         [Shortcut("SpriteShape Editing/Cycle Tangent Mode", typeof(InternalEditorBridge.ShortcutContext), KeyCode.M)]
