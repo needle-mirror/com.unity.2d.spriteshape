@@ -1,5 +1,15 @@
 # Changelog
 
+## [7.0.4] - 2022-02-07
+### Fixed
+- 1381501 Fixed case where SpriteShape Corner is not set when setting multiple corners
+- 1399400 Fix case where SpriteShape with Cache Geometry enabled does not update arrays when saving scene off-screen.
+- 1394337 Fix case where SpriteShapeGeometry Cache does not update when selecting a different Object when EditTool is active.
+- 1400230 Fix case where SpriteShape corner does not respect the ControlPoint height.
+
+### Changed
+- Update dependency version
+
 ## [7.0.3] - 2021-11-05
 ### Fixed
 - 1368906 Fix case where Bounds can cause spriteshape not load in when running Player.

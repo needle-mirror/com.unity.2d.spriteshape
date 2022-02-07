@@ -489,23 +489,19 @@ namespace UnityEngine.U2D
                 bool spriteShapeChanged = HasSpriteShapeDataChanged();
                 bool spriteShapeParametersChanged = UpdateSpriteShapeParameters();
 
+                if (splineChanged || spriteShapeChanged || spriteShapeParametersChanged)
+                {
                 if (spriteShapeChanged)
                 {
                     UpdateSpriteData();
                 }
-
-                if (splineChanged || spriteShapeChanged || spriteShapeParametersChanged)
-                {
                     jobHandle = ScheduleBake();
-                }
                 
 #if UNITY_EDITOR
-                if (spriteShapeChanged && spriteShapeGeometryCache && geometryCached)
-                {
-                    jobHandle.Complete();
-                    spriteShapeGeometryCache.UpdateGeometryCache();
+                    UpdateGeometryCache();
+#endif
                 }
-#endif                
+
             }
             return jobHandle;
         }
@@ -513,6 +509,18 @@ namespace UnityEngine.U2D
 #endregion
 
 #region UpdateData
+
+        /// <summary>
+        /// Update Cache.
+        /// </summary>
+        internal void UpdateGeometryCache()
+        {
+            if (spriteShapeGeometryCache && geometryCached)
+            {
+                m_JobHandle.Complete();
+                spriteShapeGeometryCache.UpdateGeometryCache();
+            }
+        }
 
         /// <summary>
         /// Force update SpriteShape parameters. 
@@ -744,6 +752,9 @@ namespace UnityEngine.U2D
 
             if (maxArrayCount > 0 && enabled)
             {
+                // Complate previos
+                m_JobHandle.Complete();
+                
                 // Collider Data
                 if (m_ColliderData.IsCreated)
                     m_ColliderData.Dispose();

@@ -62,12 +62,14 @@ namespace UnityEngine.U2D
                     float t = (float)n / fmax;
                     Vector3 bp = BezierPoint(rt, p0, p1, lt, t);
                     float d = math.distance(bp, sp);
-                    smallestSegment = math.min(d, smallestSegment);
                     spd += d;
                     sp = bp;
                 }
             }
 
+            float ssc = fmax * controlPointContour;
+            float ssl = spd / (ssc * 1.08f);
+            smallestSegment = math.min(ssl, smallestSegment);
             return spd;
         }
 

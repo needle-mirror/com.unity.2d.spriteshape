@@ -1997,11 +1997,11 @@ namespace UnityEngine.U2D
             float pxlWidth = enPixelV - stPixelV;   // pxlWidth is the square size of the corner sprite.
 
             // Generate the LeftTop, LeftBottom, RightTop & RightBottom for both sides.
-            GenerateColumnsBi(lcp.position, ccp.position, whsize, false, ref lb0, ref lt0, 0.5f, pivot);
-            GenerateColumnsBi(ccp.position, lcp.position, whsize, false, ref rt0, ref rb0, 0.5f, pivot);
+            GenerateColumnsBi(lcp.position, ccp.position, whsize, false, ref lb0, ref lt0, ccp.cpInfo.x * 0.5f, pivot);
+            GenerateColumnsBi(ccp.position, lcp.position, whsize, false, ref rt0, ref rb0, ccp.cpInfo.x * 0.5f, pivot);
 
-            GenerateColumnsBi(ccp.position, rcp.position, whsize, false, ref lb1, ref lt1, 0.5f, pivot);
-            GenerateColumnsBi(rcp.position, ccp.position, whsize, false, ref rt1, ref rb1, 0.5f, pivot);
+            GenerateColumnsBi(ccp.position, rcp.position, whsize, false, ref lb1, ref lt1, ccp.cpInfo.x * 0.5f, pivot);
+            GenerateColumnsBi(rcp.position, ccp.position, whsize, false, ref rt1, ref rb1, ccp.cpInfo.x * 0.5f, pivot);
 
             rt0 = rt0 + (math.normalize(rt0 - lt0) * kExtendSegment);
             rb0 = rb0 + (math.normalize(rb0 - lb0) * kExtendSegment);
@@ -2085,8 +2085,8 @@ namespace UnityEngine.U2D
             {
                 iscp.bottom = bt;
                 iscp.top = tp;
-                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ispr.metaInfo.y, pivot);
-                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
                 iscp.left = lt0;
                 iscp.right = lb1;
             }
@@ -2094,8 +2094,8 @@ namespace UnityEngine.U2D
             {
                 iscp.bottom = tp;
                 iscp.top = bt;
-                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ispr.metaInfo.y, pivot);
-                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
                 iscp.left = lb0;
                 iscp.right = lt1;
             }

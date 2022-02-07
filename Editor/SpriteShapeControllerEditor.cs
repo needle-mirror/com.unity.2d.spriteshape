@@ -65,7 +65,9 @@ namespace UnityEditor.U2D
         private SerializedProperty m_EnableTangentsProp;
         private SerializedProperty m_GeometryCachedProp;
         private SerializedProperty m_UTess2DGeometryProp;
-        
+
+        public static SpriteShapeControllerEditor spriteshapeControllerEditor;
+
         private int m_CollidersCount = 0;
         private int[] m_QualityValues = new int[] { (int)QualityDetail.High, (int)QualityDetail.Mid, (int)QualityDetail.Low };
         readonly AnimBool m_ShowStretchOption = new AnimBool();
@@ -129,7 +131,14 @@ namespace UnityEditor.U2D
 
             m_CollidersCount += ((m_SpriteShapeController.edgeCollider != null) ? 1 : 0);
             m_CollidersCount += ((m_SpriteShapeController.polygonCollider != null) ? 1 : 0);
+            spriteshapeControllerEditor = this;
         }
+
+        private void OnDisable()
+        {
+            SpriteShapeUpdateCache.UpdateCache(targets);
+            spriteshapeControllerEditor = null;
+        }        
 
         private bool OnCollidersAddedOrRemoved()
         {
@@ -353,10 +362,7 @@ namespace UnityEditor.U2D
 
             serializedObject.Update();
             EditorGUILayout.PropertyField(m_SpriteShapeProp, Contents.spriteShapeProfile);
-
-            var hasEditToolChanged = DoEditButton<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
-            if (hasEditToolChanged && !UnityEditor.EditorTools.ToolManager.activeToolType.Equals(typeof(SpriteShapeEditorTool)))
-                SpriteShapeUpdateCache.UpdateCache(targets);
+            DoEditButton<SpriteShapeEditorTool>(PathEditorToolContents.icon, Contents.editSplineLabel);
 
             DoPathInspector<SpriteShapeEditorTool>();
             var pathTool = SpriteShapeEditorTool.activeSpriteShapeEditorTool;
@@ -573,21 +579,42 @@ namespace UnityEditor.U2D
                 if (change == UnityEditor.PlayModeStateChange.ExitingEditMode)
                     UpdateSpriteShapeCacheInOpenScenes();
             };
+
+            SceneManagement.EditorSceneManager.sceneSaving += (scene, removingScene) =>
+            {
+                SaveSpriteShapesInScene(scene);
+            };
+
+            UnityEditor.EditorTools.ToolManager.activeToolChanging += () =>
+            {
+                if (UnityEditor.EditorTools.ToolManager.activeToolType == typeof(SpriteShapeEditorTool))
+                {
+                    if (null != SpriteShapeControllerEditor.spriteshapeControllerEditor)
+                        UpdateCache(SpriteShapeControllerEditor.spriteshapeControllerEditor.targets);
+                }
+            };
         }
+
+        static void SaveSpriteShapesInScene(Scene scene)
+            {
+                var gos = scene.GetRootGameObjects();
+                foreach (var go in gos)
+                {
+                    var scs = go.GetComponentsInChildren<SpriteShapeController>();
+                    foreach (var sc in scs)
+                {
+                    var jh = sc.BakeMesh();
+                    jh.Complete();
+                }
+            }
+                }
 
         static void UpdateSpriteShapeCacheInOpenScenes()
         {
             for (int i = 0; s_cacheGeometrySet && (i < SceneManager.sceneCount); ++i)
             {
                 var scene = SceneManager.GetSceneAt(i);
-                var gos = scene.GetRootGameObjects();
-                foreach (var go in gos)
-                {
-                    var scs = go.GetComponentsInChildren<SpriteShapeController>();
-                    foreach (var sc in scs)
-                        if (sc.spriteShapeGeometryCache)
-                            sc.spriteShapeGeometryCache.UpdateGeometryCache();
-                }
+                SaveSpriteShapesInScene(scene);
             }
 
             s_cacheGeometrySet = false;

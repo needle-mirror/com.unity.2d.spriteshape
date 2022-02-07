@@ -66,6 +66,16 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
         get { return m_MaxArrayCount; }
     }
 
+    internal bool requiresUpdate
+    {
+        get { return m_RequiresUpdate; }
+    }
+
+    internal bool requiresUpload
+    {
+        get { return m_RequiresUpload; }
+    }
+
     void OnEnable()
     {
         m_RequiresUpload = true;
