@@ -1,8 +1,12 @@
 # Changelog
 
+## [5.3.0] - 2022-03-12
+### Changed
+- Updated minimum Unity release version required for the package to 2020.3.26f1.
+
 ## [5.2.0] - 2022-01-06
 ### Changed
-- Update minimum Unity release version
+- Updated minimum Unity release version required for the package to 2020.3.25f1.
 
 ## [5.1.7] - 2021-11-24
 ### Fixed
