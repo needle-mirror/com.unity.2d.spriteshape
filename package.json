@@ -1,7 +1,7 @@
 {
   "name": "com.unity.2d.spriteshape",
-  "version": "8.0.0",
-  "unity": "2022.1",
+  "version": "9.0.0-pre.1",
+  "unity": "2022.2",
   "displayName": "2D SpriteShape",
   "description": "SpriteShape Runtime & Editor Package contains the tooling and the runtime component that allows you to create very organic looking spline based 2D worlds. It comes with intuitive configurator and a highly performant renderer.",
   "keywords": [
@@ -15,7 +15,7 @@
   "category": "2D",
   "dependencies": {
     "com.unity.mathematics": "1.1.0",
-    "com.unity.2d.common": "7.0.0",
+    "com.unity.2d.common": "8.0.0-pre.1",
     "com.unity.modules.physics2d": "1.0.0"
   },
   "samples": [
@@ -31,15 +31,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.spriteshape.tests": "8.0.0",
-    "com.unity.2d.common.tests": "7.0.0"
+    "com.unity.2d.spriteshape.tests": "9.0.0-pre.1",
+    "com.unity.2d.common.tests": "8.0.0-pre.1"
+  },
+  "upm": {
+    "changelog": "### Added\n- Added versioning for GeometryCreator and GeometryModifier scripts so SpriteShape geoemetry is regenerated when it changes.\n- Fill Tessellation in C# Job is now set as default tessellator. GC allocations are reduced when using this option.\n\n### Fixed\n- 1394404 Fix case where Tangent Data is always saved even when not in use for SpriteShapeRenderer when GeometryCache is active.\n- 1391968 Fix case where \"Invalid memory pointer was detected in ThreadsafeLinearAllocator::Deallocate!\" error is thrown when Sprite is in Atlas with Tight Packing\n- 1399392 Fix case where SpriteShape with Cache Geometry enabled does not update arrays when saving scene off-screen.\n- 1400229 Fix case where SpriteShape corner does not respect the ControlPoint height.\n- 1387298 Fix case where SpriteShape throws ArgumentException error when checking position validity of a point added to Spline\n- 1401376 Fix case where Shape of PolygonCollider2D doesn't update when Sprite Shape contains vertex at [0,0] and it's Profile doesn't have any Sprites."
   },
   "upmCi": {
-    "footprint": "fd5355554e062406d083276a8cbe180add5d047e"
+    "footprint": "41566868f21cbce8f26ba1bcf5f2bc8421b4ebb0"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "9b89f439ca5c8ef326594d90bc874e30e9e37104"
+    "revision": "be5115e7e9c707d0d5ac963699d8a6d45e4ae3a6"
   }
 }

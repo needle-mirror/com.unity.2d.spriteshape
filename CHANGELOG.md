@@ -1,5 +1,18 @@
 # Changelog
 
+## [9.0.0-pre.1] - 2022-03-21
+### Added
+- Added versioning for GeometryCreator and GeometryModifier scripts so SpriteShape geoemetry is regenerated when it changes.
+- Fill Tessellation in C# Job is now set as default tessellator. GC allocations are reduced when using this option.
+
+### Fixed
+- 1394404 Fix case where Tangent Data is always saved even when not in use for SpriteShapeRenderer when GeometryCache is active.
+- 1391968 Fix case where "Invalid memory pointer was detected in ThreadsafeLinearAllocator::Deallocate!" error is thrown when Sprite is in Atlas with Tight Packing
+- 1399392 Fix case where SpriteShape with Cache Geometry enabled does not update arrays when saving scene off-screen.
+- 1400229 Fix case where SpriteShape corner does not respect the ControlPoint height.
+- 1387298 Fix case where SpriteShape throws ArgumentException error when checking position validity of a point added to Spline
+- 1401376 Fix case where Shape of PolygonCollider2D doesn't update when Sprite Shape contains vertex at [0,0] and it's Profile doesn't have any Sprites.
+
 ## [8.0.0] - 2022-01-25
 ### Changed
 - Package release version.

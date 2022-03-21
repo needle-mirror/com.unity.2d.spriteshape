@@ -24,13 +24,13 @@ namespace UnityEngine.U2D
         ErrorVertexLimitReached = -1,
         Success = 0,
     }
-    
-    // Generator Stats. 
+
+    // Generator Stats.
     internal struct SpriteShapeGeneratorStats
     {
         public SpriteShapeGeneratorResult status;            // Adds any error Status
     }
-    
+
 #if ENABLE_SPRITESHAPE_BURST
     [BurstCompile]
 #endif
@@ -74,7 +74,7 @@ namespace UnityEngine.U2D
 
         struct JobContourPoint
         {
-            public float2 position;             // x, y Position.  
+            public float2 position;             // x, y Position.
             public float2 ptData;               // x : height. y :source cp.
         }
 
@@ -84,7 +84,7 @@ namespace UnityEngine.U2D
             public float2 bottom;
         }
 
-        // Tessellation Structures.      
+        // Tessellation Structures.
         struct JobSegmentInfo
         {
             public int4 sgInfo;                 // x : Begin y : End. z : Sprite w : First Sprite for that Angle Range.
@@ -110,7 +110,7 @@ namespace UnityEngine.U2D
         }
 
         /// <summary>
-        /// Native Arrays : Scope : Initialized before and ReadOnly During Job 
+        /// Native Arrays : Scope : Initialized before and ReadOnly During Job
         /// </summary>
         [ReadOnly]
         private JobParameters m_ShapeParams;
@@ -128,7 +128,7 @@ namespace UnityEngine.U2D
         private NativeArray<JobAngleRange> m_AngleRanges;
 
         /// <summary>
-        /// Native Arrays : Scope : Job 
+        /// Native Arrays : Scope : Job
         /// </summary>
         [DeallocateOnJobCompletion]
         private NativeArray<JobSegmentInfo> m_Segments;
@@ -168,9 +168,9 @@ namespace UnityEngine.U2D
         [DeallocateOnJobCompletion]
         private NativeArray<int2> m_SpriteIndices;
 
-        [DeallocateOnJobCompletion] 
+        [DeallocateOnJobCompletion]
         private NativeArray<JobIntersectPoint> m_Intersectors;
-        
+
         /// <summary>
         /// Output Native Arrays : Scope : SpriteShapeRenderer / SpriteShapeController.
         /// </summary>
@@ -240,7 +240,7 @@ namespace UnityEngine.U2D
         {
             get { return m_VertexArrayCount; }
         }
-        
+
         // Return Index Data Count
         private int indexDataCount
         {
@@ -336,7 +336,7 @@ namespace UnityEngine.U2D
                 throw new ArgumentException(
                     $"GetSpriteInfo accessed with invalid Index {index} / {m_SpriteInfos.Length}");
             }
-#endif            
+#endif
             return m_SpriteInfos[index];
         }
 
@@ -350,7 +350,7 @@ namespace UnityEngine.U2D
                 throw new ArgumentException(
                     $"GetCornerSpriteInfo accessed with invalid Index {index} / {m_CornerSpriteInfos.Length}");
             }
-#endif            
+#endif
             return m_CornerSpriteInfos[ai];
         }
 
@@ -363,7 +363,7 @@ namespace UnityEngine.U2D
                 throw new ArgumentException(
                     $"GetAngleRange accessed with invalid Index {index} / {m_AngleRanges.Length}");
             }
-#endif            
+#endif
             return m_AngleRanges[index];
         }
 
@@ -376,7 +376,7 @@ namespace UnityEngine.U2D
                 throw new ArgumentException(
                     $"GetControlPoint accessed with invalid Index {index} / {m_ControlPoints.Length}");
             }
-#endif            
+#endif
             return m_ControlPoints[index];
         }
 
@@ -389,7 +389,7 @@ namespace UnityEngine.U2D
                 throw new ArgumentException(
                     $"GetContourPoint accessed with invalid Index {index} / {m_ContourPointCount}");
             }
-#endif            
+#endif
             return m_ContourPoints[index];
         }
 
@@ -401,7 +401,7 @@ namespace UnityEngine.U2D
                 SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
                 throw new ArgumentException($"GetSegmentInfo accessed with invalid Index {index} / {m_SegmentCount}");
             }
-#endif            
+#endif
             return m_Segments[index];
         }
 
@@ -414,7 +414,7 @@ namespace UnityEngine.U2D
                 throw new ArgumentException(
                     $"GetContourIndex accessed with invalid Index {index} / {m_ControlPoints.Length}");
             }
-#endif            
+#endif
             return index * m_ShapeParams.splineData.y;
         }
 
@@ -427,7 +427,7 @@ namespace UnityEngine.U2D
                 SetResult(SpriteShapeGeneratorResult.ErrorNativeDataOverflow);
                 throw new ArgumentException($"GetEndContourIndexOfSegment accessed with invalid Index");
             }
-#endif            
+#endif
             return contourIndex;
         }
 
@@ -440,7 +440,7 @@ namespace UnityEngine.U2D
                 m_Stats[0] = stats;
             }
         }
-        
+
         #endregion
 
         #region Utility
@@ -477,20 +477,20 @@ namespace UnityEngine.U2D
         {
             return IsPointOnLine(epsilon, p1, p2, r) && IsPointOnLine(epsilon, p3, p4, r);
         }
-        
+
         static bool Colinear(float2 p, float2 q, float2 r)
         {
             return (q.x <= math.max(p.x, r.x) && q.x >= math.min(p.x, r.x) && q.y <= math.max(p.y, r.y) && q.y >= math.min(p.y, r.y));
         }
 
-        
+
         static int Det(float epsilon, float2 p, float2 q, float2 r)
         {
             float val = (q.y - p.y) * (r.x - q.x) - (q.x - p.x) * (r.y - q.y);
             if (val > -epsilon && val < epsilon) return 0;
-            return (val > 0)? 1: 2;
+            return (val > 0) ? 1 : 2;
         }
-        
+
         static bool LineIntersectionTest(float epsilon, float2 p1, float2 q1, float2 p2, float2 q2)
         {
             int o1 = Det(epsilon, p1, q1, p2);
@@ -499,7 +499,7 @@ namespace UnityEngine.U2D
             int o4 = Det(epsilon, p2, q2, q1);
             if (o1 != o2 && o3 != o4)
                 return true;
- 
+
             // Special Cases
             if (o1 == 0 && Colinear(p1, p2, q1)) return true;
             if (o2 == 0 && Colinear(p1, q2, q1)) return true;
@@ -508,7 +508,7 @@ namespace UnityEngine.U2D
             return false;
         }
 
-        
+
         static bool LineIntersection(float epsilon, float2 p1, float2 p2, float2 p3, float2 p4, ref float2 result)
         {
             if (!LineIntersectionTest(epsilon, p1, p2, p3, p4))
@@ -558,10 +558,10 @@ namespace UnityEngine.U2D
             float2 v3 = v2 * whsizey;
             rt = a - v3;
             rb = a + v3;
-            
+
             float2 pivotSet = (rb - rt) * pivot;
             rt = rt + pivotSet;
-            rb = rb + pivotSet;            
+            rb = rb + pivotSet;
             return true;
         }
 
@@ -582,10 +582,10 @@ namespace UnityEngine.U2D
 
             rt = b - v3;
             rb = b + v3;
-            
+
             float2 pivotSet = (rb - rt) * pivot;
             rt = rt + pivotSet;
-            rb = rb + pivotSet;            
+            rb = rb + pivotSet;
             return true;
         }
         #endregion
@@ -599,7 +599,7 @@ namespace UnityEngine.U2D
             corners[cornerCount++] = d;
         }
 
-        unsafe void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderOffset, float colliderDetail)
+        void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderOffset, float colliderDetail)
         {
             kModeLinear = 0;
             kModeContinous = 1;
@@ -621,7 +621,7 @@ namespace UnityEngine.U2D
             m_ActiveVertexCount = 0;
 
             kEpsilon = 0.00001f;
-            kEpsilonOrder = -0.0001f; 
+            kEpsilonOrder = -0.0001f;
             kEpsilonRelaxed = 0.001f;
             kExtendSegment = 10000.0f;
 
@@ -647,8 +647,10 @@ namespace UnityEngine.U2D
                 fy = (float)shapeParams.fillTexture.height * (1.0f / (float)shapeParams.fillScale);
             }
             m_ShapeParams.fillData = new float4(shapeParams.fillScale, fx, fy, 0);
-            UnsafeUtility.MemClear(m_GeomArray.GetUnsafePtr(), m_GeomArray.Length * UnsafeUtility.SizeOf<SpriteShapeSegment>());
-
+            unsafe
+            {
+                UnsafeUtility.MemClear(m_GeomArray.GetUnsafePtr(), m_GeomArray.Length * UnsafeUtility.SizeOf<SpriteShapeSegment>());
+            }
             m_Transform = new float4x4(shapeParams.transform.m00, shapeParams.transform.m01, shapeParams.transform.m02, shapeParams.transform.m03,
                                        shapeParams.transform.m10, shapeParams.transform.m11, shapeParams.transform.m12, shapeParams.transform.m13,
                                        shapeParams.transform.m20, shapeParams.transform.m21, shapeParams.transform.m22, shapeParams.transform.m23,
@@ -662,7 +664,7 @@ namespace UnityEngine.U2D
             m_OutputVertexData = new NativeArray<JobShapeVertex>(maxArrayCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_CornerCoordinates = new NativeArray<float2>(32, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_Intersectors = new NativeArray<JobIntersectPoint>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.ClearMemory);
-            
+
             m_TempPoints = new NativeArray<float2>(maxArrayCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_GeneratedControlPoints = new NativeArray<JobControlPoint>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_SpriteIndices = new NativeArray<int2>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
@@ -697,9 +699,6 @@ namespace UnityEngine.U2D
                     if (!math.any(spriteInfo.texRect))
                     {
                         SetResult(SpriteShapeGeneratorResult.ErrorSpritesTightPacked);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                        throw new ArgumentException($"{spr.name} is packed with Tight packing or mesh type set to Tight. Please check input sprites");
-#endif                        
                     }
                 }
                 spriteInfos[i] = spriteInfo;
@@ -759,7 +758,7 @@ namespace UnityEngine.U2D
             m_Corners = new NativeArray<JobCornerInfo>(shapePoints.Length, Allocator.TempJob);
             GenerateControlPoints();
         }
-        #endregion 
+        #endregion
 
         #region Resolve Angles for Points.
         bool WithinRange(JobAngleRange angleRange, float inputAngle)
@@ -1019,7 +1018,6 @@ namespace UnityEngine.U2D
             // Generate Intermediates.
             for (int i = startPoint; i < endPoint; ++i)
             {
-
                 // Check if the Neighbor Points are all in Linear Mode.
                 bool cornerCriteriaMet = false;
                 bool vc = InsertCorner(i, ref m_SpriteIndices, ref m_GeneratedControlPoints, ref activePoint, ref cornerCriteriaMet);
@@ -1038,8 +1036,8 @@ namespace UnityEngine.U2D
                 JobControlPoint sp = m_GeneratedControlPoints[0];
                 sp.exData.z = 1;
                 m_GeneratedControlPoints[0] = sp;
-                
-                JobControlPoint cp = GetControlPoint(endPoint); 
+
+                JobControlPoint cp = GetControlPoint(endPoint);
                 cp.cpData.z = (cp.cpData.z == kModeContinous) ? kModeBroken : cp.cpData.z;
                 cp.exData.z = 1;
                 m_GeneratedControlPoints[activePoint++] = cp;
@@ -1096,7 +1094,7 @@ namespace UnityEngine.U2D
                 JobControlPoint cp = GetControlPoint(i);
                 JobControlPoint pp = GetControlPoint(j);
                 var smoothInterp = cp.exData.w == kModeContinous || pp.exData.w == kModeContinous;
-                
+
                 float2 p0 = cp.position;
                 float2 p1 = pp.position;
                 float2 sp = p0;
@@ -1108,7 +1106,7 @@ namespace UnityEngine.U2D
                 for (int n = 0; n < splineDetail; ++n)
                 {
                     JobContourPoint xp = m_ContourPoints[ap];
-                    float t = (float) n / fmax;
+                    float t = (float)n / fmax;
                     float2 bp = BezierPoint(rt, p0, p1, lt, t);
                     xp.position = bp;
                     spd += math.distance(bp, sp);
@@ -1116,7 +1114,7 @@ namespace UnityEngine.U2D
                     sp = bp;
                 }
                 sp = p0;
-                
+
                 for (int n = 0; n < splineDetail; ++n)
                 {
                     JobContourPoint xp = m_ContourPoints[cap];
@@ -1131,7 +1129,7 @@ namespace UnityEngine.U2D
             // End
             m_ContourPointCount = ap;
             int tessPoints = 0;
-            
+
             // Create Tessallator if required.
             for (int i = 0; i < contourPointCount; ++i)
             {
@@ -1163,151 +1161,161 @@ namespace UnityEngine.U2D
                     m_TessPoints[tessPoints++] = cp.position + (vn * borderPivot);
             }
 
-            m_TessPointCount = tessPoints;            
+            m_TessPointCount = tessPoints;
         }
 
-        // Burstable UTess2D Version.
-        void TessellateContour()
+        // Prepare Contour.
+        bool PrepareContour()
         {
 
             // Generate Contour
             GenerateContour();
-            
+
             // Fill Geom. Generate in Native code until we have a reasonably fast enough Tessellation in NativeArray based Jobs.
             SpriteShapeSegment geom = m_GeomArray[0];
             geom.vertexCount = 0;
             geom.geomIndex = 0;
             geom.indexCount = 0;
             geom.spriteIndex = -1;
-
-            // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
-            if (math.all(m_ShapeParams.shapeData.xw))
-            {
-                // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
-                if (m_TessPointCount > 0)
-                {
-                    if (kOptimizeRender > 0)
-                        OptimizePoints(kRenderQuality, ref m_TessPoints, ref m_TessPointCount);
-
-                    int dataLength = m_TessPointCount;
-                    NativeArray<int2> edges = new NativeArray<int2>(dataLength - 1, Allocator.Temp);
-                    NativeArray<float2> points = new NativeArray<float2>(dataLength - 1, Allocator.Temp);
-
-                    for (int i = 0; i < points.Length; ++i)
-                        points[i] = m_TessPoints[i];
-                    
-                    for (int i = 0; i < dataLength - 2; ++i)
-                    {
-                        int2 te = edges[i];
-                        te.x = i;
-                        te.y = i + 1;
-                        edges[i] = te;
-                    }
-                    int2 tee = edges[dataLength - 2];
-                    tee.x = dataLength - 2;
-                    tee.y = 0;
-                    edges[dataLength - 2] = tee;
-
-                    int ovc = 0, oic = 0, oec = 0;
-                    NativeArray<float2> ov = new NativeArray<float2>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
-                    NativeArray<int> oi = new NativeArray<int>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
-                    NativeArray<int2> oe = new NativeArray<int2>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
-                    UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(Allocator.Temp, points, edges, ref ov, ref ovc, ref oi, ref oic,  ref oe, ref oec);
-
-                    if (oic > 0)
-                    {
-                        for (m_ActiveIndexCount = 0; m_ActiveIndexCount < oic; ++m_ActiveIndexCount)
-                            m_IndexArray[m_ActiveIndexCount] = (ushort) oi[m_ActiveIndexCount];
-
-                        for (m_ActiveVertexCount = 0; m_ActiveVertexCount < ovc; ++m_ActiveVertexCount)
-                            m_PosArray[m_ActiveVertexCount] = new Vector3(ov[m_ActiveVertexCount].x, ov[m_ActiveVertexCount].y, 0);
-
-                        m_IndexDataCount = geom.indexCount = m_ActiveIndexCount;
-                        m_VertexDataCount = geom.vertexCount = m_ActiveVertexCount;
-                    }
-                    else
-                    {
-                        SetResult(SpriteShapeGeneratorResult.ErrorDefaultQuadCreated);
-                    }
-
-                    ov.Dispose();
-                    oi.Dispose();
-                    oe.Dispose();
-                    edges.Dispose();
-                    points.Dispose();
-                }
-            }
-
-            if (m_TanArray.Length > 1)
-            {
-                for (int i = 0; i < m_ActiveVertexCount; ++i)
-                    m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
-            }
-
             m_GeomArray[0] = geom;
 
-        }        
-        
+            // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
+            if (math.all(m_ShapeParams.shapeData.xw) && m_TessPointCount > 0)
+            {
+                if (kOptimizeRender > 0)
+                    OptimizePoints(kRenderQuality, true, ref m_TessPoints, ref m_TessPointCount);
+                return true;
+            }
+            return false;
+
+        }
+
+        [BurstCompile]
+        // Tess
+        static unsafe void UTessellator(ref SpriteShapeSegment geom, float2* tessPoints, int tessPointCount, ushort* indices, ref int iCount, byte* vertices, int stride, ref int vCount, Unity.Collections.Allocator label)
+        {
+            NativeArray<int2> edges = new NativeArray<int2>(tessPointCount - 1, label);
+            NativeArray<float2> points = new NativeArray<float2>(tessPointCount - 1, label);
+            float kPrecisionFudge = 1.0f;
+            for (int i = 0; i < points.Length; ++i)
+                points[i] = tessPoints[i] * kPrecisionFudge;
+
+            for (int i = 0; i < tessPointCount - 2; ++i)
+            {
+                int2 te = edges[i];
+                te.x = i;
+                te.y = i + 1;
+                edges[i] = te;
+            }
+            int2 tee = edges[tessPointCount - 2];
+            tee.x = tessPointCount - 2;
+            tee.y = 0;
+            edges[tessPointCount - 2] = tee;
+
+            int ovc = 0, oic = 0, oec = 0;
+            NativeArray<float2> ov = new NativeArray<float2>(tessPointCount * 4, label);
+            NativeArray<int> oi = new NativeArray<int>(tessPointCount * 4, label);
+            NativeArray<int2> oe = new NativeArray<int2>(tessPointCount * 4, label);
+            UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, points, edges, ref ov, ref ovc, ref oi, ref oic, ref oe, ref oec);
+
+            if (oic > 0)
+            {
+                for (vCount = 0; vCount < ovc; ++vCount)
+                {
+                    Vector3* pos = (Vector3*)vertices;
+                    *pos = new Vector3(ov[vCount].x, ov[vCount].y, 0) / kPrecisionFudge;
+                    vertices = vertices + stride;
+                }
+                for (iCount = 0; iCount < oic; ++iCount)
+                    indices[iCount] = (ushort)oi[iCount];
+            }
+
+            ov.Dispose();
+            oi.Dispose();
+            oe.Dispose();
+            edges.Dispose();
+            points.Dispose();
+        }
+
+        // Burstable UTess2D Version.
+        bool TessellateContour(Unity.Collections.Allocator label)
+        {
+
+            // Generate Contour
+            bool innerShape = PrepareContour();
+            SpriteShapeSegment geom = m_GeomArray[0];
+
+            if (innerShape)
+            {
+                unsafe
+                {
+                    UTessellator(ref geom, (float2*)m_TessPoints.GetUnsafePtr(), m_TessPointCount, (ushort*)m_IndexArray.GetUnsafePtr(), ref m_IndexDataCount, (byte*)m_PosArray.GetUnsafePtr(), m_PosArray.Stride, ref m_VertexDataCount, label);
+                }
+
+                if (m_IndexDataCount == 0 || m_VertexDataCount == 0)
+                {
+                    m_IndexDataCount = m_ActiveVertexCount = 0;
+                    SetResult(SpriteShapeGeneratorResult.ErrorDefaultQuadCreated);
+                }
+                else
+                {
+                    if (m_TanArray.Length > 1)
+                    {
+                        for (int i = 0; i < m_ActiveVertexCount; ++i)
+                            m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
+                    }
+                    geom.indexCount = m_ActiveIndexCount = m_IndexDataCount;
+                    geom.vertexCount = m_ActiveVertexCount = m_VertexDataCount;
+                }
+                m_GeomArray[0] = geom;
+
+            }
+            return innerShape;
+
+        }
+
         void TessellateContourMainThread()
         {
 
             // Generate Contour
-            GenerateContour();
-
-            // Fill Geom. Generate in Native code until we have a reasonably fast enough Tessellation in NativeArray based Jobs.
+            bool innerShape = PrepareContour();
             SpriteShapeSegment geom = m_GeomArray[0];
-            geom.vertexCount = 0;
-            geom.geomIndex = 0;
-            geom.indexCount = 0;
-            geom.spriteIndex = -1;
 
-            // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
-            if (math.all(m_ShapeParams.shapeData.xw))
+            // Fallback only when there is InnerShape and Utess faced knots/overlaps.
+            if (innerShape && 0 == m_ActiveVertexCount)
             {
-                // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
-                if (m_TessPointCount > 0)
+                // UTess failed, trying fallback.
+                SetResult(SpriteShapeGeneratorResult.Success);
+                var inputs = new ContourVertex[m_TessPointCount];
+                for (int i = 0; i < m_TessPointCount; ++i)
+                    inputs[i] = new ContourVertex() { Position = new Vec3() { X = m_TessPoints[i].x, Y = m_TessPoints[i].y } };
+
+                Tess tess = new Tess();
+                tess.AddContour(inputs, ContourOrientation.Original);
+                tess.Tessellate(WindingRule.NonZero, ElementType.Polygons, 3);
+
+                var indices = tess.Elements.Select(i => (UInt16)i).ToArray();
+                var vertices = tess.Vertices.Select(v => new Vector2(v.Position.X, v.Position.Y)).ToArray();
+                m_IndexDataCount = indices.Length;
+                m_VertexDataCount = vertices.Length;
+
+                if (vertices.Length > 0)
                 {
-                    if (kOptimizeRender > 0)
-                        OptimizePoints(kRenderQuality, ref m_TessPoints, ref m_TessPointCount);
+                    for (m_ActiveIndexCount = 0; m_ActiveIndexCount < m_IndexDataCount; ++m_ActiveIndexCount)
+                        m_IndexArray[m_ActiveIndexCount] = indices[m_ActiveIndexCount];
+                    for (m_ActiveVertexCount = 0; m_ActiveVertexCount < m_VertexDataCount; ++m_ActiveVertexCount)
+                        m_PosArray[m_ActiveVertexCount] = new Vector3(vertices[m_ActiveVertexCount].x, vertices[m_ActiveVertexCount].y, 0);
 
-                    var inputs = new ContourVertex[m_TessPointCount];
-                    for (int i = 0; i < m_TessPointCount; ++i)
-                        inputs[i] = new ContourVertex() { Position = new Vec3() { X = m_TessPoints[i].x, Y = m_TessPoints[i].y } };
-
-                    Tess tess = new Tess();
-                    tess.AddContour(inputs, ContourOrientation.Original);
-                    tess.Tessellate(WindingRule.NonZero, ElementType.Polygons, 3);
-
-                    var indices = tess.Elements.Select(i => (UInt16)i).ToArray();
-                    var vertices = tess.Vertices.Select(v => new Vector2(v.Position.X, v.Position.Y)).ToArray();
-                    m_IndexDataCount = indices.Length;
-                    m_VertexDataCount = vertices.Length;
-
-                    if (vertices.Length > 0)
-                    {
-                        for (m_ActiveIndexCount = 0; m_ActiveIndexCount < m_IndexDataCount; ++m_ActiveIndexCount)
-                        {
-                            m_IndexArray[m_ActiveIndexCount] = indices[m_ActiveIndexCount];
-                        }
-                        for (m_ActiveVertexCount = 0; m_ActiveVertexCount < m_VertexDataCount; ++m_ActiveVertexCount)
-                        {
-                            var pos = new Vector3(vertices[m_ActiveVertexCount].x, vertices[m_ActiveVertexCount].y, 0);
-                            m_PosArray[m_ActiveVertexCount] = pos;
-                        }
-
-                        geom.indexCount = m_ActiveIndexCount;
-                        geom.vertexCount = m_ActiveVertexCount;
-                    }
+                    geom.indexCount = m_ActiveIndexCount;
+                    geom.vertexCount = m_ActiveVertexCount;
                 }
+                if (m_TanArray.Length > 1)
+                {
+                    for (int i = 0; i < m_ActiveVertexCount; ++i)
+                        m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
+                }
+                m_GeomArray[0] = geom;
             }
-
-            if (m_TanArray.Length > 1)
-            {
-                for (int i = 0; i < m_ActiveVertexCount; ++i)
-                    m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
-            }
-
-            m_GeomArray[0] = geom;
 
         }
 
@@ -1315,19 +1323,19 @@ namespace UnityEngine.U2D
         {
             if (vertexArrayCount == 0 && contourPointCount == 0)
                 return;
-            
+
             var bounds = new Bounds();
             var min = vertexArrayCount != 0 ? new float2(m_PosArray[0].x, m_PosArray[0].y) : new float2(m_ContourPoints[0].position.x, m_ContourPoints[0].position.y);
             var max = min;
-            
-            { 
+
+            {
                 for (int i = 0; i < vertexArrayCount; ++i)
                 {
                     float3 pos = m_PosArray[i];
                     min = math.min(min, pos.xy);
                     max = math.max(max, pos.xy);
                 }
-            }            
+            }
             {
                 for (int i = 0; i < contourPointCount; ++i)
                 {
@@ -1409,14 +1417,11 @@ namespace UnityEngine.U2D
 
             int localVertex = 0;
             int finalCount = indexCount + inCount + (inCount / 2);
-            
+
             if (finalCount >= indexData.Length)
             {
                 SetResult(SpriteShapeGeneratorResult.ErrorVertexLimitReached);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS                
-                throw new InvalidOperationException(
-                    $"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
-#endif                
+                return -1;
             }
 
             for (int i = 0; i < inCount; i = i + 4, outCount = outCount + 4, localVertex = localVertex + 4)
@@ -1438,19 +1443,19 @@ namespace UnityEngine.U2D
         {
             JobControlPoint scp = GetControlPoint(segment.sgInfo.x);
             JobControlPoint ecp = GetControlPoint(segment.sgInfo.y);
-            
+
             GetSegmentBoundaryColumn(segment, sprInfo, whsize, scp.position, ecp.position, false, ref vlt, ref vlb);
             GetSegmentBoundaryColumn(segment, sprInfo, whsize, ecp.position, scp.position, true, ref vrt, ref vrb);
         }
 
         void TessellateSegment(int segmentIndex, JobSpriteInfo sprInfo, JobSegmentInfo segment, float2 whsize, float4 border,
-            float pxlWidth, NativeArray<JobShapeVertex> vertices, int vertexCount, bool useClosure, bool validHead, bool validTail,  
+            float pxlWidth, NativeArray<JobShapeVertex> vertices, int vertexCount, bool useClosure, bool validHead, bool validTail,
             bool firstSegment, bool finalSegment, ref NativeArray<JobShapeVertex> outputVertices, ref int outputCount)
         {
             int outputVertexCount = 0;
             float2 zero = float2.zero;
             float2 lt = zero, lb = zero, rt = zero, rb = zero;
-            float4 stretcher = new float4(1.0f, 1.0f, 0, 0);            
+            float4 stretcher = new float4(1.0f, 1.0f, 0, 0);
             var column0 = new JobShapeVertex();
             var column1 = new JobShapeVertex();
             var column2 = new JobShapeVertex();
@@ -1460,14 +1465,12 @@ namespace UnityEngine.U2D
             int lcm = cms - 1;
             int expectedCount = outputCount + (cms * 4);
             var sprite = vertices[0].sprite;
-            
+
             if (expectedCount >= outputVertices.Length)
             {
                 SetResult(SpriteShapeGeneratorResult.ErrorVertexLimitReached);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS                
-                throw new InvalidOperationException(
-                    $"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
-#endif                
+                Debug.Log($"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
+                return;
             }
 
             float uvDist = 0;
@@ -1478,14 +1481,14 @@ namespace UnityEngine.U2D
             float uvNow = uvStart / uvTotal;
             float dt = uvInter / pxlWidth;
             float pivot = 0.5f - sprInfo.metaInfo.y;
-            
-            //// //// //// //// Stretch 
+
+            //// //// //// //// Stretch
             bool stretchCorners = false;
             bool stretchSegment = math.abs(segment.sgInfo.x - segment.sgInfo.y) == 1;
             if (stretchSegment && segmentCount > 1)
                 stretchCorners = FetchStretcher(segmentIndex, sprInfo, segment, whsize, validHead, validTail, ref stretcher);
-            //// //// //// //// Stretch 
-            
+            //// //// //// //// Stretch
+
             // Generate Render Inputs.
             for (int i = 0; i < cms; ++i)
             {
@@ -1608,18 +1611,18 @@ namespace UnityEngine.U2D
                     outputVertices[outputVertexCount++] = column3;
                 }
             }
-            
-            //// //// //// //// Stretch             
+
+            //// //// //// //// Stretch
             if (stretchCorners)
                 StretchCorners(segment, outputVertices, outputVertexCount, validHead, validTail, stretcher);
             //// //// //// //// Stretch
- 
+
             outputCount = outputVertexCount;
         }
 
         bool SkipSegment(JobSegmentInfo isi)
         {
-            // Start the Generation.            
+            // Start the Generation.
             bool skip = (isi.sgInfo.z < 0);
             if (!skip)
             {
@@ -1645,14 +1648,14 @@ namespace UnityEngine.U2D
         float InterpolateLinear(float a, float b, float t)
         {
             return math.lerp(a, b, t);
-        }        
-        
+        }
+
         float InterpolateSmooth(float a, float b, float t)
         {
             float mu2 = (1.0f - math.cos(t * math.PI)) / 2.0f;
             return (a * (1 - mu2) + b * mu2);
         }
-        
+
         void TessellateSegments()
         {
 
@@ -1680,8 +1683,8 @@ namespace UnityEngine.U2D
                 float4 border = ispr.border * rpunits;
 
                 JobControlPoint _scp = GetControlPoint(isi.sgInfo.x);
-                JobControlPoint _ecp = GetControlPoint(isi.sgInfo.y);                
-                
+                JobControlPoint _ecp = GetControlPoint(isi.sgInfo.y);
+
                 bool useClosure = (m_ControlPoints[0].cpData.z == kModeContinous) && (isi.sgInfo.y == controlPointCount - 1);
                 bool firstSegment = (i == 0) && !isCarpet && !useClosure;
                 bool validHead = hasSpriteBorder && (border.x > 0) && ((_scp.exData.z == 0) || firstSegment);
@@ -1704,9 +1707,8 @@ namespace UnityEngine.U2D
                 if (pxlWidth < kEpsilon)
                 {
                     SetResult(SpriteShapeGeneratorResult.ErrorSpritesWrongBorder);
-#if ENABLE_UNITY_COLLECTIONS_CHECKS
-                    throw new ArgumentException($"One of the sprites seem to have Invalid Borders. Please check Input Sprites.");
-#endif                    
+                    Debug.Log($"One of the sprites seem to have Invalid Borders. Please check Input Sprites.");
+                    return;
                 }
 
                 // Start the Generation.
@@ -1856,7 +1858,7 @@ namespace UnityEngine.U2D
         #endregion
 
         #region Stretch.
-        
+
         bool FetchStretcher(int segmentIndex, JobSpriteInfo sprInfo, JobSegmentInfo segment, float2 whsize, bool validHead, bool validTail, ref float4 stretcher)
         {
             bool needsStretchL = false, needsStretchR = false;
@@ -1867,7 +1869,7 @@ namespace UnityEngine.U2D
             JobSegmentInfo prevSegment = GetSegmentInfo(prevSegmentIndex);
             JobSegmentInfo nextSegment = GetSegmentInfo(nextSegmentIndex);
             JobControlPoint scp = GetControlPoint(segment.sgInfo.x);
-            JobControlPoint ecp = GetControlPoint(segment.sgInfo.y);            
+            JobControlPoint ecp = GetControlPoint(segment.sgInfo.y);
             var stretchLeft = (scp.cpData.y == 2) && math.abs(prevSegment.sgInfo.x - prevSegment.sgInfo.y) == 1;
             var stretchRight = (ecp.cpData.y == 2) && math.abs(nextSegment.sgInfo.x - nextSegment.sgInfo.y) == 1;
             var lastControlPoint = (controlPointCount - 1);
@@ -1902,7 +1904,7 @@ namespace UnityEngine.U2D
                         // Check end-points match for start and prev.
                         if (1 == scp.exData.z)
                         {
-                            // Intersection Test                            
+                            // Intersection Test
                             float2 pvlt = float2.zero, pvlb = float2.zero, pvrt = float2.zero, pvrb = float2.zero;
                             GetLineSegments(sprInfo, prevSegment, whsize, ref pvlt, ref pvlb, ref pvrt, ref pvrb);
                             ExtendSegment(ref pvlt, ref pvrt);
@@ -1916,7 +1918,7 @@ namespace UnityEngine.U2D
                             JobIntersectPoint ip = m_Intersectors[segment.sgInfo.x];
                             ip.top = ltp;
                             ip.bottom = lbt;
-                            m_Intersectors[segment.sgInfo.x] = ip;                            
+                            m_Intersectors[segment.sgInfo.x] = ip;
                         }
                     }
                 }
@@ -1936,7 +1938,7 @@ namespace UnityEngine.U2D
                         // Check end-points match for end and next.
                         if (1 == ecp.exData.z)
                         {
-                            // Intersection Test                            
+                            // Intersection Test
                             float2 nvlt = float2.zero, nvlb = float2.zero, nvrt = float2.zero, nvrb = float2.zero;
                             GetLineSegments(sprInfo, nextSegment, whsize, ref nvlt, ref nvlb, ref nvrt, ref nvrb);
                             ExtendSegment(ref nvlt, ref nvrt);
@@ -1950,7 +1952,7 @@ namespace UnityEngine.U2D
                             JobIntersectPoint ip = m_Intersectors[segment.sgInfo.y];
                             ip.top = rtp;
                             ip.bottom = rbt;
-                            m_Intersectors[segment.sgInfo.y] = ip;                            
+                            m_Intersectors[segment.sgInfo.y] = ip;
                         }
                     }
 
@@ -1995,7 +1997,7 @@ namespace UnityEngine.U2D
                     rt = m_Intersectors[segment.sgInfo.y].top;
                     rb = m_Intersectors[segment.sgInfo.y].bottom;
                 }
-                
+
 
                 for (int i = lts; i < vertexCount; i = i + 4)
                 {
@@ -2020,8 +2022,8 @@ namespace UnityEngine.U2D
                 vx.pos = lt;
                 vy.pos = lb;
                 vertices[lts] = vx;
-                vertices[lts + 2] = vy;                
-                
+                vertices[lts + 2] = vy;
+
                 JobShapeVertex vz = vertices[vertexCount - 3];
                 JobShapeVertex vw = vertices[vertexCount - 1];
                 vz.pos = rt;
@@ -2029,10 +2031,10 @@ namespace UnityEngine.U2D
                 vertices[vertexCount - 3] = vz;
                 vertices[vertexCount - 1] = vw;
             }
-        }        
-        
+        }
+
         #endregion
-        
+
         #region Corners
 
         // Extend Segment.
@@ -2051,7 +2053,7 @@ namespace UnityEngine.U2D
             int pp = (cp == 0) ? (controlPointCount - 1) : (cp - 1);
             int np = (cp + 1) % controlPointCount;
             float pivot = 0.5f - ispr.metaInfo.y;
-            
+
             JobControlPoint lcp = GetControlPoint(pp);
             JobControlPoint ccp = GetControlPoint(cp);
             JobControlPoint rcp = GetControlPoint(np);
@@ -2066,11 +2068,11 @@ namespace UnityEngine.U2D
             float pxlWidth = enPixelV - stPixelV;   // pxlWidth is the square size of the corner sprite.
 
             // Generate the LeftTop, LeftBottom, RightTop & RightBottom for both sides.
-            GenerateColumnsBi(lcp.position, ccp.position, whsize, false, ref lb0, ref lt0, 0.5f, pivot);
-            GenerateColumnsBi(ccp.position, lcp.position, whsize, false, ref rt0, ref rb0, 0.5f, pivot);
+            GenerateColumnsBi(lcp.position, ccp.position, whsize, false, ref lb0, ref lt0, ccp.cpInfo.x * 0.5f, pivot);
+            GenerateColumnsBi(ccp.position, lcp.position, whsize, false, ref rt0, ref rb0, ccp.cpInfo.x * 0.5f, pivot);
 
-            GenerateColumnsBi(ccp.position, rcp.position, whsize, false, ref lb1, ref lt1, 0.5f, pivot);
-            GenerateColumnsBi(rcp.position, ccp.position, whsize, false, ref rt1, ref rb1, 0.5f, pivot);
+            GenerateColumnsBi(ccp.position, rcp.position, whsize, false, ref lb1, ref lt1, ccp.cpInfo.x * 0.5f, pivot);
+            GenerateColumnsBi(rcp.position, ccp.position, whsize, false, ref rt1, ref rb1, ccp.cpInfo.x * 0.5f, pivot);
 
             rt0 = rt0 + (math.normalize(rt0 - lt0) * kExtendSegment);
             rb0 = rb0 + (math.normalize(rb0 - lb0) * kExtendSegment);
@@ -2090,12 +2092,12 @@ namespace UnityEngine.U2D
             // Correct Left.
             float2 zero = new float2(0, 0);
             float2 tp = zero, bt = zero;
-            float2 lt0 = zero, lb0 = zero, rt0 = zero, rb0 = zero, lt1 = zero, lb1 = zero, rt1 = zero, rb1 = zero;            
+            float2 lt0 = zero, lb0 = zero, rt0 = zero, rb0 = zero, lt1 = zero, lb1 = zero, rt1 = zero, rb1 = zero;
             float pivot = 0.5f - ispr.metaInfo.y;
-            
+
             int pp = (cp == 0) ? (controlPointCount - 1) : (cp - 1);
             int np = (cp + 1) % controlPointCount;
-            
+
             JobControlPoint lcp = GetControlPoint(pp);
             JobControlPoint ccp = GetControlPoint(cp);
             JobControlPoint rcp = GetControlPoint(np);
@@ -2107,12 +2109,12 @@ namespace UnityEngine.U2D
             // Generate the UV Increments.
             float stPixelV = border.y;
             float enPixelV = whsize.y - border.y;
-            float pxlWidth = enPixelV - stPixelV;   // pxlWidth is the square size of the corner sprite.            
+            float pxlWidth = enPixelV - stPixelV;   // pxlWidth is the square size of the corner sprite.
 
             bool intersects = GetIntersection(cp, ct, ispr, ref lt0, ref lb0, ref rt0, ref rb0, ref lt1, ref lb1, ref rt1, ref rb1, ref tp, ref bt);
             if (!intersects)
                 return false;
-            
+
             float2 pt = ccp.position;
             float2 lt = lcp.position - pt;
             float2 rt = rcp.position - pt;
@@ -2154,8 +2156,8 @@ namespace UnityEngine.U2D
             {
                 iscp.bottom = bt;
                 iscp.top = tp;
-                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ispr.metaInfo.y, pivot);
-                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
                 iscp.left = lt0;
                 iscp.right = lb1;
             }
@@ -2163,8 +2165,8 @@ namespace UnityEngine.U2D
             {
                 iscp.bottom = tp;
                 iscp.top = bt;
-                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ispr.metaInfo.y, pivot);
-                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(la, lcp.position, whsize, false, ref lt0, ref lb0, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
+                GenerateColumnsBi(ra, rcp.position, whsize, false, ref lt1, ref lb1, ccp.cpInfo.x * ispr.metaInfo.y, pivot);
                 iscp.left = lb0;
                 iscp.right = lt1;
             }
@@ -2184,36 +2186,28 @@ namespace UnityEngine.U2D
 
         int CalculateCorner(int index, float angle, float2 lt, float2 rt)
         {
-            var ct = 0;
             float slope = SlopeAngle(lt);
-            var slopePairs = new float2[] 
-            {
-                new float2(-135.0f, -35.0f),
-                new float2(35.0f, 135.0f),
-                new float2(-35.0f, 35.0f),
-                new float2(-135.0f, 135.0f)
-            };
-            var cornerPairs = new int2[] 
-            {
-                new int2(kCornerTypeInnerTopLeft, kCornerTypeOuterBottomLeft),
-                new int2(kCornerTypeInnerBottomRight, kCornerTypeOuterTopRight),
-                new int2(kCornerTypeInnerTopRight, kCornerTypeOuterTopLeft),
-                new int2(kCornerTypeInnerBottomLeft, kCornerTypeOuterBottomRight)
-            };
-            for (int i = 0; i < 3; ++i)
-            {
-                if ( slope > slopePairs[i].x && slope < slopePairs[i].y )
-                {
-                    ct = (angle > 0) ? cornerPairs[i].x : cornerPairs[i].y;
-                    break;
-                }
-            }
-            if (ct == 0)
-            {
-                ct = (angle > 0) ? kCornerTypeInnerBottomLeft : kCornerTypeOuterBottomRight;
-            }
-            return ct;
+            var slopePair0 = new float2(-135.0f, -35.0f);
+            var cornerPair0 = new int2(kCornerTypeInnerTopLeft, kCornerTypeOuterBottomLeft);
+            if ( slope > slopePair0.x && slope < slopePair0.y )
+                return (angle > 0) ? cornerPair0.x : cornerPair0.y;
 
+            var slopePair1 = new float2(35.0f, 135.0f);
+            var cornerPair1 = new int2(kCornerTypeInnerBottomRight, kCornerTypeOuterTopRight);
+            if (slope > slopePair1.x && slope < slopePair1.y)
+                return (angle > 0) ? cornerPair1.x : cornerPair1.y;
+
+            var slopePair2 = new float2(-35.0f, 35.0f);
+            var cornerPair2 = new int2(kCornerTypeInnerTopRight, kCornerTypeOuterTopLeft);
+            if (slope > slopePair2.x && slope < slopePair2.y)
+                return (angle > 0) ? cornerPair2.x : cornerPair2.y;
+
+            var slopePair3 = new float2(-135.0f, 135.0f);
+            var cornerPair3 = new int2(kCornerTypeInnerBottomLeft, kCornerTypeOuterBottomRight);
+            if (slope > slopePair3.x && slope < slopePair3.y)
+                return (angle > 0) ? cornerPair3.x : cornerPair3.y;
+
+            return (angle > 0) ? kCornerTypeInnerBottomLeft : kCornerTypeOuterBottomRight;
         }
 
         bool InsertCorner(int index, ref NativeArray<int2> cpSpriteIndices, ref NativeArray<JobControlPoint> newPoints, ref int activePoint, ref bool cornerConsidered)
@@ -2252,12 +2246,15 @@ namespace UnityEngine.U2D
             float2 idir = math.normalize(ncp.position - icp.position);
             float2 ndir = math.normalize(pcp.position - icp.position);
             float angle = AngleBetweenVector(idir, ndir);
+
             float angleAbs = math.abs(angle);
             cornerConsidered = AngleWithinRange(angleAbs, (90f - m_ShapeParams.curveData.z), (90f + m_ShapeParams.curveData.z)) || (m_ShapeParams.curveData.z == 90.0f);
+
             if (cornerConsidered && icp.cpData.y == 1)
             {
                 float2 rdir = math.normalize(icp.position - pcp.position);
                 int ct = CalculateCorner(index, angle, rdir, idir);
+
                 // Check if we have a valid Sprite.
                 if (ct > 0)
                 {
@@ -2366,7 +2363,7 @@ namespace UnityEngine.U2D
         }
 
         // Check if points are co linear and reduce.
-        void OptimizePoints(float tolerance, ref NativeArray<float2> pointSet, ref int pointCount)
+        void OptimizePoints(float tolerance, bool tess, ref NativeArray<float2> pointSet, ref int pointCount)
         {
             int kMinimumPointsRequired = 8;
             if (pointCount < kMinimumPointsRequired)
@@ -2375,44 +2372,53 @@ namespace UnityEngine.U2D
             int optimizedColliderPointCount = 0;
             int endColliderPointCount = pointCount - 2;
             bool val = true;
-            m_TempPoints[0] = pointSet[0];
+            var fst = pointSet[0];
+            m_TempPoints[0] = fst;
             for (int i = 0; i < endColliderPointCount; ++i)
             {
-                int j = i;
                 float2 v0 = pointSet[i];
                 float2 v1 = pointSet[i + 1];
                 float2 v2 = pointSet[i + 2];
-                val = true;
-                while (val && j < endColliderPointCount)
+                do
                 {
                     val = AreCollinear(v0, v1, v2, tolerance);
                     if (false == val)
                     {
                         m_TempPoints[++optimizedColliderPointCount] = v1;
-                        i = j;
                         break;
                     }
-                    j++;
-                    v1 = pointSet[j + 1];
-                    v2 = pointSet[j + 2];
+                    i++;
+                    v1 = pointSet[i + 1];
+                    v2 = pointSet[i + 2];
                 }
+                while (val && i < endColliderPointCount);
             }
-            m_TempPoints[++optimizedColliderPointCount] = pointSet[endColliderPointCount];
-            m_TempPoints[++optimizedColliderPointCount] = pointSet[endColliderPointCount + 1];
-            if (isCarpet)
-                m_TempPoints[++optimizedColliderPointCount] = pointSet[0];
-            var localPointCount = optimizedColliderPointCount + 1;
 
-            if (localPointCount > 0)
+            // Test for the last 2 points. (N - 2) (N - 1) (N)
+            var lb2 = m_TempPoints[optimizedColliderPointCount];
+            var lb1 = pointSet[endColliderPointCount];
+            var lst = pointSet[endColliderPointCount + 1];
+
+            val = AreCollinear(lb2, lb1, lst, tolerance);
+            if (!val)
+                m_TempPoints[++optimizedColliderPointCount] = lb1;
+
+            if (isCarpet)
             {
-                pointCount = 0;
-                pointSet[pointCount++] = m_TempPoints[0];
-                for (int i = 1; i < localPointCount; ++i)
+                if (tess || optimizedColliderPointCount > 2)
                 {
-                    if (math.distance(pointSet[pointCount - 1], m_TempPoints[i]) > 0.0001f)
-                        pointSet[pointCount++] = m_TempPoints[i];
+                    val = AreCollinear(m_TempPoints[optimizedColliderPointCount], lst, fst, tolerance);
+                    if (!val)
+                        m_TempPoints[++optimizedColliderPointCount] = lst;
                 }
+
+                m_TempPoints[++optimizedColliderPointCount] = fst;
             }
+            else
+                m_TempPoints[++optimizedColliderPointCount] = lst;
+            pointCount = optimizedColliderPointCount + 1;
+            UnityEngine.U2D.Common.UTess.ModuleHandle.Copy(m_TempPoints, pointSet, pointCount);
+
         }
 
         #endregion
@@ -2486,11 +2492,15 @@ namespace UnityEngine.U2D
             int kSplineDetailClamped = math.clamp(splineDetail * 3, 0, 8);
             int kNeighbors = kSplineDetailClamped > kColliderPointCountClamped ? kColliderPointCountClamped : kSplineDetailClamped;
             kNeighbors = (kNeighbors > cpCount) ? cpCount : kNeighbors;
-            
-            if (!isCarpet)
-                m_TempPoints[trimmedPointCount++] = m_ColliderPoints[0];
 
-            while (i < m_ColliderPointCount)
+            int testOverlapCount = m_ColliderPointCount;
+            if (!isCarpet)
+            {
+                m_TempPoints[trimmedPointCount++] = m_ColliderPoints[0];
+                testOverlapCount = m_ColliderPointCount - 1;
+            }
+
+            while (i < testOverlapCount)
             {
                 int h = (i > 0) ? (i - 1) : (m_ColliderPointCount - 1);
                 bool noIntersection = true;
@@ -2525,7 +2535,8 @@ namespace UnityEngine.U2D
 
                 if (noIntersection)
                 {
-                    m_TempPoints[trimmedPointCount++] = v1;
+                    if (0 != i || isCarpet)
+                        m_TempPoints[trimmedPointCount++] = v1;
                     i = i + 1;
                 }
             }
@@ -2544,7 +2555,7 @@ namespace UnityEngine.U2D
             }
             trimmedPointCount = i;
 
-            if (trimmedPointCount > 4)
+            if (trimmedPointCount > 3 && isCarpet)
             {
                 // Check intersection of first line Segment and last.
                 float2 vin = m_ColliderPoints[0];
@@ -2562,14 +2573,15 @@ namespace UnityEngine.U2D
             if (hasCollider)
             {
                 if (kColliderQuality > 0)
-                {                    
-                    OptimizePoints(kColliderQuality, ref m_ColliderPoints, ref m_ColliderPointCount);
+                {
+                    OptimizePoints(kColliderQuality, false, ref m_ColliderPoints, ref m_ColliderPointCount);
                     TrimOverlaps(m_ControlPointCount - 1);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                 }
                 // If the resulting Colliders don't have enough points including the last 2 'end-points', just use Contours as Colliders.
-                if (m_ColliderPointCount <= 4)
+                var minimumPointCount = isCarpet ? 5 : 3;
+                if (m_ColliderPointCount <= minimumPointCount)
                 {
                     for (int i = 0; i < m_TessPointCount; ++i)
                         m_ColliderPoints[i] = m_TessPoints[i];
@@ -2588,7 +2600,7 @@ namespace UnityEngine.U2D
         public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, NativeArray<SpriteShapeMetaData> metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
         {
             // Prepare Inputs.
-            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
+            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider || controller.forceColliderShapeUpdate, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
             PrepareSprites(segmentSprites, cornerSprites);
             PrepareAngleRanges(angleRanges);
             NativeArray<SplinePointMetaData> newMetaData = new NativeArray<SplinePointMetaData>(metaData.Length, Allocator.Temp);
@@ -2604,14 +2616,16 @@ namespace UnityEngine.U2D
             newMetaData.Dispose();
 
             // Generate Fill. Obsolete API and let's stick with main-thread fill.
-            kModeUTess = 0;            
+            kModeUTess = 0;
             TessellateContourMainThread();
         }
 
         internal void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, NativeArray<SplinePointMetaData> metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites, bool UseUTess)
         {
             // Prepare Inputs.
-            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
+            SetResult(SpriteShapeGeneratorResult.Success);
+
+            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider || controller.forceColliderShapeUpdate, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
             PrepareSprites(segmentSprites, cornerSprites);
             PrepareAngleRanges(angleRanges);
             PrepareControlPoints(shapePoints, metaData);
@@ -2620,31 +2634,31 @@ namespace UnityEngine.U2D
             kModeUTess = UseUTess ? 1 : 0;
             if (0 == kModeUTess)
                 TessellateContourMainThread();
-        }        
-        
+        }
+
         public void Execute()
         {
-            // BURST
-            SetResult(SpriteShapeGeneratorResult.Success);
-            
+
             generateGeometry.Begin();
             {
                 if (0 != kModeUTess)
-                    TessellateContour();
+                    TessellateContour(Allocator.Temp);
+
                 GenerateSegments();
-                UpdateSegments();
+                UpdateSegments();                
                 TessellateSegments();
                 TessellateCorners();
                 CalculateTexCoords();
             }
             generateGeometry.End();
+
             generateCollider.Begin();
             {
                 CalculateBoundingBox();
                 OptimizeCollider();
             }
             generateCollider.End();
-            
+
         }
 
         // Only needed if Burst is disabled.
@@ -2662,7 +2676,7 @@ namespace UnityEngine.U2D
             SafeDispose(m_GeneratedControlPoints);
             SafeDispose(m_SpriteIndices);
             SafeDispose(m_Intersectors);
-            
+
             SafeDispose(m_TessPoints);
             SafeDispose(m_VertexData);
             SafeDispose(m_OutputVertexData);

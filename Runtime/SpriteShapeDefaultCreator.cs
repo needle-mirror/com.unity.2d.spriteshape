@@ -32,6 +32,7 @@ namespace UnityEngine.U2D
             };
             spriteShapeJob.generateCollider = SpriteShapeController.generateCollider;
             spriteShapeJob.generateGeometry = SpriteShapeController.generateGeometry;
+
             var shapePoints = sc.GetShapeControlPoints();
             var shapeMetaData = sc.GetSplinePointMetaData();
             spriteShapeJob.Prepare(sc, sc.spriteShapeParameters, sc.maxArrayCount, shapePoints, shapeMetaData,
@@ -56,7 +57,23 @@ namespace UnityEngine.U2D
                 return creator;                
             }
         }
-        
+
+
+        /// <summary>
+        /// Get Versioning so we can check if geometry needs to be generated.
+        /// </summary>
+        public override int GetVersion()
+        {
+            int hashCode = 0;            
+            int versionHash = 1;
+            unchecked
+            {
+                hashCode = (int)2166136261 ^ GetInstanceID();
+                hashCode = hashCode * 16777619 ^ versionHash;
+            }
+            return hashCode;
+        }
+
     }
 
 }

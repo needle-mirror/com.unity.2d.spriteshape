@@ -44,6 +44,9 @@ namespace UnityEngine.U2D
         bool m_DynamicOcclusionLocal;
         bool m_DynamicOcclusionOverriden;
 
+        // Added so that shadows will work correctly when no collider is assigned
+        bool m_ForceColliderShapeUpdate = false;
+
         // Hash Check.
         int m_ActiveSplineHash = 0;
         int m_ActiveSpriteShapeHash = 0;
@@ -78,25 +81,24 @@ namespace UnityEngine.U2D
         [SerializeField]
         bool m_UpdateCollider = true;
         [SerializeField]
-        bool m_OptimizeCollider = true;
-        [SerializeField]
-        bool m_OptimizeGeometry = true;
-        [SerializeField]
         bool m_EnableTangents = false;
         [SerializeField]
         [HideInInspector]
         bool m_GeometryCached = false;
-        [SerializeField] 
-        bool m_UTess2D = false;
-        [SerializeField] 
+        [SerializeField]
+        bool m_UTess2D = true;
+
+        [SerializeField]
         SpriteShapeGeometryCreator m_Creator;
-        [SerializeField] 
+        [SerializeField]
         List<SpriteShapeGeometryModifier> m_Modifiers = new List<SpriteShapeGeometryModifier>();
+        [SerializeField]
+        List<Vector2> m_ColliderSegment = new List<Vector2>();
 
         internal static readonly ProfilerMarker generateGeometry = new ProfilerMarker("SpriteShape.GenerateGeometry");
         internal static readonly ProfilerMarker generateCollider = new ProfilerMarker("SpriteShape.GenerateCollider");
-        
-        #region GetSet
+
+#region GetSet
 
         internal int maxArrayCount
         {
@@ -130,20 +132,18 @@ namespace UnityEngine.U2D
             get
             {
                 if (!m_SpriteShapeGeometryCache)
-                    m_SpriteShapeGeometryCache = GetComponent<SpriteShapeGeometryCache>();
+                {
+                    bool b = TryGetComponent(typeof(SpriteShapeGeometryCache), out Component comp);
+                    m_SpriteShapeGeometryCache = b ? (comp as SpriteShapeGeometryCache) : null;
+                }
                 return m_SpriteShapeGeometryCache;
             }
         }
 
-        internal bool optimizeColliderInternal
-        {
-            set { m_OptimizeCollider = value; }
-        }
-        
         internal Sprite[] cornerSpriteArray
         {
             get { return m_CornerSpriteArray; }
-        }        
+        }
 
         internal Sprite[] edgeSpriteArray
         {
@@ -171,7 +171,7 @@ namespace UnityEngine.U2D
                     m_Creator = value;
             }
         }
-        
+
         /// <summary>Get a list of Modifiers. </summary>
         public List<SpriteShapeGeometryModifier> modifiers
         {
@@ -190,14 +190,14 @@ namespace UnityEngine.U2D
             get { return m_WorldSpaceUV; }
             set { m_WorldSpaceUV = value; }
         }
-        
+
         /// <summary>Defines pixel per unit for fill geometry UV generation. </summary>
         public float fillPixelsPerUnit
         {
             get { return m_FillPixelPerUnit; }
             set { m_FillPixelPerUnit = value; }
         }
-        
+
         /// <summary>Enable tangent channel when generating SpriteShape geometry (used in Shaders) </summary>
         public bool enableTangents
         {
@@ -250,13 +250,13 @@ namespace UnityEngine.U2D
         /// <summary>Optimize generated collider geometry. </summary>
         public bool optimizeCollider
         {
-            get { return m_OptimizeCollider; }
+            get { return true; }
         }
 
         /// <summary>Optimize generated SpriteShape geometry. </summary>
         public bool optimizeGeometry
         {
-            get { return m_OptimizeGeometry; }
+            get { return true; }
         }
 
         /// <summary>Does this SpriteShapeController object has colliders ?</summary>
@@ -284,7 +284,10 @@ namespace UnityEngine.U2D
             get
             {
                 if (!m_EdgeCollider2D)
-                    m_EdgeCollider2D = GetComponent<EdgeCollider2D>();
+                {
+                    bool b = TryGetComponent(typeof(EdgeCollider2D), out Component comp);
+                    m_EdgeCollider2D = b ? (comp as EdgeCollider2D) : null;
+                }
                 return m_EdgeCollider2D;
             }
         }
@@ -295,7 +298,10 @@ namespace UnityEngine.U2D
             get
             {
                 if (!m_PolygonCollider2D)
-                    m_PolygonCollider2D = GetComponent<PolygonCollider2D>();
+                {
+                    bool b = TryGetComponent(typeof(PolygonCollider2D), out Component comp);
+                    m_PolygonCollider2D = b ? (comp as PolygonCollider2D) : null;
+                }
                 return m_PolygonCollider2D;
             }
         }
@@ -311,6 +317,11 @@ namespace UnityEngine.U2D
             }
         }
 
+        internal bool forceColliderShapeUpdate
+        {
+            get { return m_ForceColliderShapeUpdate; }
+        }
+
         internal NativeArray<SpriteShapeGeneratorStats> stats
         {
             get
@@ -321,12 +332,13 @@ namespace UnityEngine.U2D
             }
         }
 
-        #endregion
+#endregion
 
-        #region EventHandles.
+#region EventHandles.
 
         void DisposeInternal()
         {
+            m_JobHandle.Complete();
             if (m_ColliderData.IsCreated)
                 m_ColliderData.Dispose();
             if (m_TangentData.IsCreated)
@@ -351,6 +363,7 @@ namespace UnityEngine.U2D
 
         void OnDisable()
         {
+            UpdateGeometryCache();
             DisposeInternal();
         }
 
@@ -372,8 +385,6 @@ namespace UnityEngine.U2D
             m_CornerAngleThreshold = 30.0f;
             m_ColliderOffset = 0;
             m_UpdateCollider = true;
-            m_OptimizeCollider = true;
-            m_OptimizeGeometry = true;
             m_EnableTangents = false;
 
             spline.Clear();
@@ -396,9 +407,9 @@ namespace UnityEngine.U2D
                 Destroy(o);
         }
 
-        #endregion
+#endregion
 
-        #region HashAndDataCheck
+#region HashAndDataCheck
 
         internal Bounds InitBounds()
         {
@@ -414,7 +425,7 @@ namespace UnityEngine.U2D
             }
             return new Bounds();
         }
-        
+
         /// <summary>
         /// Refresh SpriteShape Hash so its force generated again on the next frame if its visible.
         /// </summary>
@@ -445,7 +456,7 @@ namespace UnityEngine.U2D
         bool ValidateSpriteShapeTexture()
         {
             bool valid = false;
-            
+
             // Check if SpriteShape Profile is valid.
             if (spriteShape != null)
             {
@@ -463,14 +474,14 @@ namespace UnityEngine.U2D
                 // We allow null SpriteShape for rapid prototyping in Editor.
                 valid = true;
 #endif
-            }                
+            }
             return valid;
         }
 
         internal bool ValidateUTess2D()
         {
             bool uTess2D = m_UTess2D;
-            // Check for all properties that can create overlaps/intersections.            
+            // Check for all properties that can create overlaps/intersections.
             if (m_UTess2D && null != spriteShape)
             {
                 uTess2D = (spriteShape.fillOffset == 0);
@@ -501,6 +512,22 @@ namespace UnityEngine.U2D
             return updateSprites;
         }
 
+        int GetCustomScriptHashCode()
+        {
+
+            int hashCode = 0;
+
+            unchecked
+            {
+                hashCode = (int)2166136261 ^ spriteShapeCreator.GetVersion();
+                foreach (var mod in m_Modifiers)
+                    hashCode = hashCode * 16777619 ^ mod.GetVersion();
+            }
+
+            return hashCode;
+
+        }
+
         bool HasSplineDataChanged()
         {
             unchecked
@@ -510,13 +537,13 @@ namespace UnityEngine.U2D
 
                 // Local Stuff.
                 hashCode = hashCode * 16777619 ^ (m_UTess2D ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_WorldSpaceUV ? 1 : 0); 
+                hashCode = hashCode * 16777619 ^ (m_WorldSpaceUV ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_GeometryCached ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_OptimizeGeometry ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_StretchTiling.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (m_ColliderOffset.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (m_ColliderDetail.GetHashCode());
+                hashCode = hashCode * 16777619 ^ (GetCustomScriptHashCode());
 
                 if (splineHashCode != hashCode)
                 {
@@ -538,21 +565,21 @@ namespace UnityEngine.U2D
         }
 
         /// <summary>
-        /// Generate geometry on a Job. 
+        /// Generate geometry on a Job.
         /// </summary>
         /// <returns>JobHandle for the SpriteShape geometry generation job.</returns>
         public JobHandle BakeMesh()
         {
             JobHandle jobHandle = default;
 
-#if !UNITY_EDITOR            
+#if !UNITY_EDITOR
             if (spriteShapeGeometryCache)
             {
                 // If SpriteShapeGeometry has already been uploaded, don't bother checking further.
                 if (0 != m_ActiveSplineHash && 0 != spriteShapeGeometryCache.maxArrayCount)
                     return jobHandle;
             }
-#endif                
+#endif
 
             bool valid = ValidateSpline();
 
@@ -562,23 +589,19 @@ namespace UnityEngine.U2D
                 bool spriteShapeChanged = HasSpriteShapeDataChanged();
                 bool spriteShapeParametersChanged = UpdateSpriteShapeParameters();
 
-                if (spriteShapeChanged)
-                {
-                    UpdateSpriteData();
-                }
-
                 if (splineChanged || spriteShapeChanged || spriteShapeParametersChanged)
                 {
+                    if (spriteShapeChanged)
+                    {
+                        UpdateSpriteData();
+                    }
                     jobHandle = ScheduleBake();
-                }
-                
+
 #if UNITY_EDITOR
-                if (spriteShapeChanged && spriteShapeGeometryCache && geometryCached)
-                {
-                    jobHandle.Complete();
-                    spriteShapeGeometryCache.UpdateGeometryCache();
+                    UpdateGeometryCache();
+#endif
                 }
-#endif                
+
             }
             return jobHandle;
         }
@@ -588,7 +611,19 @@ namespace UnityEngine.U2D
 #region UpdateData
 
         /// <summary>
-        /// Force update SpriteShape parameters. 
+        /// Update Cache.
+        /// </summary>
+        internal void UpdateGeometryCache()
+        {
+            if (spriteShapeGeometryCache && geometryCached)
+            {
+                m_JobHandle.Complete();
+                spriteShapeGeometryCache.UpdateGeometryCache();
+            }
+        }
+
+        /// <summary>
+        /// Force update SpriteShape parameters.
         /// </summary>
         /// <returns>Returns true if there are changes</returns>
         public bool UpdateSpriteShapeParameters()
@@ -752,7 +787,7 @@ namespace UnityEngine.U2D
             int pointCount = spline.GetPointCount();
             NativeArray<SplinePointMetaData> shapeMetaData = new NativeArray<SplinePointMetaData>(pointCount, Allocator.Temp);
             for (int i = 0; i < pointCount; ++i)
-            {                
+            {
                 SplinePointMetaData metaData;
                 metaData.height = m_Spline.GetHeight(i);
                 metaData.spriteIndex = (uint)m_Spline.GetSpriteIndex(i);
@@ -795,6 +830,8 @@ namespace UnityEngine.U2D
 
 #endregion
 
+#region ScheduleAndGenerate
+
         unsafe JobHandle ScheduleBake()
         {
             JobHandle jobHandle = default;
@@ -810,12 +847,12 @@ namespace UnityEngine.U2D
                         return spriteShapeGeometryCache.Upload(spriteShapeRenderer, this);
             }
             maxArrayCount = spriteShapeCreator.GetVertexArrayCount(this);
-            
+
             if (maxArrayCount > 0 && enabled)
             {
                 // Complate previos
                 m_JobHandle.Complete();
-                
+
                 // Collider Data
                 if (m_ColliderData.IsCreated)
                     m_ColliderData.Dispose();
@@ -832,7 +869,7 @@ namespace UnityEngine.U2D
                 NativeSlice<Vector4> tanArray = new NativeSlice<Vector4>(m_TangentData);
 
                 if (m_EnableTangents)
-                { 
+                {
                     spriteShapeRenderer.GetChannels(maxArrayCount, out indexArray, out posArray, out uv0Array, out tanArray);
                 }
                 else
@@ -841,13 +878,13 @@ namespace UnityEngine.U2D
                 }
 
                 m_JobHandle = jobHandle = spriteShapeCreator.MakeCreatorJob(this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
-                foreach(var geomMod in m_Modifiers)
+                foreach (var geomMod in m_Modifiers)
                     m_JobHandle = geomMod.MakeModifierJob(m_JobHandle, this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
-                    
+
                 // Prepare Renderer.
                 spriteShapeRenderer.Prepare(m_JobHandle, m_ActiveShapeParameters, m_SpriteArray);
-                jobHandle = m_JobHandle;                
-                
+                jobHandle = m_JobHandle;
+
 #if UNITY_EDITOR
                 if (spriteShapeGeometryCache && geometryCached)
                     spriteShapeGeometryCache.SetGeometryCache(maxArrayCount, posArray, uv0Array, tanArray, indexArray, geomArray);
@@ -872,36 +909,47 @@ namespace UnityEngine.U2D
             // Previously this must be explicitly called if using BakeMesh.
             // But now we do it internally. BakeCollider_CanBeCalledMultipleTimesWithoutJobComplete
             m_JobHandle.Complete();
-            
+
             if (m_ColliderData.IsCreated)
             {
-                if (autoUpdateCollider)
+                if ((autoUpdateCollider && hasCollider) || forceColliderShapeUpdate)
                 {
-                    if (hasCollider)
-                    {
-                        int maxCount = short.MaxValue - 1;
-                        float2 last = (float2)0;
-                        List<Vector2> m_ColliderSegment = new List<Vector2>();
-                        for (int i = 0; i < maxCount; ++i)
-                        {
-                            float2 now = m_ColliderData[i];
-                            if (!math.any(last) && !math.any(now))
-                                break;
-                            m_ColliderSegment.Add(new Vector2(now.x, now.y));
-                        }
+                    int maxCount = short.MaxValue - 1;
+                    float2 last = (float2)0;
 
+                    m_ColliderSegment.Clear();
+                    for (int i = 0; i < maxCount; ++i)
+                    {
+                        float2 now = m_ColliderData[i];
+                        if (!math.any(last) && !math.any(now))
+                        {
+                            if ((i+1) < maxCount)
+                            {
+                                float2 next = m_ColliderData[i+1];
+                                if (!math.any(next) && !math.any(next))
+                                    break;
+                            }
+                            else
+                                break;
+                        }
+                        m_ColliderSegment.Add(new Vector2(now.x, now.y));
+                    }
+
+                    if (autoUpdateCollider)
+                    {
                         if (edgeCollider != null)
                             edgeCollider.points = m_ColliderSegment.ToArray();
                         if (polygonCollider != null)
                             polygonCollider.points = m_ColliderSegment.ToArray();
-#if UNITY_EDITOR
-                        UnityEditor.SceneView.RepaintAll();
-#endif                        
                     }
+#if UNITY_EDITOR
+                    UnityEditor.SceneView.RepaintAll();
+#endif
                 }
+
                 // Dispose Collider as its no longer needed.
                 m_ColliderData.Dispose();
-                
+
                 // Print Once.
                 if (m_Statistics.IsCreated)
                 {
@@ -915,16 +963,16 @@ namespace UnityEngine.U2D
                             Debug.LogWarningFormat(gameObject, "Sprites used in SpriteShape profile must use FullRect.");
                             break;
                         case SpriteShapeGeneratorResult.ErrorSpritesWrongBorder:
-                            Debug.LogWarningFormat(gameObject, "Sprites used in SpriteShape profile have invalid borders. Please check SpriteShape profile."); 
+                            Debug.LogWarningFormat(gameObject, "Sprites used in SpriteShape profile have invalid borders. Please check SpriteShape profile.");
                             break;
                         case SpriteShapeGeneratorResult.ErrorVertexLimitReached:
-                            Debug.LogWarningFormat(gameObject, "Mesh data has reached Limits. Please try dividing shape into smaller blocks."); 
+                            Debug.LogWarningFormat(gameObject, "Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
                             break;
                         case SpriteShapeGeneratorResult.ErrorDefaultQuadCreated:
-                            Debug.LogWarningFormat(gameObject, "Fill tessellation (C# Job) encountered errors. Please disable it to use default tessellation for fill geometry."); 
-                            break;                        
+                            Debug.LogWarningFormat(gameObject, "Fill tessellation (C# Job) encountered errors. Please disable it to use default tessellation for fill geometry.");
+                            break;
                     }
-                }                
+                }
             }
         }
 
@@ -946,31 +994,27 @@ namespace UnityEngine.U2D
             }
         }
 
-        Texture2D GetTextureFromIndex(int index)
+#endregion
+
+        internal void ForceColliderShapeUpdate(bool forceUpdate)
         {
-            if (index == 0)
-                return spriteShape ? spriteShape.fillTexture : null;
-
-            --index;
-            if (index < m_EdgeSpriteArray.Length)
-                return GetSpriteTexture(m_EdgeSpriteArray[index]);
-
-            index -= m_EdgeSpriteArray.Length;
-            return GetSpriteTexture(m_CornerSpriteArray[index]);
+            m_ForceColliderShapeUpdate = forceUpdate;
         }
 
-        Texture2D GetSpriteTexture(Sprite sprite)
+        internal NativeArray<float2> GetColliderShapeData()
         {
-            if (sprite)
+            if (m_ColliderData.IsCreated)
             {
-#if UNITY_EDITOR
-                return UnityEditor.Sprites.SpriteUtility.GetSpriteTexture(sprite, sprite.packed);
-#else
-                return sprite.texture;
-#endif
+                JobHandle handle = BakeMesh();
+                handle.Complete();
+                BakeCollider();
             }
 
-            return null;
+            NativeArray<float2> retNativeArray = new NativeArray<float2>(m_ColliderSegment.Count, Allocator.Temp);
+            for (int i = 0; i < retNativeArray.Length; i++)
+                retNativeArray[i] = m_ColliderSegment[i];
+
+            return retNativeArray;
         }
     }
 }
