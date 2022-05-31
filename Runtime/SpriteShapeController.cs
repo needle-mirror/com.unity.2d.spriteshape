@@ -125,7 +125,10 @@ namespace UnityEngine.U2D
             get
             {
                 if (!m_SpriteShapeGeometryCache)
-                    m_SpriteShapeGeometryCache = GetComponent<SpriteShapeGeometryCache>();
+                {
+                    bool b = TryGetComponent(typeof(SpriteShapeGeometryCache), out Component comp);
+                    m_SpriteShapeGeometryCache = b ? (comp as SpriteShapeGeometryCache) : null;
+                }
                 return m_SpriteShapeGeometryCache;
             }
         }
@@ -225,7 +228,10 @@ namespace UnityEngine.U2D
             get
             {
                 if (!m_EdgeCollider2D)
-                    m_EdgeCollider2D = GetComponent<EdgeCollider2D>();
+                {
+                    bool b = TryGetComponent(typeof(EdgeCollider2D), out Component comp);
+                    m_EdgeCollider2D = b ? (comp as EdgeCollider2D) : null;
+                }
                 return m_EdgeCollider2D;
             }
         }
@@ -235,7 +241,10 @@ namespace UnityEngine.U2D
             get
             {
                 if (!m_PolygonCollider2D)
-                    m_PolygonCollider2D = GetComponent<PolygonCollider2D>();
+                {
+                    bool b = TryGetComponent(typeof(PolygonCollider2D), out Component comp);
+                    m_PolygonCollider2D = b ? (comp as PolygonCollider2D) : null;
+                }
                 return m_PolygonCollider2D;
             }
         }
@@ -822,19 +831,28 @@ namespace UnityEngine.U2D
                     {
                         int maxCount = short.MaxValue - 1;
                         float2 last = (float2)0;
-                        List<Vector2> m_ColliderSegment = new List<Vector2>();
+                        List<Vector2> colliderSegment = new List<Vector2>();
                         for (int i = 0; i < maxCount; ++i)
                         {
                             float2 now = m_ColliderData[i];
                             if (!math.any(last) && !math.any(now))
-                                break;
-                            m_ColliderSegment.Add(new Vector2(now.x, now.y));
+                            {
+                                if ((i+1) < maxCount)
+                                {
+                                    float2 next = m_ColliderData[i+1];
+                                    if (!math.any(next) && !math.any(next))
+                                        break;
+                                }
+                                else
+                                    break;
+                            }
+                            colliderSegment.Add(new Vector2(now.x, now.y));
                         }
 
                         if (edgeCollider != null)
-                            edgeCollider.points = m_ColliderSegment.ToArray();
+                            edgeCollider.points = colliderSegment.ToArray();
                         if (polygonCollider != null)
-                            polygonCollider.points = m_ColliderSegment.ToArray();
+                            polygonCollider.points = colliderSegment.ToArray();
 #if UNITY_EDITOR
                         UnityEditor.SceneView.RepaintAll();
 #endif                        
@@ -861,33 +879,6 @@ namespace UnityEngine.U2D
                     Graphics.ExecuteCommandBuffer(rc);
                 }
             }
-        }
-
-        Texture2D GetTextureFromIndex(int index)
-        {
-            if (index == 0)
-                return spriteShape ? spriteShape.fillTexture : null;
-
-            --index;
-            if (index < m_EdgeSpriteArray.Length)
-                return GetSpriteTexture(m_EdgeSpriteArray[index]);
-
-            index -= m_EdgeSpriteArray.Length;
-            return GetSpriteTexture(m_CornerSpriteArray[index]);
-        }
-
-        Texture2D GetSpriteTexture(Sprite sprite)
-        {
-            if (sprite)
-            {
-#if UNITY_EDITOR
-                return UnityEditor.Sprites.SpriteUtility.GetSpriteTexture(sprite, sprite.packed);
-#else
-                return sprite.texture;
-#endif
-            }
-
-            return null;
         }
     }
 }

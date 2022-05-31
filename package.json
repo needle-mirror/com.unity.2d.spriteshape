@@ -1,6 +1,6 @@
 {
   "name": "com.unity.2d.spriteshape",
-  "version": "7.0.4",
+  "version": "7.0.5",
   "unity": "2021.2",
   "unityRelease": "7f1",
   "displayName": "2D SpriteShape",
@@ -33,15 +33,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.spriteshape.tests": "7.0.4",
+    "com.unity.2d.spriteshape.tests": "7.0.5",
     "com.unity.2d.common.tests": "6.0.3"
   },
+  "_upm": {
+    "changelog": "### Fixed\n- 1421401 Fix case where SpriteShape throws ArgumentException error when checking position validity of a point added to Spline.\n- 1421403 Fix case where Tangent Data is always saved even when not in use for SpriteShapeRenderer when GeometryCache is active.\n- 1421404 Fix case where Shape of PolygonCollider2D doesn't update when Sprite Shape contains vertex at [0,0]."
+  },
   "upmCi": {
-    "footprint": "28e25ba18139ddcdb7de167bf0a9a3383234e54b"
+    "footprint": "3a3dc6a0510d3991a6ffd5a13b83fbb0c446ef5a"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "41fd674f8e4b2265bdbc50291dced1bd86c590ee"
+    "revision": "b8ef9a9fa25d116a9e65e40bc9a7f86135688ed8"
   }
 }

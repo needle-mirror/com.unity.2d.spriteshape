@@ -41,15 +41,19 @@ namespace UnityEngine.U2D
 
         private bool IsPositionValid(int index, int next, Vector3 point)
         {
-            int prev = (index == 0) ? (m_ControlPoints.Count - 1) : (index - 1);
-            next = (next >= m_ControlPoints.Count) ? 0 : next;
+            int pointCount = GetPointCount();
+            if (isOpenEnded && (index == 0 || index == pointCount))
+                return true;
+            
+            int prev = (index == 0) ? (pointCount - 1) : (index - 1);
             if (prev >= 0)
             {
                 Vector3 diff = m_ControlPoints[prev].position - point;
                 if (diff.magnitude < KEpsilon)
                     return false;
             }
-            if (next < m_ControlPoints.Count)
+            next = (next >= pointCount) ? 0 : next;
+            if (next < pointCount)
             {
                 Vector3 diff = m_ControlPoints[next].position - point;
                 if (diff.magnitude < KEpsilon)

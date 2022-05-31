@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.0.5] - 2022-05-31
+### Fixed
+- 1421401 Fix case where SpriteShape throws ArgumentException error when checking position validity of a point added to Spline.
+- 1421403 Fix case where Tangent Data is always saved even when not in use for SpriteShapeRenderer when GeometryCache is active.
+- 1421404 Fix case where Shape of PolygonCollider2D doesn't update when Sprite Shape contains vertex at [0,0].
+
 ## [7.0.4] - 2022-02-07
 ### Fixed
 - 1381501 Fixed case where SpriteShape Corner is not set when setting multiple corners

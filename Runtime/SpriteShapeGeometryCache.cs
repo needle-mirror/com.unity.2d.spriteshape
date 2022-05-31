@@ -49,16 +49,21 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
     NativeSlice<Vector2> m_Uv0ArrayCache;
     NativeSlice<Vector4> m_TanArrayCache;
     NativeArray<ushort> m_IndexArrayCache;
-    NativeArray<UnityEngine.U2D.SpriteShapeSegment> m_GeomArrayCache;
+    NativeArray<SpriteShapeSegment> m_GeomArrayCache;
 
     internal ushort[] indexArray
     {
-        get { return m_IndexArray; }
+        get => m_IndexArray;
     }
 
     internal Vector3[] posArray
     {
-        get { return m_PosArray; }
+        get => m_PosArray;
+    }
+
+    public Vector4[] tanArray
+    {
+        get => m_TanArray;
     }
 
     internal int maxArrayCount
@@ -120,12 +125,14 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
 
             m_PosArray = new Vector3[vertexCount];
             m_Uv0Array = new Vector2[vertexCount];
-            m_TanArray = new Vector4[vertexCount];
             m_IndexArray = new ushort[indexCount];
 
             SpriteShapeCopyUtility<ushort>.Copy(m_IndexArray, m_IndexArrayCache, indexCount);
             SpriteShapeCopyUtility<Vector3>.Copy(m_PosArray, m_PosArrayCache, vertexCount);
             SpriteShapeCopyUtility<Vector2>.Copy(m_Uv0Array, m_Uv0ArrayCache, vertexCount);
+            
+            // Do not store Tangent data if not enabled. Just store a stub.
+            m_TanArray = new Vector4[(m_TanArrayCache.Length >= vertexCount) ? vertexCount : 1];
             if (m_TanArrayCache.Length >= vertexCount)
                 SpriteShapeCopyUtility<Vector4>.Copy(m_TanArray, m_TanArrayCache, vertexCount);
 
@@ -151,7 +158,7 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
             NativeSlice<Vector2> uv0Array;
             NativeArray<ushort> indexArray;
 
-            if (sc.enableTangents)
+            if (sc.enableTangents && m_TanArray.Length > 1)
             {
                 NativeSlice<Vector4> tanArray;
                 sr.GetChannels(m_MaxArrayCount, out indexArray, out posArray, out uv0Array, out tanArray);
