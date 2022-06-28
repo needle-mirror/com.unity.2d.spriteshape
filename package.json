@@ -1,6 +1,6 @@
 {
   "name": "com.unity.2d.spriteshape",
-  "version": "7.0.5",
+  "version": "7.0.6",
   "unity": "2021.2",
   "unityRelease": "7f1",
   "displayName": "2D SpriteShape",
@@ -16,7 +16,7 @@
   "category": "2D",
   "dependencies": {
     "com.unity.mathematics": "1.1.0",
-    "com.unity.2d.common": "6.0.3",
+    "com.unity.2d.common": "6.0.4",
     "com.unity.2d.path": "5.0.2",
     "com.unity.modules.physics2d": "1.0.0"
   },
@@ -33,18 +33,18 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.spriteshape.tests": "7.0.5",
-    "com.unity.2d.common.tests": "6.0.3"
+    "com.unity.2d.spriteshape.tests": "7.0.6",
+    "com.unity.2d.common.tests": "6.0.4"
   },
   "_upm": {
-    "changelog": "### Fixed\n- 1421401 Fix case where SpriteShape throws ArgumentException error when checking position validity of a point added to Spline.\n- 1421403 Fix case where Tangent Data is always saved even when not in use for SpriteShapeRenderer when GeometryCache is active.\n- 1421404 Fix case where Shape of PolygonCollider2D doesn't update when Sprite Shape contains vertex at [0,0]."
+    "changelog": "### Changed\n- Refactored internal triangulation and tessellation APIs."
   },
   "upmCi": {
-    "footprint": "3a3dc6a0510d3991a6ffd5a13b83fbb0c446ef5a"
+    "footprint": "8a3a203aaaba727e6d1dd92994e5cd415a443d2f"
   },
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "b8ef9a9fa25d116a9e65e40bc9a7f86135688ed8"
+    "revision": "6b783c5dfb5a72d73e2b0a70d1caf4a367c58805"
   }
 }

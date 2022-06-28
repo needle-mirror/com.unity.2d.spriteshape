@@ -1154,7 +1154,7 @@ namespace UnityEngine.U2D
                     NativeArray<float2> ov = new NativeArray<float2>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
                     NativeArray<int> oi = new NativeArray<int>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
                     NativeArray<int2> oe = new NativeArray<int2>(m_TessPointCount * m_TessPointCount, Allocator.Temp);
-                    UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(Allocator.Temp, points, edges, ref ov, ref ovc, ref oi, ref oic,  ref oe, ref oec);
+                    UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(Allocator.Temp, points, edges, ref ov, out ovc, ref oi, out oic,  ref oe, out oec);
 
                     if (oic > 0)
                     {

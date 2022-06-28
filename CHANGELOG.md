@@ -1,5 +1,9 @@
 # Changelog
 
+## [7.0.6] - 2022-06-28
+### Changed
+- Refactored internal triangulation and tessellation APIs.
+
 ## [7.0.5] - 2022-05-31
 ### Fixed
 - 1421401 Fix case where SpriteShape throws ArgumentException error when checking position validity of a point added to Spline.
