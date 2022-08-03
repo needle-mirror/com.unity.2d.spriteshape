@@ -1,13 +1,12 @@
 # Sprite Shape Controller
 
-The __Sprite Shape Controller__ component is automatically attached to the GameObject created when a __Sprite Shape Profile__ is dragged into the Scene. You edit the shape of the Sprite Shape's outline through the Controller's settings. The Controller displays different settings depending on different conditions.
+The __Sprite Shape Controller__ component is automatically attached to the GameObject created when a [Sprite Shape Profile](SSProfile.md) is dragged into the Scene. You edit the shape of the Sprite Shape's outline through the Controller's settings. The Controller displays different settings depending on different conditions.
 
 ## Property Settings - Default
 
 The default component settings below are displayed when Edit Spline is not enabled.
 
 ![Sprite Shape Controller property settings](images/SpriteShapeController_propUpdate.png)
-
 
 
 | __Property__                                                 | __Function__                                                 |
@@ -18,11 +17,13 @@ The default component settings below are displayed when Edit Spline is not enabl
 | __Detail__                                                   | Select the tessellation quality of the rendered Sprite Shape mesh. High/Medium/Low Quality options available. |
 | __Open Ended__                                               | Disable to connect both ends of the Sprite Shape together to form an enclosed Shape. Enable to leave both ends of the Sprite Shape unconnected. |
 | __Adaptive UV__                                              | Enabled by default. When enabled, Unity attempts to seamlessly tile the Sprites along the Sprite Shape path by deforming the Sprites to between Control Points. Disable this property to tile Sprites with no deformation and at  their exact width. Sprites may appear cutoff if the space between Control Points is shorter than the width of the Sprite. |
-| __Optimize Geometry__                                        | Enable this property to minimize the triangle count of the Sprite Shape’s inner geometry. |
 | __Enable Tangents__                                          | Enable this property if there are features which require tangent calculations, such as when utilizing the Shaders with the [2D Universal Render Pipeline](https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@9.0/manual/2d-index.html). |
 | __Corner Threshold__                                         | Use this slider to set the threshold of when a point is considered a corner of the Sprite Shape, where the value is the angle between adjacent edges and angles at the. A point is considered a corner at the threshold value and lower. The default value is 30 degrees. Set a custom value to override this default value. |
 | __Fill__                                                     | -                                                            |
+| __Fill Tessellation (C# Job)__                               | Generate fill geometry in C# Job.                            |
 | __Stretch UV__                                               | Enable this setting to have Unity stretch the UV of the Fill texture across the Full Rect of the Sprite Shape. |
+| __Custom Geometry Creator__                                  | Set the Scriptable Object that generates custom geometry. By default a built-in generator is set when created. |
+| __Custom Geometry Modifier__                                  | Set a list of Scriptable Objects that modifies generated geometry. |
 | __Pixels Per Unit (only available when Stretch UV is disabled)__ | This values affect the appearance of the Fill texture of the Sprite Shape. This value affects the scale of the Fill texture, with higher values reducing the size of the texture. The default value is 100. |
 | __World Space UV (only available when Stretch UV is disabled)__ | Enable to apply the Fill texture according to the World Space UV, instead of per GameObject UV. |
 
@@ -54,11 +55,9 @@ This feature allows the Sprite Shape to form corners with stretched Sprites betw
 1. Both the selected and adjacent points have the same __Height__.
 2. Sprites rendered at the Corner point and its neighboring points must have the same Sprite pivot position.
 
-Please note that scripting support for this new Corner mode will be available in a later release.
-
 ### Additional Collider settings
 
-Add either the __Polygon Collider 2D__ or __Edge Collider 2D__ component to the __Sprite Shape__ to enable additional __Collider__ settings in the __Sprite Shape Controller__. See the [Enabling Collision](SSCollision.md) page for more details about enabling Colliders with Sprite Shapes.
+Add either the __Polygon Collider 2D__ or __Edge Collider 2D__ component to the __Sprite Shape__ to enable additional __Collider__ settings in the __Sprite Shape Controller__. Refer to [Enabling Collision](SSCollision.md) for more details about enabling Colliders with Sprite Shapes. Colliders are always optimized by cleaning up extra control points that are colinear.
 
 ![Collider settings](images/2019_3_SSController_collider.png)
 
@@ -66,7 +65,6 @@ Add either the __Polygon Collider 2D__ or __Edge Collider 2D__ component to the 
 | --------------------- | ------------------------------------------------------------ |
 | __Update Collider__   | Enabled by Default. Enable this option to have the Collider mesh be updated to the Sprite Shape's current shape as the Sprite Shape is edited. Disable if you are editing the Collider mesh separately from the Sprite Shape and to use a custom Collider mesh. |
 | __Offset__            | Select the amount to extrude the Collider mesh towards the edge of the Sprite Shape. The range is from -0.5 to 0.5, starting at 0 by default. |
-| __Optimize Collider__ | Enabled by default. Enable to have Unity optimize the Collider mesh by cleaning up extra control points that are co-linear. Disable this option when editing the Collider mesh separately from the Sprite Shape to prevent Unity from affecting the custom Collider mesh. |
 | __Detail__            | Sets the tessellation quality of the rendered Collider. High/Medium/Low Quality options available. |
 
 

@@ -2,7 +2,7 @@
 
 The __Sprite Shape Profile__ contains the settings that determine which Sprites that appear on a Sprite Shape at specific Angle Ranges, as well as other display settings. You can use the same Profile for multiple __Sprite Shapes__ in a Scene.
 
-Create a __Sprite Shape Profile__ from the Editor main menu (menu: __Assets > Create > Sprite Shape Profile__), and select from the two available options: __Open Shape__ and __Closed Shape__.
+Create a Sprite Shape Profile from the Editor main menu (menu: __Assets > Create > Sprite Shape Profile__), and select from the two available options: [Open Shape](#open-shape) and [Closed Shape](#closed-shape).
 
 ![](images/v1.1-SSProfile.png)
 
@@ -19,13 +19,13 @@ Create a __Sprite Shape Profile__ from the Editor main menu (menu: __Assets > Cr
 | **Order**                                                    | Determines the display priority when Sprites intersect. Sprites with higher values are rendered above lower ones. |
 | **Sprites**                                                  | List of Sprites assigned to the selected Angle Range. Displays a list of all Sprites assigned to the selected Angle Range. The order of Sprites in the list determines their **Sprite Variant** number, starting from zero at the top of the list. The first Sprite at the top of the list is the Sprite displayed by default at a Control Point. |
 | **Corners**                                                  | -                                                            |
-| *** All Corner options**                                     | Assign specific Sprites to be displayed on the Sprite Shape at the respective corners. Refer to the documentation on [Corner Sprites]() for more information. |
+| **(All Corner options)**                                     | Assign specific Sprites to be displayed on the Sprite Shape at the respective corners. |
 
 ## Open Shape
 
-![Open Shape Profile preset](C:\Users\Sam\Documents\GitHub\com.unity.2d.spriteshape\Documentation~\images\OpenShapeProfile.png)
+![Open Shape Profile preset](images/OpenShapeProfile.png)
 
-Use the __Open Shape__ preset Profile to create Shapes made from a single edge outline with tiled Sprites along its edge. This preset is ideal for creating level elements such as platforms. 
+Use the __Open Shape__ preset Profile to create Shapes made from a single edge outline with tiled Sprites along its edge. This preset is ideal for creating level elements such as platforms.
 
 ![Example of an Open Shape](images/2D_SpriteShape_024.png)
 
@@ -43,7 +43,7 @@ Drag the Closed Shape Profile into the Scene view to automatically generate a Sp
 
 A key feature of the __Sprite Shape Profile__ is the Angle Ranges tool. Assigning an Angle Range determines what Sprite is displayed at specific angles, as the Sprite Shape is deformed in the Scene.
 
-## Creating Angle Ranges 
+## Creating Angle Ranges
 
 ### Method 1:
 
@@ -92,4 +92,3 @@ After assigning Sprites to multiple __Angle Ranges__, rotate the Preview Handle 
 ![Previewing one range](images/2D_SpriteShape_022.png)
 
 ![Previewing the other range](images/2D_SpriteShape_023.png)
-

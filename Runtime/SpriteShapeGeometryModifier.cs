@@ -29,6 +29,7 @@ namespace UnityEngine.U2D
         /// <summary>
         /// Get Versioning so we can check if geometry needs to be generated.
         /// </summary>
+        /// <returns></returns>
         public virtual int GetVersion() => GetInstanceID();
     }
 };

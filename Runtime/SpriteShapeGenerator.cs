@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Profiling;
 using Unity.SpriteShape.External.LibTessDotNet;
+using UnityEngine.U2D.Common.UTess;
 
 // We will enable this once Burst gets a verified final version as this attribute keeps changing.
 #if ENABLE_SPRITESHAPE_BURST
@@ -147,20 +148,11 @@ namespace UnityEngine.U2D
         private int m_TessPointCount;
 
         [DeallocateOnJobCompletion]
-        NativeArray<JobShapeVertex> m_VertexData;
-
-        [DeallocateOnJobCompletion]
-        NativeArray<JobShapeVertex> m_OutputVertexData;
-
-        [DeallocateOnJobCompletion]
         private NativeArray<JobControlPoint> m_ControlPoints;
         private int m_ControlPointCount;
 
         [DeallocateOnJobCompletion]
         private NativeArray<float2> m_CornerCoordinates;
-
-        [DeallocateOnJobCompletion]
-        private NativeArray<float2> m_TempPoints;
 
         [DeallocateOnJobCompletion]
         private NativeArray<JobControlPoint> m_GeneratedControlPoints;
@@ -215,6 +207,7 @@ namespace UnityEngine.U2D
         int kCornerTypeInnerBottomLeft;
         int kCornerTypeInnerBottomRight;
         int kControlPointCount;
+        int kMaxArrayCount;
 
         float kEpsilon;
         float kEpsilonOrder;
@@ -614,6 +607,7 @@ namespace UnityEngine.U2D
             kCornerTypeInnerBottomLeft = 7;
             kCornerTypeInnerBottomRight = 8;
 
+            kMaxArrayCount = maxArrayCount;
             m_IndexDataCount = 0;
             m_VertexDataCount = 0;
             m_ColliderDataCount = 0;
@@ -660,12 +654,8 @@ namespace UnityEngine.U2D
             m_Segments = new NativeArray<JobSegmentInfo>(shapePoints.Length * 2, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_ContourPoints = new NativeArray<JobContourPoint>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_TessPoints = new NativeArray<float2>(shapePoints.Length * (int)shapeParams.splineDetail * 128, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            m_VertexData = new NativeArray<JobShapeVertex>(maxArrayCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
-            m_OutputVertexData = new NativeArray<JobShapeVertex>(maxArrayCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_CornerCoordinates = new NativeArray<float2>(32, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_Intersectors = new NativeArray<JobIntersectPoint>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.ClearMemory);
-
-            m_TempPoints = new NativeArray<float2>(maxArrayCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_GeneratedControlPoints = new NativeArray<JobControlPoint>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
             m_SpriteIndices = new NativeArray<int2>(kControlPointCount, Allocator.TempJob, NativeArrayOptions.UninitializedMemory);
 
@@ -1211,12 +1201,11 @@ namespace UnityEngine.U2D
             tee.x = tessPointCount - 2;
             tee.y = 0;
             edges[tessPointCount - 2] = tee;
-
-            int ovc = 0, oic = 0, oec = 0;
+            
             NativeArray<float2> ov = new NativeArray<float2>(tessPointCount * 4, label);
             NativeArray<int> oi = new NativeArray<int>(tessPointCount * 4, label);
             NativeArray<int2> oe = new NativeArray<int2>(tessPointCount * 4, label);
-            UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, points, edges, ref ov, ref ovc, ref oi, ref oic, ref oe, ref oec);
+            UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, in points, in edges, ref ov, out var ovc, ref oi, out var oic, ref oe, out var oec);
 
             if (oic > 0)
             {
@@ -1382,7 +1371,7 @@ namespace UnityEngine.U2D
 
         }
 
-        void CopyVertexData(ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, ref NativeSlice<Vector4> outTan, int outIndex, NativeArray<JobShapeVertex> inVertices, int inIndex, float sOrder)
+        void CopyVertexData(ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, ref NativeSlice<Vector4> outTan, int outIndex, ref Array<JobShapeVertex> inVertices, int inIndex, float sOrder)
         {
             Vector3 iscp = outPos[outIndex];
             Vector2 iscu = outUV0[outIndex];
@@ -1410,7 +1399,7 @@ namespace UnityEngine.U2D
             }
         }
 
-        int CopySegmentRenderData(JobSpriteInfo ispr, ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, ref NativeSlice<Vector4> outTan, ref int outCount, ref NativeArray<ushort> indexData, ref int indexCount, NativeArray<JobShapeVertex> inVertices, int inCount, float sOrder)
+        int CopySegmentRenderData(JobSpriteInfo ispr, ref NativeSlice<Vector3> outPos, ref NativeSlice<Vector2> outUV0, ref NativeSlice<Vector4> outTan, ref int outCount, ref NativeArray<ushort> indexData, ref int indexCount, ref Array<JobShapeVertex> inVertices, int inCount, float sOrder)
         {
             if (inCount < 4)
                 return -1;
@@ -1426,7 +1415,7 @@ namespace UnityEngine.U2D
 
             for (int i = 0; i < inCount; i = i + 4, outCount = outCount + 4, localVertex = localVertex + 4)
             {
-                CopyVertexData(ref outPos, ref outUV0, ref outTan, outCount, inVertices, i, sOrder);
+                CopyVertexData(ref outPos, ref outUV0, ref outTan, outCount, ref inVertices, i, sOrder);
                 indexData[indexCount++] = (ushort) (localVertex);
                 indexData[indexCount++] = (ushort) (3 + localVertex);
                 indexData[indexCount++] = (ushort) (1 + localVertex);
@@ -1449,8 +1438,8 @@ namespace UnityEngine.U2D
         }
 
         void TessellateSegment(int segmentIndex, JobSpriteInfo sprInfo, JobSegmentInfo segment, float2 whsize, float4 border,
-            float pxlWidth, NativeArray<JobShapeVertex> vertices, int vertexCount, bool useClosure, bool validHead, bool validTail,
-            bool firstSegment, bool finalSegment, ref NativeArray<JobShapeVertex> outputVertices, ref int outputCount)
+            float pxlWidth, ref Array<JobShapeVertex> vertices, int vertexCount, bool useClosure, bool validHead, bool validTail,
+            bool firstSegment, bool finalSegment, ref Array<JobShapeVertex> outputVertices, ref int outputCount)
         {
             int outputVertexCount = 0;
             float2 zero = float2.zero;
@@ -1614,7 +1603,7 @@ namespace UnityEngine.U2D
 
             //// //// //// //// Stretch
             if (stretchCorners)
-                StretchCorners(segment, outputVertices, outputVertexCount, validHead, validTail, stretcher);
+                StretchCorners(segment, ref outputVertices, outputVertexCount, validHead, validTail, stretcher);
             //// //// //// //// Stretch
 
             outputCount = outputVertexCount;
@@ -1663,6 +1652,10 @@ namespace UnityEngine.U2D
             bool disableHead = (iscp.cpData.z == kModeContinous && isCarpet);
             float2 zero = new float2(0, 0);
             float2 ec = zero;
+
+            var minArrayCount = (kControlPointCount > kMaxArrayCount) ? (kMaxArrayCount / 2) : kControlPointCount;
+            var segVertexData = new Array<JobShapeVertex>(minArrayCount, kMaxArrayCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            var segOutputData = new Array<JobShapeVertex>(minArrayCount, kMaxArrayCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
 
             for (int i = 0; i < segmentCount; ++i)
             {
@@ -1728,7 +1721,7 @@ namespace UnityEngine.U2D
                     isv.pos = v1 + (math.normalize(v1 - v2) * border.x);
                     isv.meta.x = icp.ptData.x;
                     isv.sprite.x = sprIx;
-                    m_VertexData[vertexCount++] = isv;
+                    segVertexData[vertexCount++] = isv;
                 }
 
                 // Generate the Strip.
@@ -1760,12 +1753,12 @@ namespace UnityEngine.U2D
 
                         if (vertexCount > 0)
                         {
-                            var dt = math.length(m_VertexData[vertexCount - 1].pos - isv.pos);
+                            var dt = math.length(segVertexData[vertexCount - 1].pos - isv.pos);
                             addtail = dt > kEpsilonRelaxed;
                         }
 
                         if (addtail)
-                            m_VertexData[vertexCount++] = isv;
+                            segVertexData[vertexCount++] = isv;
 
                         while (sl > pxlWidth)
                         {
@@ -1777,8 +1770,8 @@ namespace UnityEngine.U2D
                             isv.pos = ip;
                             isv.meta.x = InterpolateLinear(sh, eh, hl / al);
                             isv.sprite.x = sprIx;
-                            if (math.any(m_VertexData[vertexCount - 1].pos - isv.pos))
-                                m_VertexData[vertexCount++] = isv;
+                            if (math.any(segVertexData[vertexCount - 1].pos - isv.pos))
+                                segVertexData[vertexCount++] = isv;
 
                             sl = sl - pxlWidth;
                             sp = ip;
@@ -1798,7 +1791,7 @@ namespace UnityEngine.U2D
                     isv.pos = ecp.position;
                     isv.meta.x = ecp.ptData.x;
                     isv.sprite.x = sprIx;
-                    m_VertexData[vertexCount++] = isv;
+                    segVertexData[vertexCount++] = isv;
                 }
 
                 // Generate Tail
@@ -1810,16 +1803,16 @@ namespace UnityEngine.U2D
                     isv.pos = v1 + (math.normalize(v1 - v2) * border.z);
                     isv.meta.x = icp.ptData.x;
                     isv.sprite.x = sprIx;
-                    m_VertexData[vertexCount++] = isv;
+                    segVertexData[vertexCount++] = isv;
                 }
 
                 // Generate the Renderer Data.
                 int outputCount = 0;
-                TessellateSegment(i, ispr, isi, whsize, border, pxlWidth, m_VertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref m_OutputVertexData, ref outputCount);
+                TessellateSegment(i, ispr, isi, whsize, border, pxlWidth, ref segVertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref segOutputData, ref outputCount);
                 if (outputCount == 0)
                     continue;
                 var z = ((float)(i + 1) * kEpsilonOrder) + ((float)isi.sgInfo.z * kEpsilonOrder * 0.001f);
-                CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_TanArray, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, m_OutputVertexData, outputCount, z);
+                CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_TanArray, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, ref segOutputData, outputCount, z);
 
                 if (hasCollider)
                 {
@@ -1831,8 +1824,8 @@ namespace UnityEngine.U2D
                     stPixelU = border.x;
                     enPixelU = whsize.x - border.z;
                     pxlWidth = enPixelU - stPixelU;
-                    TessellateSegment(i, isprc, isi, whsize, border, pxlWidth, m_VertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref m_OutputVertexData, ref outputCount);
-                    ec = UpdateCollider(isi, isprc, m_OutputVertexData, outputCount, ref m_ColliderPoints, ref m_ColliderDataCount);
+                    TessellateSegment(i, isprc, isi, whsize, border, pxlWidth, ref segVertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref segOutputData, ref outputCount);
+                    ec = UpdateCollider(isi, isprc, ref segOutputData, outputCount, ref m_ColliderPoints, ref m_ColliderDataCount);
                 }
 
                 // Geom Data
@@ -1847,6 +1840,9 @@ namespace UnityEngine.U2D
                 m_ActiveIndexCount = m_IndexDataCount;
                 m_ActiveVertexCount = m_VertexDataCount;
             }
+
+            segVertexData.Dispose();
+            segOutputData.Dispose();
 
             // Copy Collider, Copy Render Data.
             m_GeomArrayCount = segmentCount + 1;
@@ -1976,7 +1972,7 @@ namespace UnityEngine.U2D
             return (needsStretchL || needsStretchR);
         }
 
-        void StretchCorners(JobSegmentInfo segment, NativeArray<JobShapeVertex> vertices, int vertexCount, bool validHead, bool validTail, float4 stretcher)
+        void StretchCorners(JobSegmentInfo segment, ref Array<JobShapeVertex> vertices, int vertexCount, bool validHead, bool validTail, float4 stretcher)
         {
             if (vertexCount > 0)
             {
@@ -2369,11 +2365,12 @@ namespace UnityEngine.U2D
             if (pointCount < kMinimumPointsRequired)
                 return;
 
+            var tmpPoints = new NativeArray<float2>(pointCount + 8, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             int optimizedColliderPointCount = 0;
             int endColliderPointCount = pointCount - 2;
             bool val = true;
             var fst = pointSet[0];
-            m_TempPoints[0] = fst;
+            tmpPoints[0] = fst;
             for (int i = 0; i < endColliderPointCount; ++i)
             {
                 float2 v0 = pointSet[i];
@@ -2384,7 +2381,7 @@ namespace UnityEngine.U2D
                     val = AreCollinear(v0, v1, v2, tolerance);
                     if (false == val)
                     {
-                        m_TempPoints[++optimizedColliderPointCount] = v1;
+                        tmpPoints[++optimizedColliderPointCount] = v1;
                         break;
                     }
                     i++;
@@ -2395,29 +2392,30 @@ namespace UnityEngine.U2D
             }
 
             // Test for the last 2 points. (N - 2) (N - 1) (N)
-            var lb2 = m_TempPoints[optimizedColliderPointCount];
+            var lb2 = tmpPoints[optimizedColliderPointCount];
             var lb1 = pointSet[endColliderPointCount];
             var lst = pointSet[endColliderPointCount + 1];
 
             val = AreCollinear(lb2, lb1, lst, tolerance);
             if (!val)
-                m_TempPoints[++optimizedColliderPointCount] = lb1;
+                tmpPoints[++optimizedColliderPointCount] = lb1;
 
             if (isCarpet)
             {
                 if (tess || optimizedColliderPointCount > 2)
                 {
-                    val = AreCollinear(m_TempPoints[optimizedColliderPointCount], lst, fst, tolerance);
+                    val = AreCollinear(tmpPoints[optimizedColliderPointCount], lst, fst, tolerance);
                     if (!val)
-                        m_TempPoints[++optimizedColliderPointCount] = lst;
+                        tmpPoints[++optimizedColliderPointCount] = lst;
                 }
 
-                m_TempPoints[++optimizedColliderPointCount] = fst;
+                tmpPoints[++optimizedColliderPointCount] = fst;
             }
             else
-                m_TempPoints[++optimizedColliderPointCount] = lst;
+                tmpPoints[++optimizedColliderPointCount] = lst;
             pointCount = optimizedColliderPointCount + 1;
-            UnityEngine.U2D.Common.UTess.ModuleHandle.Copy(m_TempPoints, pointSet, pointCount);
+            UnityEngine.U2D.Common.UTess.ModuleHandle.Copy(tmpPoints, pointSet, pointCount);
+            tmpPoints.Dispose();
 
         }
 
@@ -2453,7 +2451,7 @@ namespace UnityEngine.U2D
             }
         }
 
-        float2 UpdateCollider(JobSegmentInfo isi, JobSpriteInfo ispr, NativeArray<JobShapeVertex> vertices, int count, ref NativeArray<float2> colliderPoints, ref int colliderPointCount)
+        float2 UpdateCollider(JobSegmentInfo isi, JobSpriteInfo ispr, ref Array<JobShapeVertex> vertices, int count, ref NativeArray<float2> colliderPoints, ref int colliderPointCount)
         {
             float2 zero = new float2(0, 0);
             float pivot = 0; // 0.5f - ispr.metaInfo.y; // Follow processed geometry and only use ColliderPivot.
@@ -2486,6 +2484,8 @@ namespace UnityEngine.U2D
             int kMinimumPointTolerance = 4;
             if (m_ColliderPointCount < kMinimumPointTolerance)
                 return;
+
+            var tmpPoints = new NativeArray<float2>(m_ColliderPointCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             int trimmedPointCount = 0;
             int i = 0;
             int kColliderPointCountClamped = m_ColliderPointCount / 2;
@@ -2496,7 +2496,7 @@ namespace UnityEngine.U2D
             int testOverlapCount = m_ColliderPointCount;
             if (!isCarpet)
             {
-                m_TempPoints[trimmedPointCount++] = m_ColliderPoints[0];
+                tmpPoints[trimmedPointCount++] = m_ColliderPoints[0];
                 testOverlapCount = m_ColliderPointCount - 1;
             }
 
@@ -2527,7 +2527,7 @@ namespace UnityEngine.U2D
                     if (overLaps && IsPointOnLines(kEpsilonRelaxed, v0, v1, v2, v3, vi))
                     {
                         noIntersection = false;
-                        m_TempPoints[trimmedPointCount++] = vi;
+                        tmpPoints[trimmedPointCount++] = vi;
                         i = i + n;
                         break;
                     }
@@ -2536,22 +2536,22 @@ namespace UnityEngine.U2D
                 if (noIntersection)
                 {
                     if (0 != i || isCarpet)
-                        m_TempPoints[trimmedPointCount++] = v1;
+                        tmpPoints[trimmedPointCount++] = v1;
                     i = i + 1;
                 }
             }
             for (; i < m_ColliderPointCount; ++i)
-                m_TempPoints[trimmedPointCount++] = m_ColliderPoints[i];
+                tmpPoints[trimmedPointCount++] = m_ColliderPoints[i];
 
             i = 0;
-            m_ColliderPoints[i++] = m_TempPoints[0];
-            float2 prev = m_TempPoints[0];
+            m_ColliderPoints[i++] = tmpPoints[0];
+            float2 prev = tmpPoints[0];
             for (int j = 1; j < trimmedPointCount; ++j)
             {
-                float dist = math.length(m_TempPoints[j] - prev);
+                float dist = math.length(tmpPoints[j] - prev);
                 if (dist > kEpsilon)
-                    m_ColliderPoints[i++] = m_TempPoints[j];
-                prev = m_TempPoints[j];
+                    m_ColliderPoints[i++] = tmpPoints[j];
+                prev = tmpPoints[j];
             }
             trimmedPointCount = i;
 
@@ -2565,6 +2565,7 @@ namespace UnityEngine.U2D
                     m_ColliderPoints[0] = m_ColliderPoints[trimmedPointCount - 1] = vin;
             }
 
+            tmpPoints.Dispose();
             m_ColliderPointCount = trimmedPointCount;
         }
 
@@ -2645,7 +2646,7 @@ namespace UnityEngine.U2D
                     TessellateContour(Allocator.Temp);
 
                 GenerateSegments();
-                UpdateSegments();                
+                UpdateSegments();
                 TessellateSegments();
                 TessellateCorners();
                 CalculateTexCoords();
@@ -2672,14 +2673,11 @@ namespace UnityEngine.U2D
             SafeDispose(m_Segments);
             SafeDispose(m_ControlPoints);
             SafeDispose(m_ContourPoints);
-            SafeDispose(m_TempPoints);
             SafeDispose(m_GeneratedControlPoints);
             SafeDispose(m_SpriteIndices);
             SafeDispose(m_Intersectors);
 
             SafeDispose(m_TessPoints);
-            SafeDispose(m_VertexData);
-            SafeDispose(m_OutputVertexData);
             SafeDispose(m_CornerCoordinates);
         }
 

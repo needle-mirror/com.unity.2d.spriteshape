@@ -36,7 +36,7 @@ Create __Sprite Shapes__ with the following steps:
    - [Open Shape](SSProfile.md#open-shape)
    - [Closed Shape](SSProfile.md#closed-shape)
 2. Edit the outline of the Sprite Shape with the [Sprite Shape Controller](SSController.md) component settings.
-3. Enable [Physics2D](https://docs.unity3d.com/Manual/class-Physics2DManager.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
+3. Enable [Physics 2D](https://docs.unity3d.com/Manual/class-Physics2DManager.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
 
 To further customize the shape and outline of a __Sprite Shape__:
 

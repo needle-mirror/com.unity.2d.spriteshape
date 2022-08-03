@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.0.0] - 2022-08-03
+### Changed
+- Refactored internal triangulation and tessellation APIs.
+
 ## [9.0.0-pre.1] - 2022-03-21
 ### Added
 - Added versioning for GeometryCreator and GeometryModifier scripts so SpriteShape geoemetry is regenerated when it changes.
