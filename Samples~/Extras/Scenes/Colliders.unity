@@ -1859,7 +1859,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 36.316113, y: -26.14928}
+  m_Offset: {x: 36.316116, y: -26.351784}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -1870,7 +1870,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 132.14908, y: 3.2228775}
+  m_Size: {x: 132.14908, y: 1.805376}
   m_EdgeRadius: 0
 --- !u!1971053207 &436285780
 SpriteShapeRenderer:
@@ -1933,24 +1933,24 @@ MonoBehaviour:
     m_IsOpenEnded: 1
     m_ControlPoints:
     - position: {x: -27.532185, y: -26.215977, z: 0}
-      leftTangent: {x: -6.6110344, y: 5.3857536, z: 0}
-      rightTangent: {x: 4.6707573, y: -3.8050842, z: 0}
-      mode: 1
+      leftTangent: {x: 0, y: 0, z: 0}
+      rightTangent: {x: 0, y: 0, z: 0}
+      mode: 0
       height: 1
       bevelCutoff: 0
       bevelSize: 0
       spriteIndex: 0
       corner: 1
     - position: {x: 101.01609, y: -26.410751, z: 0}
-      leftTangent: {x: -3.3493195, y: -3.1139984, z: 0}
-      rightTangent: {x: 6.1174393, y: 5.687624, z: 0}
-      mode: 1
+      leftTangent: {x: 0, y: 0, z: 0}
+      rightTangent: {x: 0, y: 0, z: 0}
+      mode: 0
       height: 1
       bevelCutoff: 0
       bevelSize: 0
       spriteIndex: 0
       corner: 1
-  m_SpriteShape: {fileID: 0}
+  m_SpriteShape: {fileID: 11400000, guid: a710fe91ca336478e999261a86254e9f, type: 2}
   m_FillPixelPerUnit: 100
   m_StretchTiling: 1
   m_SplineDetail: 16

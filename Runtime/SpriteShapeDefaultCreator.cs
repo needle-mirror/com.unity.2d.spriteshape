@@ -28,7 +28,7 @@ namespace UnityEngine.U2D
             var spriteShapeJob = new SpriteShapeGenerator()
             {
                 m_Bounds = bounds, m_PosArray = positions, m_Uv0Array = texCoords, m_TanArray = tangents,
-                m_GeomArray = segments, m_IndexArray = indices, m_ColliderPoints = colliderData, m_Stats = sc.stats
+                m_GeomArray = segments, m_IndexArray = indices, m_ColliderPoints = colliderData, m_Stats = sc.stats, m_ShadowPoints = sc.shadowData
             };
             spriteShapeJob.generateCollider = SpriteShapeController.generateCollider;
             spriteShapeJob.generateGeometry = SpriteShapeController.generateGeometry;

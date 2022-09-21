@@ -1,8 +1,14 @@
 # Changelog
 
-## [9.0.0] - 2022-08-03
+## [10.0.0-pre.1] - 2022-09-21
+### Fixed
+- DANB-18   Fix case where SpriteShapeController does not initialize collider data.
+- DANB-97   Fix SpriteShape Extras "Colliders" scene causes warnings in console when opening
+- DANB-120  Fix case where adding a new element to Custom Geometry Modifier spams errors.
+
 ### Changed
 - Refactored internal triangulation and tessellation APIs.
+- D2D-3550 Move "Pixel Per Unit" and "Worldspace UV" fill settings adjacent to "Stretch UV" to have all fill settings grouped together
 
 ## [9.0.0-pre.1] - 2022-03-21
 ### Added

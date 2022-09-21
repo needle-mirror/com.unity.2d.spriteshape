@@ -37,15 +37,13 @@ namespace UnityEngine.U2D
 
         // Required for Generation.
         NativeArray<float2> m_ColliderData;
+        NativeArray<float2> m_ShadowData;
         NativeArray<Vector4> m_TangentData;
         NativeArray<SpriteShapeGeneratorStats> m_Statistics;
 
         // Renderer Stuff.
         bool m_DynamicOcclusionLocal;
         bool m_DynamicOcclusionOverriden;
-
-        // Added so that shadows will work correctly when no collider is assigned
-        bool m_ForceColliderShapeUpdate = false;
 
         // Hash Check.
         int m_ActiveSplineHash = 0;
@@ -87,6 +85,12 @@ namespace UnityEngine.U2D
         bool m_GeometryCached = false;
         [SerializeField]
         bool m_UTess2D = true;
+        [SerializeField]
+        bool m_UpdateShadow = false;
+        [SerializeField]
+        int m_ShadowDetail = (int)QualityDetail.High;
+        [SerializeField, Range(-0.5f, 0.5f)]
+        float m_ShadowOffset = 0.5f;
 
         [SerializeField]
         SpriteShapeGeometryCreator m_Creator;
@@ -94,6 +98,8 @@ namespace UnityEngine.U2D
         List<SpriteShapeGeometryModifier> m_Modifiers = new List<SpriteShapeGeometryModifier>();
         [SerializeField]
         List<Vector2> m_ColliderSegment = new List<Vector2>();
+        [SerializeField]
+        List<Vector2> m_ShadowSegment = new List<Vector2>();
 
         internal static readonly ProfilerMarker generateGeometry = new ProfilerMarker("SpriteShape.GenerateGeometry");
         internal static readonly ProfilerMarker generateCollider = new ProfilerMarker("SpriteShape.GenerateCollider");
@@ -148,6 +154,11 @@ namespace UnityEngine.U2D
         internal Sprite[] edgeSpriteArray
         {
             get { return m_EdgeSpriteArray; }
+        }
+
+        internal NativeArray<float2> shadowData
+        {
+            get { return m_ShadowData; }
         }
 
         /// <summary> Angle Ranges </summary>
@@ -317,9 +328,27 @@ namespace UnityEngine.U2D
             }
         }
 
-        internal bool forceColliderShapeUpdate
+        internal bool updateShadow
         {
-            get { return m_ForceColliderShapeUpdate; }
+            get { return m_UpdateShadow; }
+            set { m_UpdateShadow = value; }
+        }
+
+        internal int shadowDetail
+        {
+            get { return m_ShadowDetail; }
+            set { m_ShadowDetail = value; }
+        }
+
+        internal float shadowOffset
+        {
+            get { return m_ShadowOffset; }
+            set { m_ShadowOffset = value; }
+        }
+
+        internal List<Vector2> shadowSegment
+        {
+            get { return m_ShadowSegment; }
         }
 
         internal NativeArray<SpriteShapeGeneratorStats> stats
@@ -341,6 +370,8 @@ namespace UnityEngine.U2D
             m_JobHandle.Complete();
             if (m_ColliderData.IsCreated)
                 m_ColliderData.Dispose();
+            if (m_ShadowData.IsCreated)
+                m_ShadowData.Dispose();
             if (m_TangentData.IsCreated)
                 m_TangentData.Dispose();
             if (m_Statistics.IsCreated)
@@ -380,10 +411,12 @@ namespace UnityEngine.U2D
             m_FillPixelPerUnit = 100f;
 
             m_ColliderDetail = (int)QualityDetail.High;
+            m_ShadowDetail = (int)QualityDetail.High;
             m_StretchTiling = 1.0f;
             m_WorldSpaceUV = false;
             m_CornerAngleThreshold = 30.0f;
             m_ColliderOffset = 0;
+            m_ShadowOffset = 0.5f;
             m_UpdateCollider = true;
             m_EnableTangents = false;
 
@@ -521,7 +554,8 @@ namespace UnityEngine.U2D
             {
                 hashCode = (int)2166136261 ^ spriteShapeCreator.GetVersion();
                 foreach (var mod in m_Modifiers)
-                    hashCode = hashCode * 16777619 ^ mod.GetVersion();
+                    if (null != mod)
+                        hashCode = hashCode * 16777619 ^ mod.GetVersion();
             }
 
             return hashCode;
@@ -540,10 +574,16 @@ namespace UnityEngine.U2D
                 hashCode = hashCode * 16777619 ^ (m_WorldSpaceUV ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_GeometryCached ? 1 : 0);
+                hashCode = hashCode * 16777619 ^ (m_UpdateShadow ? 1 : 0);
+                hashCode = hashCode * 16777619 ^ (m_UpdateCollider ? 1 : 0);
                 hashCode = hashCode * 16777619 ^ (m_StretchTiling.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (m_ColliderOffset.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (m_ColliderDetail.GetHashCode());
+                hashCode = hashCode * 16777619 ^ (m_ShadowOffset.GetHashCode());
+                hashCode = hashCode * 16777619 ^ (m_ShadowDetail.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (GetCustomScriptHashCode());
+                hashCode = hashCode * 16777619 ^ (edgeCollider == null ? 0 : 1);
+                hashCode = hashCode * 16777619 ^ (polygonCollider == null ? 0 : 1);
 
                 if (splineHashCode != hashCode)
                 {
@@ -857,6 +897,9 @@ namespace UnityEngine.U2D
                 if (m_ColliderData.IsCreated)
                     m_ColliderData.Dispose();
                 m_ColliderData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
+                if (m_ShadowData.IsCreated)
+                    m_ShadowData.Dispose();
+                m_ShadowData = new NativeArray<float2>(maxArrayCount, Allocator.Persistent);
 
                 // Tangent Data
                 if (!m_TangentData.IsCreated)
@@ -879,7 +922,8 @@ namespace UnityEngine.U2D
 
                 m_JobHandle = jobHandle = spriteShapeCreator.MakeCreatorJob(this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
                 foreach (var geomMod in m_Modifiers)
-                    m_JobHandle = geomMod.MakeModifierJob(m_JobHandle, this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
+                    if (null != geomMod)
+                        m_JobHandle = geomMod.MakeModifierJob(m_JobHandle, this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
 
                 // Prepare Renderer.
                 spriteShapeRenderer.Prepare(m_JobHandle, m_ActiveShapeParameters, m_SpriteArray);
@@ -901,6 +945,43 @@ namespace UnityEngine.U2D
             return jobHandle;
         }
 
+        internal void BakeShadow()
+        {
+            if (m_ShadowData.IsCreated)
+            {
+                if (updateShadow)
+                {
+                    int maxCount = short.MaxValue - 1;
+                    float2 last = (float2)0;
+
+                    m_ShadowSegment.Clear();
+                    for (int i = 0; i < maxCount; ++i)
+                    {
+                        float2 now = m_ShadowData[i];
+                        if (!math.any(last) && !math.any(now))
+                        {
+                            if ((i + 1) < maxCount)
+                            {
+                                float2 next = m_ShadowData[i + 1];
+                                if (!math.any(next) && !math.any(next))
+                                    break;
+                            }
+                            else
+                                break;
+                        }
+                        m_ShadowSegment.Add(new Vector2(now.x, now.y));
+                    }
+
+#if UNITY_EDITOR
+                    UnityEditor.SceneView.RepaintAll();
+#endif
+                }
+
+                // Dispose Collider as its no longer needed.
+                m_ShadowData.Dispose();
+            }
+        }
+
         /// <summary>
         /// Update Collider of this Object.
         /// </summary>
@@ -909,10 +990,11 @@ namespace UnityEngine.U2D
             // Previously this must be explicitly called if using BakeMesh.
             // But now we do it internally. BakeCollider_CanBeCalledMultipleTimesWithoutJobComplete
             m_JobHandle.Complete();
+            BakeShadow();
 
             if (m_ColliderData.IsCreated)
             {
-                if ((autoUpdateCollider && hasCollider) || forceColliderShapeUpdate)
+                if ((autoUpdateCollider && hasCollider))
                 {
                     int maxCount = short.MaxValue - 1;
                     float2 last = (float2)0;
@@ -996,23 +1078,23 @@ namespace UnityEngine.U2D
 
 #endregion
 
-        internal void ForceColliderShapeUpdate(bool forceUpdate)
+        internal void ForceShadowShapeUpdate(bool forceUpdate)
         {
-            m_ForceColliderShapeUpdate = forceUpdate;
+            m_UpdateShadow = forceUpdate;
         }
 
-        internal NativeArray<float2> GetColliderShapeData()
+        internal NativeArray<float2> GetShadowShapeData()
         {
-            if (m_ColliderData.IsCreated)
+            if (m_ShadowData.IsCreated)
             {
                 JobHandle handle = BakeMesh();
                 handle.Complete();
                 BakeCollider();
             }
 
-            NativeArray<float2> retNativeArray = new NativeArray<float2>(m_ColliderSegment.Count, Allocator.Temp);
+            NativeArray<float2> retNativeArray = new NativeArray<float2>(m_ShadowSegment.Count, Allocator.Temp);
             for (int i = 0; i < retNativeArray.Length; i++)
-                retNativeArray[i] = m_ColliderSegment[i];
+                retNativeArray[i] = m_ShadowSegment[i];
 
             return retNativeArray;
         }

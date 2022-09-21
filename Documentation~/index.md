@@ -43,3 +43,12 @@ To further customize the shape and outline of a __Sprite Shape__:
 1. Create a __Sprite Shape Profile__ from the main menu (menu: __Assets > Create > 2D > Sprite Shape Profile__).
 2. Create [Angle Ranges](SSProfile.md#creating-angle-ranges) and [assign Sprites](SSProfile.md#assigning-sprites) in the __Sprite Shape Profile__.
 3. Assign the __Sprite Shape Profile__ to a __Sprite Shape Controller__'s __Profile__ settings. The same Profile can be used by multiple Sprite Shapes.
+
+## Placing an Object along the Spline
+
+Place an object along with the spline with the following steps.
+
+1. Select the desired GameObject and add [Sprite Shape Object Placement](SSObjectPlacement.md) component from Add Component in Inspector.
+2. Select and assign the source SpriteShapeController in the Inspector.
+3. Adjust the ratio, start and end points to position the GameObject along the spline. 
+4. Toggle Set Normal to adjust the GameObject to rotate along the direction of the SpriteShapeController.

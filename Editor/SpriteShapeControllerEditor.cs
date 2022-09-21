@@ -26,6 +26,8 @@ namespace UnityEditor.U2D
             public static readonly string editSplineLabel = "Edit Spline";
             public static readonly GUIContent fillLabel = new GUIContent("Fill");
             public static readonly GUIContent colliderLabel = new GUIContent("Collider");
+            public static readonly GUIContent shadowLabel = new GUIContent("Shadow");
+            public static readonly GUIContent customGeometryLabel = new GUIContent("Custom Geometry");
             public static readonly GUIContent fillPixelPerUnitLabel = new GUIContent("Pixel Per Unit", "Pixel Per Unit for fill texture.");
             public static readonly GUIContent spriteShapeProfile = new GUIContent("Profile", "The SpriteShape Profile to render");
             public static readonly GUIContent materialLabel = new GUIContent("Material", "Material to be used by SpriteRenderer");
@@ -44,12 +46,15 @@ namespace UnityEditor.U2D
             public static readonly GUIContent cornerThresholdDetail = new GUIContent("Corner Threshold", "Corner angle threshold below which corners wont be placed.");
             public static readonly GUIContent colliderOffset = new GUIContent("Offset", "Extrude collider distance.");
             public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider", "Update Collider as you edit SpriteShape");
+            public static readonly GUIContent shadowDetail = new GUIContent("Detail", "Tessellation Quality on the Shadow.");
+            public static readonly GUIContent shadowOffset = new GUIContent("Offset", "Extrude shadow distance.");
+            public static readonly GUIContent updateShadowLabel = new GUIContent("Update Shadow", "Update Shadow as you edit SpriteShape");
             public static readonly GUIContent optimizeColliderLabel = new GUIContent("Optimize Collider", "Cleanup planar self-intersections and optimize collider points");
             public static readonly GUIContent optimizeGeometryLabel = new GUIContent("Optimize Geometry", "Simplify geometry");
             public static readonly GUIContent cacheGeometryLabel = new GUIContent("Cache Geometry", "Bake geometry data. This will save geometry data on editor and load it on runtime instead of generating.");
             public static readonly GUIContent uTess2DLabel = new GUIContent("Fill Tessellation (C# Job)", "Use C# Jobs to generate Fill Geometry. (Edge geometry always uses C# Jobs)");
-            public static readonly GUIContent creatorLabel = new GUIContent("Custom Geometry Creator", "Allows over-riding default geometry calculations with a custom one.");
-            public static readonly GUIContent modifiersLabel = new GUIContent("Custom Geometry Modifier", "Allows processing / modifying generated vertices geometry.");
+            public static readonly GUIContent creatorLabel = new GUIContent("Creator", "Allows over-riding default geometry calculations with a custom one.");
+            public static readonly GUIContent modifiersLabel = new GUIContent("Modifier", "Allows processing / modifying generated vertices geometry.");
         }
 
         private SerializedProperty m_SpriteShapeProp;
@@ -65,6 +70,9 @@ namespace UnityEditor.U2D
         private SerializedProperty m_ColliderAutoUpdate;
         private SerializedProperty m_ColliderDetailProp;
         private SerializedProperty m_ColliderOffsetProp;
+
+        private SerializedProperty m_ShadowAutoUpdate;
+        private SerializedProperty m_ShadowDetailProp;
 
         private SerializedProperty m_EnableTangentsProp;
         private SerializedProperty m_GeometryCachedProp;
@@ -122,8 +130,10 @@ namespace UnityEditor.U2D
             m_CornerAngleThresholdProp = serializedObject.FindProperty("m_CornerAngleThreshold");
 
             m_ColliderAutoUpdate = serializedObject.FindProperty("m_UpdateCollider");
+            m_ShadowAutoUpdate = serializedObject.FindProperty("m_UpdateShadow");
             m_ColliderDetailProp = serializedObject.FindProperty("m_ColliderDetail");
             m_ColliderOffsetProp = serializedObject.FindProperty("m_ColliderOffset");
+            m_ShadowDetailProp = serializedObject.FindProperty("m_ShadowDetail");
             m_EnableTangentsProp = serializedObject.FindProperty("m_EnableTangents");
             m_GeometryCachedProp = serializedObject.FindProperty("m_GeometryCached");
             m_UTess2DGeometryProp = serializedObject.FindProperty("m_UTess2D");
@@ -438,10 +448,11 @@ namespace UnityEditor.U2D
             EditorGUILayout.PropertyField(m_AdaptiveUVProp, Contents.adaptiveUVLabel);
             EditorGUILayout.PropertyField(m_EnableTangentsProp, Contents.enableTangentsLabel);
 
-            if (UnityEditor.EditorTools.ToolManager.activeToolType == typeof(SpriteShapeEditorTool))
+            // Cache Geometry is only editable for Scene Objects or when in Prefab Isolation Mode.
             {
-                // Cache Geometry is only editable for Scene Objects or when in Prefab Isolation Mode.
-                if (Selection.gameObjects.Length == 1 && Selection.transforms.Contains(Selection.gameObjects[0].transform))
+                bool cacheEnabled = (Selection.gameObjects.Length == 1 && Selection.transforms.Contains(Selection.gameObjects[0].transform) && UnityEditor.EditorTools.ToolManager.activeToolType == typeof(SpriteShapeEditorTool));
+
+                EditorGUI.BeginDisabledGroup(cacheEnabled == false);
                 {
                     EditorGUI.BeginChangeCheck();
                     EditorGUILayout.PropertyField(m_GeometryCachedProp, Contents.cacheGeometryLabel);
@@ -464,6 +475,8 @@ namespace UnityEditor.U2D
                         m_SpriteShapeController.RefreshSpriteShape();
                     }
                 }
+                EditorGUI.EndDisabledGroup();
+
                 SpriteShapeUpdateCache.s_cacheGeometrySet = true;
             }
 
@@ -481,8 +494,6 @@ namespace UnityEditor.U2D
             DrawHeader(Contents.fillLabel);
             EditorGUILayout.PropertyField(m_UTess2DGeometryProp, Contents.uTess2DLabel);
             EditorGUILayout.PropertyField(m_StretchUVProp, Contents.stretchUVLabel);
-            EditorGUILayout.PropertyField(m_CreatorProp, Contents.creatorLabel);
-            EditorGUILayout.PropertyField(m_ModifierListProp, Contents.modifiersLabel);
 
             if (ShouldShowStretchOption())
             {
@@ -493,6 +504,12 @@ namespace UnityEditor.U2D
                 EditorGUILayout.PropertyField(m_FillPixelPerUnitProp, Contents.fillPixelPerUnitLabel);
                 EditorGUILayout.PropertyField(m_WorldSpaceUVProp, Contents.worldUVLabel);
             }
+
+            EditorGUILayout.Space();
+            DrawHeader(Contents.customGeometryLabel);
+
+            EditorGUILayout.PropertyField(m_CreatorProp, Contents.creatorLabel);
+            EditorGUILayout.PropertyField(m_ModifierListProp, Contents.modifiersLabel);
 
             if (m_SpriteShapeController.gameObject.GetComponent<PolygonCollider2D>() != null || m_SpriteShapeController.gameObject.GetComponent<EdgeCollider2D>() != null)
             {
@@ -505,6 +522,14 @@ namespace UnityEditor.U2D
                     EditorGUILayout.IntPopup(m_ColliderDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.colliderDetail);
                 }
             }
+
+            if (m_ShadowAutoUpdate.boolValue)
+            {
+                EditorGUILayout.Space();
+                DrawHeader(Contents.shadowLabel);
+                EditorGUILayout.IntPopup(m_ShadowDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.shadowDetail);
+            }
+
             if (EditorGUI.EndChangeCheck())
             {
                 updateCollider = true;
@@ -518,7 +543,7 @@ namespace UnityEditor.U2D
 
         void BakeCollider()
         {
-            if (m_SpriteShapeController.autoUpdateCollider == false && !m_SpriteShapeController.forceColliderShapeUpdate)
+            if (m_SpriteShapeController.autoUpdateCollider == false && !m_SpriteShapeController.updateShadow)
                 return;
 
             PolygonCollider2D polygonCollider = m_SpriteShapeController.polygonCollider;

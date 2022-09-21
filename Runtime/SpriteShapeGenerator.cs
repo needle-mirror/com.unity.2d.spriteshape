@@ -43,8 +43,8 @@ namespace UnityEngine.U2D
         struct JobParameters
         {
             public int4 shapeData;              // x : ClosedShape (bool) y : AdaptiveUV (bool) z : SpriteBorders (bool) w : Enable Fill Texture.
-            public int4 splineData;             // x : StrtechUV. y : splineDetail z : _unused_ w: Collider On/Off
-            public float4 curveData;            // x : ColliderPivot y : BorderPivot z : AngleThreshold w : _unused_.
+            public int4 splineData;             // x : StrtechUV. y : splineDetail z : Shadow On/Off w: Collider On/Off
+            public float4 curveData;            // x : ColliderPivot y : BorderPivot z : AngleThreshold w : ShadowPivot.
             public float4 fillData;             // x : fillScale  y : fillScale.x W z : fillScale.y H w: 0.
         }
 
@@ -180,12 +180,15 @@ namespace UnityEngine.U2D
 
         private int m_ColliderPointCount;
         public NativeArray<float2> m_ColliderPoints;
+        private int m_ShadowPointCount;
+        public NativeArray<float2> m_ShadowPoints;
         public NativeArray<Bounds> m_Bounds;
         public NativeArray<SpriteShapeGeneratorStats> m_Stats;
 
         int m_IndexDataCount;
         int m_VertexDataCount;
         int m_ColliderDataCount;
+        int m_ShadowDataCount;
         int m_ActiveIndexCount;
         int m_ActiveVertexCount;
 
@@ -217,6 +220,8 @@ namespace UnityEngine.U2D
         float kOptimizeRender;
         float kColliderQuality;
         float kOptimizeCollider;
+        float kShadowQuality;
+        float kOptimizeShadow;
         float kLowestQualityTolerance;
         float kHighestQualityTolerance;
 
@@ -281,10 +286,22 @@ namespace UnityEngine.U2D
             get { return m_ShapeParams.splineData.w == 1; }
         }
 
+        // Needs Collider Generaie.
+        private bool hasShadow
+        {
+            get { return m_ShapeParams.splineData.z == 1; }
+        }
+
         // Collider Pivot
         private float colliderPivot
         {
             get { return m_ShapeParams.curveData.x; }
+        }
+
+        // Shadow Pivot
+        private float shadowPivot
+        {
+            get { return m_ShapeParams.curveData.w; }
         }
 
         // Border Pivot
@@ -592,7 +609,7 @@ namespace UnityEngine.U2D
             corners[cornerCount++] = d;
         }
 
-        void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderOffset, float colliderDetail)
+        void PrepareInput(SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, bool optimizeGeometry, bool updateCollider, bool optimizeCollider, float colliderOffset, float colliderDetail, bool updateShadow, float shadowOffset, float shadowDetail)
         {
             kModeLinear = 0;
             kModeContinous = 1;
@@ -611,8 +628,11 @@ namespace UnityEngine.U2D
             m_IndexDataCount = 0;
             m_VertexDataCount = 0;
             m_ColliderDataCount = 0;
+            m_ShadowPointCount = 0;
             m_ActiveIndexCount = 0;
             m_ActiveVertexCount = 0;
+            m_ColliderPointCount = 0;
+            m_ShadowPointCount = 0;
 
             kEpsilon = 0.00001f;
             kEpsilonOrder = -0.0001f;
@@ -627,13 +647,18 @@ namespace UnityEngine.U2D
             kColliderQuality = (kHighestQualityTolerance - kColliderQuality + 2.0f) * 0.002f;
             colliderOffset = (colliderOffset == 0) ? kEpsilonRelaxed : -colliderOffset;
 
+            kShadowQuality = math.clamp(shadowDetail, kLowestQualityTolerance, kHighestQualityTolerance);
+            kOptimizeShadow = 1;
+            kShadowQuality = (kHighestQualityTolerance - kShadowQuality + 2.0f) * 0.002f;
+            shadowOffset = (shadowOffset == 0) ? kEpsilonRelaxed : -shadowOffset;
+
             kOptimizeRender = optimizeGeometry ? 1 : 0;
             kRenderQuality = math.clamp(shapeParams.splineDetail, kLowestQualityTolerance, kHighestQualityTolerance);
             kRenderQuality = (kHighestQualityTolerance - kRenderQuality + 2.0f) * 0.0002f;
 
             m_ShapeParams.shapeData = new int4(shapeParams.carpet ? 1 : 0, shapeParams.adaptiveUV ? 1 : 0, shapeParams.spriteBorders ? 1 : 0, shapeParams.fillTexture != null ? 1 : 0);
-            m_ShapeParams.splineData = new int4(shapeParams.stretchUV ? 1 : 0, (shapeParams.splineDetail > 4) ? (int)shapeParams.splineDetail : 4, 0, updateCollider ? 1 : 0);
-            m_ShapeParams.curveData = new float4(colliderOffset, shapeParams.borderPivot, shapeParams.angleThreshold, 0);
+            m_ShapeParams.splineData = new int4(shapeParams.stretchUV ? 1 : 0, (shapeParams.splineDetail > 4) ? (int)shapeParams.splineDetail : 4, updateShadow ? 1 : 0, updateCollider ? 1 : 0);
+            m_ShapeParams.curveData = new float4(colliderOffset, shapeParams.borderPivot, shapeParams.angleThreshold, shadowOffset);
             float fx = 0, fy = 0;
             if (shapeParams.fillTexture != null)
             {
@@ -1201,7 +1226,7 @@ namespace UnityEngine.U2D
             tee.x = tessPointCount - 2;
             tee.y = 0;
             edges[tessPointCount - 2] = tee;
-            
+
             NativeArray<float2> ov = new NativeArray<float2>(tessPointCount * 4, label);
             NativeArray<int> oi = new NativeArray<int>(tessPointCount * 4, label);
             NativeArray<int2> oe = new NativeArray<int2>(tessPointCount * 4, label);
@@ -1627,6 +1652,7 @@ namespace UnityEngine.U2D
                 {
                     JobContourPoint icp = GetContourPoint(cis);
                     m_ColliderPoints[m_ColliderDataCount++] = icp.position;
+                    m_ShadowPoints[m_ShadowDataCount++] = icp.position;
                     cis++;
                 }
             }
@@ -1814,7 +1840,7 @@ namespace UnityEngine.U2D
                 var z = ((float)(i + 1) * kEpsilonOrder) + ((float)isi.sgInfo.z * kEpsilonOrder * 0.001f);
                 CopySegmentRenderData(ispr, ref m_PosArray, ref m_Uv0Array, ref m_TanArray, ref m_VertexDataCount, ref m_IndexArray, ref m_IndexDataCount, ref segOutputData, outputCount, z);
 
-                if (hasCollider)
+                if (hasCollider || hasShadow)
                 {
                     JobSpriteInfo isprc = (ispr.metaInfo.x == 0) ? GetSpriteInfo(isi.sgInfo.w) : ispr;
                     outputCount = 0;
@@ -1825,7 +1851,10 @@ namespace UnityEngine.U2D
                     enPixelU = whsize.x - border.z;
                     pxlWidth = enPixelU - stPixelU;
                     TessellateSegment(i, isprc, isi, whsize, border, pxlWidth, ref segVertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref segOutputData, ref outputCount);
-                    ec = UpdateCollider(isi, isprc, ref segOutputData, outputCount, ref m_ColliderPoints, ref m_ColliderDataCount);
+                    if (hasCollider)
+                        ec = UpdateExtraGeometry(isi, isprc, ref segOutputData, outputCount, ref m_ColliderPoints, ref m_ColliderDataCount, colliderPivot);
+                    if (hasShadow)
+                        ec = UpdateExtraGeometry(isi, isprc, ref segOutputData, outputCount, ref m_ShadowPoints, ref m_ShadowDataCount, shadowPivot);
                 }
 
                 // Geom Data
@@ -1849,6 +1878,7 @@ namespace UnityEngine.U2D
             m_IndexArrayCount = m_IndexDataCount;
             m_VertexArrayCount = m_VertexDataCount;
             m_ColliderPointCount = m_ColliderDataCount;
+            m_ShadowPointCount = m_ShadowDataCount;
         }
 
         #endregion
@@ -2422,7 +2452,7 @@ namespace UnityEngine.U2D
         #endregion
 
         #region Collider Specific.
-        void AttachCornerToCollider(JobSegmentInfo isi, float pivot, ref NativeArray<float2> colliderPoints, ref int colliderPointCount)
+        void AttachCornerToCollider(JobSegmentInfo isi, float pivot, ref NativeArray<float2> points, ref int pointCount)
         {
             float2 zero = new float2(0, 0);
             int cornerIndex = isi.sgInfo.x + 1;
@@ -2445,18 +2475,18 @@ namespace UnityEngine.U2D
                         v2 = isc.top;
                     cp = (v0 - v2) * pivot;
                     cp = (v2 + cp + v0 + cp) * 0.5f;
-                    colliderPoints[colliderPointCount++] = cp;
+                    points[pointCount++] = cp;
                     break;
                 }
             }
         }
 
-        float2 UpdateCollider(JobSegmentInfo isi, JobSpriteInfo ispr, ref Array<JobShapeVertex> vertices, int count, ref NativeArray<float2> colliderPoints, ref int colliderPointCount)
+        float2 UpdateExtraGeometry(JobSegmentInfo isi, JobSpriteInfo ispr, ref Array<JobShapeVertex> vertices, int count, ref NativeArray<float2> points, ref int pointCount, float _pivot)
         {
             float2 zero = new float2(0, 0);
             float pivot = 0; // 0.5f - ispr.metaInfo.y; // Follow processed geometry and only use ColliderPivot.
-            pivot = pivot + colliderPivot;
-            AttachCornerToCollider(isi, pivot, ref colliderPoints, ref colliderPointCount);
+            pivot = pivot + _pivot;
+            AttachCornerToCollider(isi, pivot, ref points, ref pointCount);
 
             float2 cp = zero;
             float2 v0 = zero;
@@ -2468,63 +2498,63 @@ namespace UnityEngine.U2D
                 v2 = vertices[k + 2].pos;
                 cp = (v0 - v2) * pivot;
                 if (vertices[k].sprite.z == 0)
-                    colliderPoints[colliderPointCount++] = (v2 + cp + v0 + cp) * 0.5f;
+                    points[pointCount++] = (v2 + cp + v0 + cp) * 0.5f;
             }
 
             float2 v1 = vertices[count - 1].pos;
             float2 v3 = vertices[count - 3].pos;
             cp = (v3 - v1) * pivot;
             if (vertices[count - 1].sprite.z == 0)
-                colliderPoints[colliderPointCount++] = (v1 + cp + v3 + cp) * 0.5f;
+                points[pointCount++] = (v1 + cp + v3 + cp) * 0.5f;
             return cp;
         }
 
-        void TrimOverlaps(int cpCount)
+        static void TrimOverlaps(int cpCount, bool _isCarpet, int _splineDetail, float _kEpsilon, float _kEpsilonRelaxed, ref NativeArray<float2> _colliderPoints, ref int colliderPointCount)
         {
             int kMinimumPointTolerance = 4;
-            if (m_ColliderPointCount < kMinimumPointTolerance)
+            if (colliderPointCount < kMinimumPointTolerance)
                 return;
 
-            var tmpPoints = new NativeArray<float2>(m_ColliderPointCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            var tmpPoints = new NativeArray<float2>(colliderPointCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             int trimmedPointCount = 0;
             int i = 0;
-            int kColliderPointCountClamped = m_ColliderPointCount / 2;
-            int kSplineDetailClamped = math.clamp(splineDetail * 3, 0, 8);
+            int kColliderPointCountClamped = colliderPointCount / 2;
+            int kSplineDetailClamped = math.clamp(_splineDetail * 3, 0, 8);
             int kNeighbors = kSplineDetailClamped > kColliderPointCountClamped ? kColliderPointCountClamped : kSplineDetailClamped;
             kNeighbors = (kNeighbors > cpCount) ? cpCount : kNeighbors;
 
-            int testOverlapCount = m_ColliderPointCount;
-            if (!isCarpet)
+            int testOverlapCount = colliderPointCount;
+            if (!_isCarpet)
             {
-                tmpPoints[trimmedPointCount++] = m_ColliderPoints[0];
-                testOverlapCount = m_ColliderPointCount - 1;
+                tmpPoints[trimmedPointCount++] = _colliderPoints[0];
+                testOverlapCount = colliderPointCount - 1;
             }
 
             while (i < testOverlapCount)
             {
-                int h = (i > 0) ? (i - 1) : (m_ColliderPointCount - 1);
+                int h = (i > 0) ? (i - 1) : (colliderPointCount - 1);
                 bool noIntersection = true;
-                float2 v0 = m_ColliderPoints[h];
-                float2 v1 = m_ColliderPoints[i];
+                float2 v0 = _colliderPoints[h];
+                float2 v1 = _colliderPoints[i];
 
                 for (int n = kNeighbors; n > 1; --n)
                 {
-                    int j = (i + n - 1) % m_ColliderPointCount;
-                    int k = (i + n) % m_ColliderPointCount;
+                    int j = (i + n - 1) % colliderPointCount;
+                    int k = (i + n) % colliderPointCount;
                     if (k == 0 || i == 0)
                         continue;
 
-                    float2 v2 = m_ColliderPoints[j];
-                    float2 v3 = m_ColliderPoints[k];
+                    float2 v2 = _colliderPoints[j];
+                    float2 v3 = _colliderPoints[k];
                     float2 vx = v0 - v3;
 
-                    if (math.abs(math.length(vx)) < kEpsilon)
+                    if (math.abs(math.length(vx)) < _kEpsilon)
                         break;
 
                     float2 vi = v0;
 
-                    bool overLaps = LineIntersection(kEpsilonRelaxed, v0, v1, v2, v3, ref vi);
-                    if (overLaps && IsPointOnLines(kEpsilonRelaxed, v0, v1, v2, v3, vi))
+                    bool overLaps = LineIntersection(_kEpsilonRelaxed, v0, v1, v2, v3, ref vi);
+                    if (overLaps && IsPointOnLines(_kEpsilonRelaxed, v0, v1, v2, v3, vi))
                     {
                         noIntersection = false;
                         tmpPoints[trimmedPointCount++] = vi;
@@ -2535,38 +2565,38 @@ namespace UnityEngine.U2D
 
                 if (noIntersection)
                 {
-                    if (0 != i || isCarpet)
+                    if (0 != i || _isCarpet)
                         tmpPoints[trimmedPointCount++] = v1;
                     i = i + 1;
                 }
             }
-            for (; i < m_ColliderPointCount; ++i)
-                tmpPoints[trimmedPointCount++] = m_ColliderPoints[i];
+            for (; i < colliderPointCount; ++i)
+                tmpPoints[trimmedPointCount++] = _colliderPoints[i];
 
             i = 0;
-            m_ColliderPoints[i++] = tmpPoints[0];
+            _colliderPoints[i++] = tmpPoints[0];
             float2 prev = tmpPoints[0];
             for (int j = 1; j < trimmedPointCount; ++j)
             {
                 float dist = math.length(tmpPoints[j] - prev);
-                if (dist > kEpsilon)
-                    m_ColliderPoints[i++] = tmpPoints[j];
+                if (dist > _kEpsilon)
+                    _colliderPoints[i++] = tmpPoints[j];
                 prev = tmpPoints[j];
             }
             trimmedPointCount = i;
 
-            if (trimmedPointCount > 3 && isCarpet)
+            if (trimmedPointCount > 3 && _isCarpet)
             {
                 // Check intersection of first line Segment and last.
-                float2 vin = m_ColliderPoints[0];
-                bool endOverLaps = LineIntersection(kEpsilonRelaxed, m_ColliderPoints[0], m_ColliderPoints[1],
-                    m_ColliderPoints[trimmedPointCount - 1], m_ColliderPoints[trimmedPointCount - 2], ref vin);
+                float2 vin = _colliderPoints[0];
+                bool endOverLaps = LineIntersection(_kEpsilonRelaxed, _colliderPoints[0], _colliderPoints[1],
+                    _colliderPoints[trimmedPointCount - 1], _colliderPoints[trimmedPointCount - 2], ref vin);
                 if (endOverLaps)
-                    m_ColliderPoints[0] = m_ColliderPoints[trimmedPointCount - 1] = vin;
+                    _colliderPoints[0] = _colliderPoints[trimmedPointCount - 1] = vin;
             }
 
             tmpPoints.Dispose();
-            m_ColliderPointCount = trimmedPointCount;
+            colliderPointCount = trimmedPointCount;
         }
 
         void OptimizeCollider()
@@ -2576,7 +2606,7 @@ namespace UnityEngine.U2D
                 if (kColliderQuality > 0)
                 {
                     OptimizePoints(kColliderQuality, false, ref m_ColliderPoints, ref m_ColliderPointCount);
-                    TrimOverlaps(m_ControlPointCount - 1);
+                    TrimOverlaps(m_ControlPointCount - 1, isCarpet, splineDetail, kEpsilon, kEpsilonRelaxed, ref m_ColliderPoints, ref m_ColliderPointCount);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                     m_ColliderPoints[m_ColliderPointCount++] = new float2(0, 0);
                 }
@@ -2593,6 +2623,30 @@ namespace UnityEngine.U2D
             }
         }
 
+        void OptimizeShadow()
+        {
+            if (hasShadow)
+            {
+                if (kShadowQuality > 0)
+                {
+                    OptimizePoints(kShadowQuality, false, ref m_ShadowPoints, ref m_ShadowPointCount);
+                    TrimOverlaps(m_ControlPointCount - 1, isCarpet, splineDetail, kEpsilon, kEpsilonRelaxed, ref m_ShadowPoints, ref m_ShadowPointCount);
+                    m_ShadowPoints[m_ShadowPointCount++] = new float2(0, 0);
+                    m_ShadowPoints[m_ShadowPointCount++] = new float2(0, 0);
+                }
+                // If the resulting Colliders don't have enough points including the last 2 'end-points', just use Contours as Colliders.
+                var minimumPointCount = isCarpet ? 5 : 3;
+                if (m_ShadowPointCount <= minimumPointCount)
+                {
+                    for (int i = 0; i < m_TessPointCount; ++i)
+                        m_ShadowPoints[i] = m_TessPoints[i];
+                    m_ShadowPoints[m_TessPointCount] = new float2(0, 0);
+                    m_ShadowPoints[m_TessPointCount + 1] = new float2(0, 0);
+                    m_ShadowPointCount = m_TessPointCount + 2;
+                }
+            }
+        }
+
         #endregion
 
         #region Entry, Exit Points.
@@ -2601,7 +2655,7 @@ namespace UnityEngine.U2D
         public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, NativeArray<SpriteShapeMetaData> metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
         {
             // Prepare Inputs.
-            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider || controller.forceColliderShapeUpdate, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
+            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail, controller.updateShadow, controller.shadowOffset, controller.shadowDetail);
             PrepareSprites(segmentSprites, cornerSprites);
             PrepareAngleRanges(angleRanges);
             NativeArray<SplinePointMetaData> newMetaData = new NativeArray<SplinePointMetaData>(metaData.Length, Allocator.Temp);
@@ -2626,7 +2680,7 @@ namespace UnityEngine.U2D
             // Prepare Inputs.
             SetResult(SpriteShapeGeneratorResult.Success);
 
-            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider || controller.forceColliderShapeUpdate, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail);
+            PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail, controller.updateShadow, controller.shadowOffset, controller.shadowDetail);
             PrepareSprites(segmentSprites, cornerSprites);
             PrepareAngleRanges(angleRanges);
             PrepareControlPoints(shapePoints, metaData);
@@ -2657,6 +2711,7 @@ namespace UnityEngine.U2D
             {
                 CalculateBoundingBox();
                 OptimizeCollider();
+                OptimizeShadow();
             }
             generateCollider.End();
 
