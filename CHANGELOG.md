@@ -1,5 +1,10 @@
 # Changelog
 
+## [9.0.1] - 2022-10-11
+### Fixed
+- DANB-177  Fix case where SpriteShapeController does not initialize collider data.
+- DANB-224  Fix case where adding a new element to Custom Geometry Modifier spams errors.
+
 ## [9.0.0] - 2022-08-03
 ### Changed
 - Refactored internal triangulation and tessellation APIs.

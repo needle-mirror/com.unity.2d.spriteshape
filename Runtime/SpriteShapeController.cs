@@ -521,7 +521,8 @@ namespace UnityEngine.U2D
             {
                 hashCode = (int)2166136261 ^ spriteShapeCreator.GetVersion();
                 foreach (var mod in m_Modifiers)
-                    hashCode = hashCode * 16777619 ^ mod.GetVersion();
+                    if (null != mod)
+                        hashCode = hashCode * 16777619 ^ mod.GetVersion();
             }
 
             return hashCode;
@@ -544,6 +545,8 @@ namespace UnityEngine.U2D
                 hashCode = hashCode * 16777619 ^ (m_ColliderOffset.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (m_ColliderDetail.GetHashCode());
                 hashCode = hashCode * 16777619 ^ (GetCustomScriptHashCode());
+                hashCode = hashCode * 16777619 ^ (edgeCollider == null ? 0 : 1);
+                hashCode = hashCode * 16777619 ^ (polygonCollider == null ? 0 : 1);
 
                 if (splineHashCode != hashCode)
                 {
@@ -879,7 +882,8 @@ namespace UnityEngine.U2D
 
                 m_JobHandle = jobHandle = spriteShapeCreator.MakeCreatorJob(this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
                 foreach (var geomMod in m_Modifiers)
-                    m_JobHandle = geomMod.MakeModifierJob(m_JobHandle, this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
+                    if (null != geomMod)
+                        m_JobHandle = geomMod.MakeModifierJob(m_JobHandle, this, indexArray, posArray, uv0Array, tanArray, geomArray, m_ColliderData);
 
                 // Prepare Renderer.
                 spriteShapeRenderer.Prepare(m_JobHandle, m_ActiveShapeParameters, m_SpriteArray);
