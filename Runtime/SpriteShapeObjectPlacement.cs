@@ -5,18 +5,33 @@ using Unity.Mathematics;
 namespace UnityEngine.U2D
 {
 
+    /// <summary>
+    /// SpriteShape Object placement Modes.
+    /// Auto : Allows editing the transform of the Object while keeping it on the surface of the spline.
+    /// Manual : Allows mo0vement strictly with the Ratio and Start, End points.
+    /// </summary>
+    public enum SpriteShapeObjectPlacementMode
+    {
+        Auto,
+        Manual
+    };
+
+    /// <summary>
+    /// SpriteShapeObjectPlacement helps placing a game Object along the Spline.
+    /// </summary>
     [ExecuteInEditMode]
+    [ExecuteAlways]
     public class SpriteShapeObjectPlacement : MonoBehaviour
     {
 
         [SerializeField]
-        bool m_SetNormal = true;
-
-        [SerializeField, Range(0.0f, 1.0f)]
-        float m_Ratio = 0.5f;
+        SpriteShapeController m_SpriteShapeController;
 
         [SerializeField]
-        SpriteShapeController m_SpriteShapeController;
+        bool m_SetNormal = true;
+
+        [SerializeField]
+        SpriteShapeObjectPlacementMode m_Mode;
 
         [SerializeField]
         [Min(0)]
@@ -26,8 +41,13 @@ namespace UnityEngine.U2D
         [Min(0)]
         int m_EndPoint = 1;
 
+        [SerializeField]
+        float m_Ratio = 0.5f;
+
         /// Internal Hash Code.
         int m_ActiveHashCode = 0;
+        static readonly float kMaxDistance = 10000.0f;
+        private static readonly int kMaxIteration = 128;
 
         /// <summary>
         /// Dictates whether the object needs to be rotated to the normal along the spline.
@@ -36,6 +56,15 @@ namespace UnityEngine.U2D
         {
             get { return m_SetNormal; }
             set { m_SetNormal = value; }
+        }
+
+        /// <summary>
+        /// Set SpriteShape Object placement mode.
+        /// </summary>
+        public SpriteShapeObjectPlacementMode mode
+        {
+            get { return m_Mode; }
+            set { m_Mode = value; }
         }
 
         /// <summary>
@@ -81,23 +110,44 @@ namespace UnityEngine.U2D
 
             unchecked
             {
-                // SpriteShape.
-                int hashCode = (int)2166136261 ^ spriteShapeController.splineHashCode;
-                hashCode = hashCode * 16777619 ^ spriteShapeController.spriteShapeHashCode;
-
-                // Local Stuff.
-                hashCode = hashCode * 16777619 ^ (setNormal ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (ratio.GetHashCode());
-                hashCode = hashCode * 16777619 ^ (startPoint);
-                hashCode = hashCode * 16777619 ^ (endPoint);
-
-                if (m_ActiveHashCode != hashCode)
+                var count = 0;
+                int spriteShapeHashCode = (int) 2166136261 ^ spriteShapeController.splineHashCode;
+                spriteShapeHashCode = spriteShapeHashCode * 16777619 ^ spriteShapeController.spriteShapeHashCode;
+                var ssTransform = spriteShapeController.gameObject.transform;
+                var pos = gameObject.transform.position;
+                var rot = gameObject.transform.rotation;
+                spriteShapeHashCode = spriteShapeHashCode * 16777619 ^ (setNormal ? 1 : 0);
+                spriteShapeHashCode = spriteShapeHashCode * 16777619 ^ (startPoint);
+                spriteShapeHashCode = spriteShapeHashCode * 16777619 ^ (endPoint);
+                spriteShapeHashCode = spriteShapeHashCode * 16777619 ^ ssTransform.position.GetHashCode();
+                spriteShapeHashCode = spriteShapeHashCode * 16777619 ^ ssTransform.rotation.GetHashCode();
+                do
                 {
-                    Place();
-                    m_ActiveHashCode = hashCode;
-                    return true;
-                }
+                    // SpriteShape.
+                    // Local Stuff.
+                    int hashCode = spriteShapeHashCode * 16777619 ^ Math.Round(pos.x * 1000.0f).GetHashCode();
+                    hashCode = hashCode * 16777619 ^ Math.Round(pos.y * 1000.0f).GetHashCode();
+                    hashCode = hashCode * 16777619 ^ Math.Round(pos.z * 1000.0f).GetHashCode();
+                    hashCode = hashCode * 16777619 ^ Math.Round(ratio * 1000.0f).GetHashCode();
+                    hashCode = hashCode * 16777619 ^ Math.Round(rot.x * 1000.0f).GetHashCode();
+                    hashCode = hashCode * 16777619 ^ Math.Round(rot.y * 1000.0f).GetHashCode();
+                    hashCode = hashCode * 16777619 ^ Math.Round(rot.z * 1000.0f).GetHashCode();
+                    hashCode = hashCode * 16777619 ^ Math.Round(rot.w * 1000.0f).GetHashCode();
+
+                    if (m_ActiveHashCode != hashCode)
+                    {
+                        var run = Place();
+                        m_ActiveHashCode = hashCode;
+                        if (!run)
+                            break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                } while (count++ < kMaxIteration);
             }
+
             return false;
         }
 
@@ -157,18 +207,24 @@ namespace UnityEngine.U2D
             return distance;
         }
 
-        void PlaceObjectInternal(int sp, int ep, float t, NativeArray<ShapeControlPoint> shapePoints)
+        Vector3 PlaceObjectInternal(int sp, int ep, float t, NativeArray<ShapeControlPoint> shapePoints)
         {
-
+            ep = ep % shapePoints.Length;
             var p0 = shapePoints[sp].position;
             var p1 = shapePoints[ep].position;
             var rt = p0 + shapePoints[sp].rightTangent;
             var lt = p1 + shapePoints[ep].leftTangent;
             var bp = BezierUtility.BezierPoint(rt, p0, p1, lt, t);
             var position = new Vector3(bp.x, bp.y, 0);
-            var srcTransform = spriteShapeController.transform;
+            var srcTransform = spriteShapeController.transform.localToWorldMatrix;
             var dstTransform = gameObject.transform;
-            dstTransform.position = srcTransform.TransformPoint(position);
+            var p = srcTransform.MultiplyPoint3x4(position);
+            var d = dstTransform.position;
+            if (m_Mode == SpriteShapeObjectPlacementMode.Auto)
+                d.y = p.y;
+            else
+                d = p;
+            dstTransform.position = d;
 
             if (setNormal)
             {
@@ -186,14 +242,24 @@ namespace UnityEngine.U2D
                 var rotation = Quaternion.Euler(0, 0, c);
                 dstTransform.rotation = srcTransform.rotation * rotation;
             }
+            return d;
         }
 
-        void PlaceObject(Spline spline, int sp, int ep)
+        Vector3 PlaceObject(Spline spline, int sp, int ep, ref bool run)
         {
             var shapePoints = spriteShapeController.GetShapeControlPoints();
+            if (sp > shapePoints.Length || ep > shapePoints.Length)
+            {
+                run = false;
+                return Vector3.zero;
+            }
+                
             var t = math.clamp(ratio, 0.0001f, 0.9999f);
             if (ep - sp == 1)
-                PlaceObjectInternal(sp, ep, t, shapePoints);
+            {
+                run = true;
+                return PlaceObjectInternal(sp, ep, t, shapePoints);
+            }
             else
             {
                 var s = 0;
@@ -202,9 +268,14 @@ namespace UnityEngine.U2D
                 var r = 0.0f;
                 d = GetDistance(d, sp, ep, ref s, ref e, ref r, shapePoints) * t;
                 GetDistance(d, sp, ep, ref s, ref e, ref r, shapePoints);
-                if (startPoint >= 0)
-                    PlaceObjectInternal(s, e, r, shapePoints);
+                if (s >= 0)
+                {
+                    run = true;
+                    return PlaceObjectInternal(s, e, r, shapePoints);
+                }
             }
+            run = false;
+            return Vector3.zero;
         }
 
         int GetSplinePointCount()
@@ -215,14 +286,70 @@ namespace UnityEngine.U2D
             return pointCount;
         }
 
-        void Place()
+        bool Place()
         {
             var pointCount = GetSplinePointCount();
-            var sp = math.clamp(startPoint, 0, pointCount);
-            var ep = math.clamp(endPoint, 0, pointCount);
-            if (sp >= ep)
-                throw new InvalidOperationException("Invalid start and end points.");
-            PlaceObject(spriteShapeController.spline, sp, ep);
+            var run = false;
+            if (m_Mode == SpriteShapeObjectPlacementMode.Manual)
+            {
+                var sp = math.clamp(startPoint, 0, pointCount);
+                var ep = math.clamp(endPoint, 0, pointCount);
+                if (sp >= ep)
+                {
+                    endPoint = pointCount;
+                    Debug.LogWarning("Invalid End point and it has been clamped", transform);
+                }
+                PlaceObject(spriteShapeController.spline, sp, ep, ref run);
+                return run;
+            }
+
+            var distance = kMaxDistance;
+            var position = transform.position;
+            var closestPoint = Vector3.zero;
+            {
+                int tp = 0, np = 0;
+                float et = 100, dist = kMaxDistance;
+                var spline = spriteShapeController.spline;
+                var matrix = spriteShapeController.transform.localToWorldMatrix;
+                var splinePointCount = spline.GetPointCount();                
+
+                for (int i = 0; i < pointCount; ++i)
+                {
+                    var ni = (i + 1) % spline.GetPointCount();
+                    var thisposition = matrix.MultiplyPoint3x4(spline.GetPosition(i));
+                    var nextPosition = matrix.MultiplyPoint3x4(spline.GetPosition(ni));
+                    var rightTangent = spline.GetRightTangent(i) + thisposition;
+                    var leftTangent = spline.GetLeftTangent(ni) + nextPosition;
+
+                    float t;
+                    closestPoint = BezierUtility.ClosestPointOnCurve(
+                        position,
+                        thisposition,
+                        nextPosition,
+                        rightTangent,
+                        leftTangent,
+                        0.0001f,
+                        out t);
+                    float _d = (closestPoint - position).magnitude;
+                    if (_d < dist)
+                    {
+                        tp = i;
+                        np = ni;
+                        et = t;
+                        dist = _d;
+                    }
+
+                }
+
+                if (tp >= 0 && tp < splinePointCount && np >= 0 && np < splinePointCount)
+                {
+                    startPoint = tp;
+                    endPoint = np == 0 ? tp + 1 : np;
+                    ratio = et;
+                    position = PlaceObject(spline, startPoint, endPoint, ref run);
+                }
+            }
+            return run;
         }
 
         void Start ()
@@ -234,6 +361,7 @@ namespace UnityEngine.U2D
         {
             PlaceObjectOnHashChange();
         }
+
     }
 
 }

@@ -74,13 +74,11 @@ namespace UnityEngine.U2D
             return spd;
         }
 
-        internal static Vector3 ClosestPointOnCurve(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, out float t)
+        internal static Vector3 ClosestPointOnCurve(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, float sqrError, out float t)
         {
             Vector3 startToEnd = endPosition - startPosition;
             Vector3 startToTangent = (startTangent - startPosition);
             Vector3 endToTangent = (endTangent - endPosition);
-
-            float sqrError = 0.001f;
 
             if (Colinear(startToTangent, startToEnd, sqrError) && Colinear(endToTangent, startToEnd, sqrError))
                 return ClosestPointToSegment(point, startPosition, endPosition, out t);
@@ -117,9 +115,8 @@ namespace UnityEngine.U2D
             return pointRight;
         }
 
-        internal static Vector3 ClosestPointOnCurveFast(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, out float t)
+        internal static Vector3 ClosestPointOnCurveFast(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, float sqrError, out float t)
         {
-            float sqrError = 0.001f;
             float startT = 0f;
             float endT = 1f;
 
@@ -226,7 +223,7 @@ namespace UnityEngine.U2D
             rightEndTangent = tangentPoint1;
         }
 
-        private static Vector3 ClosestPointToSegment(Vector3 point, Vector3 segmentStart, Vector3 segmentEnd, out float t)
+        internal static Vector3 ClosestPointToSegment(Vector3 point, Vector3 segmentStart, Vector3 segmentEnd, out float t)
         {
             Vector3 relativePoint = point - segmentStart;
             Vector3 segment = (segmentEnd - segmentStart);

@@ -55,6 +55,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent uTess2DLabel = new GUIContent("Fill Tessellation (C# Job)", "Use C# Jobs to generate Fill Geometry. (Edge geometry always uses C# Jobs)");
             public static readonly GUIContent creatorLabel = new GUIContent("Creator", "Allows over-riding default geometry calculations with a custom one.");
             public static readonly GUIContent modifiersLabel = new GUIContent("Modifier", "Allows processing / modifying generated vertices geometry.");
+            public static readonly GUIContent boundsScaleLabel = new GUIContent("Bounds Scale", "Scale the Bounding Box of SpriteShape Geometry so its not culled out when scripting or dyanmically modifying Splines.");
         }
 
         private SerializedProperty m_SpriteShapeProp;
@@ -73,6 +74,7 @@ namespace UnityEditor.U2D
 
         private SerializedProperty m_ShadowAutoUpdate;
         private SerializedProperty m_ShadowDetailProp;
+        private SerializedProperty m_BoundsScaleProp;
 
         private SerializedProperty m_EnableTangentsProp;
         private SerializedProperty m_GeometryCachedProp;
@@ -134,6 +136,7 @@ namespace UnityEditor.U2D
             m_ColliderDetailProp = serializedObject.FindProperty("m_ColliderDetail");
             m_ColliderOffsetProp = serializedObject.FindProperty("m_ColliderOffset");
             m_ShadowDetailProp = serializedObject.FindProperty("m_ShadowDetail");
+            m_BoundsScaleProp = serializedObject.FindProperty("m_BoundsScale");
             m_EnableTangentsProp = serializedObject.FindProperty("m_EnableTangents");
             m_GeometryCachedProp = serializedObject.FindProperty("m_GeometryCached");
             m_UTess2DGeometryProp = serializedObject.FindProperty("m_UTess2D");
@@ -440,6 +443,7 @@ namespace UnityEditor.U2D
             DrawHeader(Contents.splineLabel);
 
             EditorGUILayout.IntPopup(m_SplineDetailProp, Contents.splineDetailOptions, m_QualityValues, Contents.splineDetail);
+            EditorGUILayout.PropertyField(m_BoundsScaleProp, Contents.boundsScaleLabel);
             serializedObject.ApplyModifiedProperties();
 
             DoOpenEndedInspector<SpriteShapeEditorTool>(m_IsOpenEndedProp);
@@ -681,6 +685,8 @@ namespace UnityEditor.U2D
             var gos = scene.GetRootGameObjects();
             foreach (var go in gos)
             {
+                if (!go.activeInHierarchy)
+                    continue;
                 var scs = go.GetComponentsInChildren<SpriteShapeController>();
                 foreach (var sc in scs)
                 {
@@ -707,7 +713,7 @@ namespace UnityEditor.U2D
             {
                 var s = t as SpriteShapeController;
                 if (s)
-                    if (s.spriteShapeGeometryCache)
+                    if (s.gameObject.activeInHierarchy && s.spriteShapeGeometryCache)
                         s.spriteShapeGeometryCache.UpdateGeometryCache();
             }
         }

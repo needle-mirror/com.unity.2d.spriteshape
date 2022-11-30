@@ -91,6 +91,8 @@ namespace UnityEngine.U2D
         int m_ShadowDetail = (int)QualityDetail.High;
         [SerializeField, Range(-0.5f, 0.5f)]
         float m_ShadowOffset = 0.5f;
+        [SerializeField]
+        float m_BoundsScale = 2.0f;
 
         [SerializeField]
         SpriteShapeGeometryCreator m_Creator;
@@ -282,6 +284,13 @@ namespace UnityEngine.U2D
             get { return m_Spline; }
         }
 
+        /// <summary>Scale the Bounding Box of SpriteShape Geometry so its not culled out when scripting or dyanmically modifying Splines. </summary>
+        public float boundsScale
+        {
+            get { return m_BoundsScale; }
+            set { m_BoundsScale = value; InitBounds(); }
+        }
+
         /// <summary>SpriteShape Profile asset that contains information on how to generate/render SpriteShapes. </summary>
         public SpriteShape spriteShape
         {
@@ -452,6 +461,7 @@ namespace UnityEngine.U2D
                 Bounds bounds = new Bounds(spline.GetPosition(0), Vector3.zero);
                 for (int i = 1; i < pointCount; ++i)
                     bounds.Encapsulate(spline.GetPosition(i));
+                bounds.size = bounds.size * m_BoundsScale;
                 bounds.Encapsulate(spriteShapeRenderer.localBounds);
                 spriteShapeRenderer.SetLocalAABB(bounds);
                 return bounds;
@@ -592,6 +602,11 @@ namespace UnityEngine.U2D
                 }
             }
             return false;
+        }
+
+        void OnBecameInvisible()
+        {
+            InitBounds();
         }
 
         void LateUpdate()

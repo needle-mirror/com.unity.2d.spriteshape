@@ -24,6 +24,7 @@ namespace SpriteShapeExtras
                 op.setNormal = m_UseNormals;
                 op.startPoint = 0;
                 op.endPoint = ssc.spline.GetPointCount();
+                op.mode = SpriteShapeObjectPlacementMode.Manual;
                 op.ratio = Random.Range(0.0f, 1.0f);
             }
         }

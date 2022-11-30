@@ -1,10 +1,19 @@
 # Changelog
 
+## [10.0.0-pre.2] - 2022-11-30
+### Added
+- Added Sample for Custom Geometry Generation and Vertex Colors.
+- Replace obsolete API calls.
+
+### Fixed
+- DANB-243 Fix case where Sprite Shape is invisible when spawned at runtime
+- DANB-183 Fix case where Spriteshape with tangents enabled has shadow artifacts after reopening the project
+
 ## [10.0.0-pre.1] - 2022-09-21
 ### Fixed
-- DANB-18   Fix case where SpriteShapeController does not initialize collider data.
-- DANB-97   Fix SpriteShape Extras "Colliders" scene causes warnings in console when opening
-- DANB-120  Fix case where adding a new element to Custom Geometry Modifier spams errors.
+- DANB-18 Fix case where SpriteShapeController does not initialize collider data.
+- DANB-97 Fix SpriteShape Extras "Colliders" scene causes warnings in console when opening
+- DANB-120 Fix case where adding a new element to Custom Geometry Modifier spams errors.
 
 ### Changed
 - Refactored internal triangulation and tessellation APIs.

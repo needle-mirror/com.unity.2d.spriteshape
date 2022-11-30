@@ -221,7 +221,6 @@ namespace UnityEngine.U2D
         float kColliderQuality;
         float kOptimizeCollider;
         float kShadowQuality;
-        float kOptimizeShadow;
         float kLowestQualityTolerance;
         float kHighestQualityTolerance;
 
@@ -648,7 +647,6 @@ namespace UnityEngine.U2D
             colliderOffset = (colliderOffset == 0) ? kEpsilonRelaxed : -colliderOffset;
 
             kShadowQuality = math.clamp(shadowDetail, kLowestQualityTolerance, kHighestQualityTolerance);
-            kOptimizeShadow = 1;
             kShadowQuality = (kHighestQualityTolerance - kShadowQuality + 2.0f) * 0.002f;
             shadowOffset = (shadowOffset == 0) ? kEpsilonRelaxed : -shadowOffset;
 
@@ -1273,13 +1271,13 @@ namespace UnityEngine.U2D
                 }
                 else
                 {
+                    geom.indexCount = m_ActiveIndexCount = m_IndexDataCount;
+                    geom.vertexCount = m_ActiveVertexCount = m_VertexDataCount;
                     if (m_TanArray.Length > 1)
                     {
                         for (int i = 0; i < m_ActiveVertexCount; ++i)
                             m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
                     }
-                    geom.indexCount = m_ActiveIndexCount = m_IndexDataCount;
-                    geom.vertexCount = m_ActiveVertexCount = m_VertexDataCount;
                 }
                 m_GeomArray[0] = geom;
 

@@ -87,7 +87,7 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
         m_RequiresUpdate = false;
     }
 
-    // Set Geometry Cache.
+    // Set Geometry Cache. Fix Tangent Cache.
     internal void SetGeometryCache(int _maxArrayCount, NativeSlice<Vector3> _posArray, NativeSlice<Vector2> _uv0Array, NativeSlice<Vector4> _tanArray, NativeArray<ushort> _indexArray, NativeArray<UnityEngine.U2D.SpriteShapeSegment> _geomArray)
     {
         m_RequiresUpdate = true;
@@ -130,7 +130,7 @@ internal class SpriteShapeGeometryCache : MonoBehaviour
             SpriteShapeCopyUtility<ushort>.Copy(m_IndexArray, m_IndexArrayCache, indexCount);
             SpriteShapeCopyUtility<Vector3>.Copy(m_PosArray, m_PosArrayCache, vertexCount);
             SpriteShapeCopyUtility<Vector2>.Copy(m_Uv0Array, m_Uv0ArrayCache, vertexCount);
-            
+
             // Do not store Tangent data if not enabled. Just store a stub.
             m_TanArray = new Vector4[(m_TanArrayCache.Length >= vertexCount) ? vertexCount : 1];
             if (m_TanArrayCache.Length >= vertexCount)
