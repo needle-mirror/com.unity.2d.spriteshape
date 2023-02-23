@@ -1,5 +1,10 @@
 # Changelog
 
+## [10.0.0] - 2023-02-23
+### Changed
+- Release for Unity 2023.1
+
+
 ## [10.0.0-pre.2] - 2022-11-30
 ### Added
 - Added Sample for Custom Geometry Generation and Vertex Colors.
@@ -8,6 +13,7 @@
 ### Fixed
 - DANB-243 Fix case where Sprite Shape is invisible when spawned at runtime
 - DANB-183 Fix case where Spriteshape with tangents enabled has shadow artifacts after reopening the project
+- DANB-282 Fix Case where BezierUtility.BezierPoint function parameters are not in the right order
 
 ## [10.0.0-pre.1] - 2022-09-21
 ### Fixed
