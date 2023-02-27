@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.0.2] - 2023-02-27
+### Fixed
+- DANB-328  Fix case where BezierUtility.BezierPoint function parameters are not in the right order
+- DANB-307  Fix case where Error �A Native Collection has not been disposed, resulting in a memory leak occurs in Play Mode
+- DANB-279  Fix case where Spriteshape with tangents enabled has shadow artifacts after reopening the project
+
 ## [9.0.1] - 2022-10-11
 ### Fixed
 - DANB-177  Fix case where SpriteShapeController does not initialize collider data.

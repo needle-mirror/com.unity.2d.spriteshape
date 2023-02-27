@@ -656,6 +656,9 @@ namespace UnityEditor.U2D
             var gos = scene.GetRootGameObjects();
             foreach (var go in gos)
             {
+                if (!go.activeInHierarchy)
+                    continue;
+
                 var scs = go.GetComponentsInChildren<SpriteShapeController>();
                 foreach (var sc in scs)
                 {
@@ -682,7 +685,7 @@ namespace UnityEditor.U2D
             {
                 var s = t as SpriteShapeController;
                 if (s)
-                    if (s.spriteShapeGeometryCache)
+                    if (s.gameObject.activeInHierarchy && s.spriteShapeGeometryCache)
                         s.spriteShapeGeometryCache.UpdateGeometryCache();
             }
         }

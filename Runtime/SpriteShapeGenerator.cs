@@ -1201,7 +1201,7 @@ namespace UnityEngine.U2D
             tee.x = tessPointCount - 2;
             tee.y = 0;
             edges[tessPointCount - 2] = tee;
-            
+
             NativeArray<float2> ov = new NativeArray<float2>(tessPointCount * 4, label);
             NativeArray<int> oi = new NativeArray<int>(tessPointCount * 4, label);
             NativeArray<int2> oe = new NativeArray<int2>(tessPointCount * 4, label);
@@ -1248,13 +1248,13 @@ namespace UnityEngine.U2D
                 }
                 else
                 {
+                    geom.indexCount = m_ActiveIndexCount = m_IndexDataCount;
+                    geom.vertexCount = m_ActiveVertexCount = m_VertexDataCount;
                     if (m_TanArray.Length > 1)
                     {
                         for (int i = 0; i < m_ActiveVertexCount; ++i)
                             m_TanArray[i] = new Vector4(1.0f, 0, 0, -1.0f);
                     }
-                    geom.indexCount = m_ActiveIndexCount = m_IndexDataCount;
-                    geom.vertexCount = m_ActiveVertexCount = m_VertexDataCount;
                 }
                 m_GeomArray[0] = geom;
 
