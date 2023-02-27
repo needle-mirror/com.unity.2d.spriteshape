@@ -1,5 +1,10 @@
 # Changelog
 
+## [7.0.7] - 2023-02-27
+### Fixed
+- DANB-283  Fix case where BezierUtility.BezierPoint function parameters are not in the right order
+- DANB-306  Fix case where Error “A Native Collection has not been disposed, resulting in a memory leak” occurs in Play Mode
+
 ## [7.0.6] - 2022-06-28
 ### Changed
 - Refactored internal triangulation and tessellation APIs.

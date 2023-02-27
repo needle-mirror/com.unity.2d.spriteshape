@@ -596,18 +596,21 @@ namespace UnityEditor.U2D
         }
 
         static void SaveSpriteShapesInScene(Scene scene)
+        {
+            var gos = scene.GetRootGameObjects();
+            foreach (var go in gos)
             {
-                var gos = scene.GetRootGameObjects();
-                foreach (var go in gos)
-                {
-                    var scs = go.GetComponentsInChildren<SpriteShapeController>();
-                    foreach (var sc in scs)
+                if (!go.activeInHierarchy)
+                    continue;
+
+                var scs = go.GetComponentsInChildren<SpriteShapeController>();
+                foreach (var sc in scs)
                 {
                     var jh = sc.BakeMesh();
                     jh.Complete();
                 }
             }
-                }
+        }
 
         static void UpdateSpriteShapeCacheInOpenScenes()
         {
@@ -626,7 +629,7 @@ namespace UnityEditor.U2D
             {
                 var s = t as SpriteShapeController;
                 if (s)
-                    if (s.spriteShapeGeometryCache)
+                    if (s.gameObject.activeInHierarchy && s.spriteShapeGeometryCache)
                         s.spriteShapeGeometryCache.UpdateGeometryCache();
             }
         }

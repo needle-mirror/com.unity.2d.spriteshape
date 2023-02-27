@@ -23,8 +23,9 @@ namespace UnityEngine.U2D
         public static Vector3 BezierPoint(Vector3 startRightTangent, Vector3 startPosition, Vector3 endPosition, Vector3 endLeftTangent, float t)
         {
             float s = 1.0f - t;
-            return s * s * s * startRightTangent + 3.0f * s * s * t * startPosition + 3.0f * s * t * t * endPosition + t * t * t * endLeftTangent;
-        }        
+            float st3 = 3.0f * s * t;
+            return (s * s * s * startPosition) + (st3 * s * startRightTangent) + (st3 * t * endLeftTangent) + (t * t * t * endPosition);
+        }
         internal static float GetSpritePixelWidth(Sprite sprite)
         {
             float4 meta = new float4(sprite.pixelsPerUnit, sprite.pivot.y / sprite.textureRect.height, sprite.rect.width, sprite.rect.height);
