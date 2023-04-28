@@ -1,9 +1,14 @@
 # Changelog
 
+## [10.0.1] - 2023-04-28
+### Fixed
+- UUM-29635 Fix case where SpriteShape point overlay is displaying inconsistent number of digits after decimal point.
+- DANB-422 Fix case where Sprite Shape is not filled when "Closed Sprite Shape" is enabled and "Detail" is set to "High Quality"
+- DANB-403 Fix case where Spriteshape does not conform to edge sprites 9-slicing when first point is continuous.
+
 ## [10.0.0] - 2023-02-23
 ### Changed
 - Release for Unity 2023.1
-
 
 ## [10.0.0-pre.2] - 2022-11-30
 ### Added

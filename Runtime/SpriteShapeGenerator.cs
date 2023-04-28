@@ -1228,7 +1228,7 @@ namespace UnityEngine.U2D
             NativeArray<float2> ov = new NativeArray<float2>(tessPointCount * 4, label);
             NativeArray<int> oi = new NativeArray<int>(tessPointCount * 4, label);
             NativeArray<int2> oe = new NativeArray<int2>(tessPointCount * 4, label);
-            UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, in points, in edges, ref ov, out var ovc, ref oi, out var oic, ref oe, out var oec);
+            UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, in points, in edges, ref ov, out var ovc, ref oi, out var oic, ref oe, out var oec, false);
 
             if (oic > 0)
             {
@@ -1705,10 +1705,10 @@ namespace UnityEngine.U2D
                 bool useClosure = (m_ControlPoints[0].cpData.z == kModeContinous) && (isi.sgInfo.y == controlPointCount - 1);
                 bool firstSegment = (i == 0) && !isCarpet && !useClosure;
                 bool validHead = hasSpriteBorder && (border.x > 0) && ((_scp.exData.z == 0) || firstSegment);
-                validHead = (m_ControlPoints[0].cpData.z == kModeContinous) ? (validHead && !isCarpet) : validHead;
+                validHead = (_scp.cpData.z == kModeContinous) ? (validHead && !isCarpet) : validHead;
                 bool finalSegment = (i == segmentCount - 1) && !isCarpet && !useClosure;
                 bool validTail = hasSpriteBorder && (border.z > 0) && ((_ecp.exData.z == 0) || finalSegment);
-                validTail = (m_ControlPoints[0].cpData.z == kModeContinous) ? (validTail && !isCarpet) : validTail;
+                validTail = (_ecp.cpData.z == kModeContinous) ? (validTail && !isCarpet) : validTail;
 
                 // Generate the UV Increments.
                 float extendUV = 0;
