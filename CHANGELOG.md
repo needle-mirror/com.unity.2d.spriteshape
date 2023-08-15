@@ -1,5 +1,9 @@
 # Changelog
 
+## [10.0.2] - 2023-08-15
+### Fixed
+- UUM-41920 Fill tessellation doesn't work and Warnings logged for Closed 2D Shapes when C# Job is used
+
 ## [10.0.1] - 2023-04-28
 ### Fixed
 - UUM-29635 Fix case where SpriteShape point overlay is displaying inconsistent number of digits after decimal point.

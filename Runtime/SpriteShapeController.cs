@@ -44,6 +44,7 @@ namespace UnityEngine.U2D
         // Renderer Stuff.
         bool m_DynamicOcclusionLocal;
         bool m_DynamicOcclusionOverriden;
+        bool m_TessellationNeedsFallback = false;
 
         // Hash Check.
         int m_ActiveSplineHash = 0;
@@ -529,7 +530,7 @@ namespace UnityEngine.U2D
             {
                 uTess2D = (spriteShape.fillOffset == 0);
             }
-            return uTess2D;
+            return uTess2D && !m_TessellationNeedsFallback;
         }
 
         bool HasSpriteShapeChanged()
@@ -644,7 +645,7 @@ namespace UnityEngine.U2D
                 bool spriteShapeChanged = HasSpriteShapeDataChanged();
                 bool spriteShapeParametersChanged = UpdateSpriteShapeParameters();
 
-                if (splineChanged || spriteShapeChanged || spriteShapeParametersChanged)
+                if (splineChanged || spriteShapeChanged || spriteShapeParametersChanged || m_TessellationNeedsFallback)
                 {
                     if (spriteShapeChanged)
                     {
@@ -943,6 +944,7 @@ namespace UnityEngine.U2D
                 // Prepare Renderer.
                 spriteShapeRenderer.Prepare(m_JobHandle, m_ActiveShapeParameters, m_SpriteArray);
                 jobHandle = m_JobHandle;
+                m_TessellationNeedsFallback = false;
 
 #if UNITY_EDITOR
                 if (spriteShapeGeometryCache && geometryCached)
@@ -1066,7 +1068,13 @@ namespace UnityEngine.U2D
                             Debug.LogWarningFormat(gameObject, "Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
                             break;
                         case SpriteShapeGeneratorResult.ErrorDefaultQuadCreated:
-                            Debug.LogWarningFormat(gameObject, "Fill tessellation (C# Job) encountered errors. Please disable it to use default tessellation for fill geometry.");
+                            if (m_UTess2D)
+                            {
+                                m_TessellationNeedsFallback = true;
+                                Debug.LogWarningFormat(gameObject, "Fill tessellation (C# Job) encountered errors. Please avoid overlaps or close points in the input Spline. Falling back to default generator.");
+                                break;
+                            }
+                            Debug.LogWarningFormat(gameObject, "Fill tessellation encountered errors. Please avoid overlaps or close points in the input spline.");
                             break;
                     }
                 }
