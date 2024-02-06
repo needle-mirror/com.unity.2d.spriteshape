@@ -1,5 +1,11 @@
 # Changelog
 
+## [10.0.3] - 2024-02-06
+### Fixed
+- DANB-316 Update obsolete API usage.
+- DANB-554 Prevent Crash on DynamicHeapAllocator::Deallocate when changing SpriteShapeController splineDetail value through Script to 1
+- DANB-545 Fix rendering artefacts when using Variant Atlas for SpriteShape
+
 ## [10.0.2] - 2023-08-15
 ### Fixed
 - UUM-41920 Fill tessellation doesn't work and Warnings logged for Closed 2D Shapes when C# Job is used

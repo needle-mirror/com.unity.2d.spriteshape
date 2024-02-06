@@ -10,18 +10,18 @@ namespace SpriteShapeExtras
     // Please add this Component to Camera or some top level object on each loadable scene.
     public class GenerateSpriteShapes : MonoBehaviour
     {
-    
+
         // Once all SpriteShapes are rendered, remove this Component if On or remove it from elsewhere.
         public bool destroyOnCompletion = true;
-    
+
         void OnGUI()
         {
-            
-            // Loop all invisible SpriteShapeRenderers and generate geometry. 
-            SpriteShapeRenderer[] spriteShapeRenderers = (SpriteShapeRenderer[]) GameObject.FindObjectsOfType (typeof(SpriteShapeRenderer));
+
+            // Loop all invisible SpriteShapeRenderers and generate geometry.
+            SpriteShapeRenderer[] spriteShapeRenderers = (SpriteShapeRenderer[])GameObject.FindObjectsByType<SpriteShapeRenderer>(FindObjectsSortMode.None);
             CommandBuffer rc = new CommandBuffer();
             rc.GetTemporaryRT(0, 256, 256, 0);
-            rc.SetRenderTarget(0);        
+            rc.SetRenderTarget(0);
             foreach (var spriteShapeRenderer in spriteShapeRenderers)
             {
                 var spriteShapeController = spriteShapeRenderer.gameObject.GetComponent<SpriteShapeController>();
@@ -37,13 +37,13 @@ namespace SpriteShapeExtras
             }
             rc.ReleaseTemporaryRT(0);
             Graphics.ExecuteCommandBuffer(rc);
-            
+
             // SpriteShape Renderers are generated. This component is no longer needed. Delete this [or] remove this Component from elsewhere.
             if (destroyOnCompletion)
                 Destroy(this);
-            
+
         }
-        
+
     }
 
 }
