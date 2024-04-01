@@ -1,5 +1,9 @@
 # Changelog
 
+## [10.0.4] - 2024-04-01
+### Changed
+- Updated the Editor Analytics to use the latest APIs.
+
 ## [10.0.3] - 2024-02-06
 ### Fixed
 - DANB-316 Update obsolete API usage.

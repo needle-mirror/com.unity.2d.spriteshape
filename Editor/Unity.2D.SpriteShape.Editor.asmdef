@@ -17,6 +17,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "2023.2.0a22",
+            "define": "USE_NEW_EDITOR_ANALYTICS"
+        }
+    ],
     "noEngineReferences": false
 }

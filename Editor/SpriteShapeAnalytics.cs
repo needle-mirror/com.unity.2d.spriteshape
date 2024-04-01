@@ -7,17 +7,18 @@ using UnityEngine.Events;
 
 namespace UnityEditor.U2D
 {
-
     internal class SpriteShapeAnalyticsEvents
     {
         public class SpriteShapeEvent : UnityEvent<UnityEngine.U2D.SpriteShape> { }
+
         public class SpriteShapeRendererEvent : UnityEvent<SpriteShapeRenderer> { }
 
         private SpriteShapeEvent m_SpriteShape = new SpriteShapeEvent();
         private SpriteShapeRendererEvent m_SpriteShapeRenderer = new SpriteShapeRendererEvent();
 
-        public virtual SpriteShapeEvent spriteShapeEvent { get { return m_SpriteShape; } }
-        public virtual SpriteShapeRendererEvent spriteShapeRendererEvent { get { return m_SpriteShapeRenderer; } }
+        public virtual SpriteShapeEvent spriteShapeEvent => m_SpriteShape;
+
+        public virtual SpriteShapeRendererEvent spriteShapeRendererEvent => m_SpriteShapeRenderer;
     }
 
     [Serializable]
@@ -29,12 +30,41 @@ namespace UnityEditor.U2D
 
     [Serializable]
     struct SpriteShapeAnalyticsEvent
+#if USE_NEW_EDITOR_ANALYTICS
+        : IAnalytic.IData
+#endif
     {
+        public const string name = "u2dSpriteShapeToolUsage";
+
         [SerializeField]
         public SpriteShapeAnalyticsEventType sub_type;
         [SerializeField]
         public string data;
     }
+
+#if USE_NEW_EDITOR_ANALYTICS
+    [AnalyticInfo(eventName: SpriteShapeAnalyticsEvent.name,
+        vendorKey: SpriteShapeUnityAnalyticsStorage.vendorKey,
+        version: SpriteShapeUnityAnalyticsStorage.version,
+        maxEventsPerHour: SpriteShapeAnalyticConstant.k_MaxEventsPerHour,
+        maxNumberOfElements: SpriteShapeAnalyticConstant.k_MaxNumberOfElements)]
+    internal class SpriteShapeAnalyticsEventAnalytic : IAnalytic
+    {
+        SpriteShapeAnalyticsEvent m_EvtData;
+
+        public SpriteShapeAnalyticsEventAnalytic(SpriteShapeAnalyticsEvent evtData)
+        {
+            m_EvtData = evtData;
+        }
+
+        public bool TryGatherData(out IAnalytic.IData data, out Exception error)
+        {
+            data = m_EvtData;
+            error = null;
+            return true;
+        }
+    }
+#endif
 
     internal interface ISpriteShapeAnalyticsStorage
     {
@@ -78,7 +108,7 @@ namespace UnityEditor.U2D
             eventBus.spriteShapeEvent.RemoveListener(OnSpriteShapeCreated);
             eventBus.spriteShapeRendererEvent.RemoveListener(OnSpriteShapeRendererCreated);
             m_AnalyticsStorage.Dispose();
-        }        
+        }
 
         void OnSpriteShapeCreated(UnityEngine.U2D.SpriteShape shape)
         {
@@ -149,20 +179,25 @@ namespace UnityEditor.U2D
     [InitializeOnLoad]
     internal class SpriteShapeUnityAnalyticsStorage : ISpriteShapeAnalyticsStorage
     {
-        const string k_VendorKey = "unity.2d.spriteshape";
-        const int k_Version = 1;
+        public const string vendorKey = "unity.2d.spriteshape";
+        public const int version = 1;
 
         public SpriteShapeUnityAnalyticsStorage()
         {
-            EditorAnalytics.RegisterEventWithLimit("u2dSpriteShapeToolUsage", SpriteShapeAnalyticConstant.k_MaxEventsPerHour, SpriteShapeAnalyticConstant.k_MaxNumberOfElements, k_VendorKey, k_Version);
+#if !USE_NEW_EDITOR_ANALYTICS
+            EditorAnalytics.RegisterEventWithLimit(SpriteShapeAnalyticsEvent.name, SpriteShapeAnalyticConstant.k_MaxEventsPerHour, SpriteShapeAnalyticConstant.k_MaxNumberOfElements, vendorKey, version);
+#endif
         }
 
         public AnalyticsResult SendUsageEvent(SpriteShapeAnalyticsEvent evt)
         {
-            return EditorAnalytics.SendEventWithLimit("u2dSpriteShapeToolUsage", evt, k_Version);
+#if USE_NEW_EDITOR_ANALYTICS
+            return EditorAnalytics.SendAnalytic(new SpriteShapeAnalyticsEventAnalytic(evt));
+#else
+            return EditorAnalytics.SendEventWithLimit(SpriteShapeAnalyticsEvent.name, evt, version);
+#endif
         }
 
         public void Dispose() { }
     }
-
 }
