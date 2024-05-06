@@ -1,5 +1,9 @@
 # Changelog
 
+## [10.0.5] - 2024-05-06
+### Fixed
+- DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
+
 ## [10.0.4] - 2024-04-01
 ### Changed
 - Updated the Editor Analytics to use the latest APIs.

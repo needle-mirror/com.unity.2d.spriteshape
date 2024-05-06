@@ -1480,7 +1480,7 @@ namespace UnityEngine.U2D
             int expectedCount = outputCount + (cms * 4);
             var sprite = vertices[0].sprite;
 
-            if (expectedCount >= outputVertices.Length)
+            if (expectedCount >= outputVertices.MaxSize)
             {
                 SetResult(SpriteShapeGeneratorResult.ErrorVertexLimitReached);
                 Debug.Log($"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
