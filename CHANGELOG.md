@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.0.3] - 2024-05-06
+### Fixed
+- DANB-555  Fix Crash on DynamicHeapAllocator::Deallocate when changing SpriteShapeController splineDetail value through Script to 1
+
 ## [9.0.2] - 2023-02-27
 ### Fixed
 - DANB-328  Fix case where BezierUtility.BezierPoint function parameters are not in the right order

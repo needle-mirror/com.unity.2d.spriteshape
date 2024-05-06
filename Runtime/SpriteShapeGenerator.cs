@@ -1182,7 +1182,7 @@ namespace UnityEngine.U2D
 
         [BurstCompile]
         // Tess
-        static unsafe void UTessellator(ref SpriteShapeSegment geom, float2* tessPoints, int tessPointCount, ushort* indices, ref int iCount, byte* vertices, int stride, ref int vCount, Unity.Collections.Allocator label)
+        static unsafe void UTessellator(ref SpriteShapeSegment geom, int maxCount, float2* tessPoints, int tessPointCount, ushort* indices, ref int iCount, byte* vertices, int stride, ref int vCount, Unity.Collections.Allocator label)
         {
             NativeArray<int2> edges = new NativeArray<int2>(tessPointCount - 1, label);
             NativeArray<float2> points = new NativeArray<float2>(tessPointCount - 1, label);
@@ -1206,6 +1206,8 @@ namespace UnityEngine.U2D
             NativeArray<int> oi = new NativeArray<int>(tessPointCount * 4, label);
             NativeArray<int2> oe = new NativeArray<int2>(tessPointCount * 4, label);
             UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, in points, in edges, ref ov, out var ovc, ref oi, out var oic, ref oe, out var oec);
+            ovc = ovc < maxCount ? ovc : maxCount;
+            oic = oic < maxCount ? oic : maxCount;
 
             if (oic > 0)
             {
@@ -1238,7 +1240,7 @@ namespace UnityEngine.U2D
             {
                 unsafe
                 {
-                    UTessellator(ref geom, (float2*)m_TessPoints.GetUnsafePtr(), m_TessPointCount, (ushort*)m_IndexArray.GetUnsafePtr(), ref m_IndexDataCount, (byte*)m_PosArray.GetUnsafePtr(), m_PosArray.Stride, ref m_VertexDataCount, label);
+                    UTessellator(ref geom, kMaxArrayCount, (float2*)m_TessPoints.GetUnsafePtr(), m_TessPointCount, (ushort*)m_IndexArray.GetUnsafePtr(), ref m_IndexDataCount, (byte*)m_PosArray.GetUnsafePtr(), m_PosArray.Stride, ref m_VertexDataCount, label);
                 }
 
                 if (m_IndexDataCount == 0 || m_VertexDataCount == 0)

@@ -822,7 +822,7 @@ namespace UnityEngine.U2D
             // Approximate vertex Array Count. Include Corners and Wide Sprites into account.
             float smallestSegment = smallestWidth;
             float shapeLength = BezierUtility.BezierLength(shapePoints, splineDetail, ref smallestSegment) * 4.0f;
-            int adjustShape = shapePoints.Length * 4 * splineDetail;
+            int adjustShape = shapePoints.Length * 5 * splineDetail;
             int adjustWidth = hasSprites ? ((int)(shapeLength / smallestSegment) * splineDetail) + adjustShape : 0;
             adjustShape = optimizeGeometry ? (adjustShape) : (adjustShape * 2);
             adjustShape = ValidateSpriteShapeTexture() ? adjustShape : 0;
