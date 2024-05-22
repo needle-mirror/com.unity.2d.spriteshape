@@ -1,5 +1,9 @@
 # Changelog
 
+## [10.0.6] - 2024-05-22
+### Changed
+- Update Spriteshape package to 2D Common package 9.0.5 dependency.
+
 ## [10.0.5] - 2024-05-06
 ### Fixed
 - DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
