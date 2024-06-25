@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.0.4] - 2024-06-25
+- ### Fixed
+- DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
+
 ## [9.0.3] - 2024-05-06
 ### Fixed
 - DANB-555  Fix Crash on DynamicHeapAllocator::Deallocate when changing SpriteShapeController splineDetail value through Script to 1
