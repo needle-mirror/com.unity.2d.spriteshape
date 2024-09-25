@@ -20,7 +20,7 @@ namespace UnityEngine.U2D
         /// <param name="tangents">Tangent of vertices in generated geometry. </param>
         /// <param name="segments">Submeshes in generated geometry. </param>
         /// <param name="colliderData">Points that define the path of Collider. </param>
-        /// <returns></returns>
+        /// <returns>JobHandle for the allocated Job to modify Geometry.</returns>
         public abstract JobHandle MakeModifierJob(JobHandle generator, SpriteShapeController spriteShapeController, NativeArray<ushort> indices,
             NativeSlice<Vector3> positions, NativeSlice<Vector2> texCoords, NativeSlice<Vector4> tangents,
             NativeArray<SpriteShapeSegment> segments, NativeArray<float2> colliderData);
@@ -29,7 +29,7 @@ namespace UnityEngine.U2D
         /// <summary>
         /// Get Versioning so we can check if geometry needs to be generated.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>Version of Modifier.</returns>
         public virtual int GetVersion() => GetInstanceID();
     }
 };

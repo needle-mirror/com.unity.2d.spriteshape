@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.0.5] - 2024-09-25
+### Fixed
+- DANB-730 "System.IndexOutOfRangeException" is thrown when increasing Sprite Shape Mesh size beyond limits
+
 ## [9.0.4] - 2024-06-25
 - ### Fixed
 - DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
