@@ -1671,6 +1671,17 @@ namespace UnityEngine.U2D
             return (a * (1 - mu2) + b * mu2);
         }
 
+        bool AddVertex(ref Array<JobShapeVertex> array, ref int indexCount, JobShapeVertex vertex)
+        {
+            if (indexCount + 1 < array.MaxSize)
+            {
+                array[indexCount] = vertex;
+                indexCount++;
+                return true;
+            }
+            return false;
+        }
+        
         void TessellateSegments()
         {
 
@@ -1695,6 +1706,7 @@ namespace UnityEngine.U2D
                 JobShapeVertex isv = new JobShapeVertex();
                 JobSpriteInfo ispr = GetSpriteInfo(isi.sgInfo.z);
 
+                bool vertexLimit = true;
                 int vertexCount = 0;
                 int sprIx = isi.sgInfo.z;
                 float rpunits = 1.0f / ispr.metaInfo.x;
@@ -1747,7 +1759,7 @@ namespace UnityEngine.U2D
                     isv.pos = v1 + (math.normalize(v1 - v2) * border.x);
                     isv.meta.x = icp.ptData.x;
                     isv.sprite.x = sprIx;
-                    segVertexData[vertexCount++] = isv;
+                    vertexLimit = AddVertex(ref segVertexData, ref vertexCount, isv);
                 }
 
                 // Generate the Strip.
@@ -1784,9 +1796,11 @@ namespace UnityEngine.U2D
                         }
 
                         if (addtail)
-                            segVertexData[vertexCount++] = isv;
+                        {
+                            vertexLimit = AddVertex(ref segVertexData, ref vertexCount, isv);
+                        }
 
-                        while (sl > pxlWidth)
+                        while (sl > pxlWidth && vertexLimit)
                         {
                             float _uv = pxlWidth - extendUV;
                             float2 uv = new float2(_uv);
@@ -1797,7 +1811,7 @@ namespace UnityEngine.U2D
                             isv.meta.x = InterpolateLinear(sh, eh, hl / al);
                             isv.sprite.x = sprIx;
                             if (math.any(segVertexData[vertexCount - 1].pos - isv.pos))
-                                segVertexData[vertexCount++] = isv;
+                                vertexLimit = AddVertex(ref segVertexData, ref vertexCount, isv);
 
                             sl = sl - pxlWidth;
                             sp = ip;
@@ -1817,7 +1831,7 @@ namespace UnityEngine.U2D
                     isv.pos = ecp.position;
                     isv.meta.x = ecp.ptData.x;
                     isv.sprite.x = sprIx;
-                    segVertexData[vertexCount++] = isv;
+                    vertexLimit = AddVertex(ref segVertexData, ref vertexCount, isv);
                 }
 
                 // Generate Tail
@@ -1829,9 +1843,17 @@ namespace UnityEngine.U2D
                     isv.pos = v1 + (math.normalize(v1 - v2) * border.z);
                     isv.meta.x = icp.ptData.x;
                     isv.sprite.x = sprIx;
-                    segVertexData[vertexCount++] = isv;
+                    vertexLimit = AddVertex(ref segVertexData, ref vertexCount, isv);
                 }
 
+                // Check for any invalid Sizes.
+                if (!vertexLimit)
+                {
+                    SetResult(SpriteShapeGeneratorResult.ErrorVertexLimitReached);
+                    Debug.Log($"Mesh data has reached Limits. Please try dividing shape into smaller blocks.");
+                    return;
+                }                
+                
                 // Generate the Renderer Data.
                 int outputCount = 0;
                 TessellateSegment(i, ispr, isi, whsize, border, pxlWidth, ref segVertexData, vertexCount, useClosure, validHead, validTail, firstSegment, finalSegment, ref segOutputData, ref outputCount);

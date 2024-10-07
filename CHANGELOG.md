@@ -1,5 +1,9 @@
 # Changelog
 
+## [10.0.7] - 2024-10-07
+### Fixed
+- DANB-731 "System.IndexOutOfRangeException" is thrown when increasing Sprite Shape Mesh size beyond limits
+
 ## [10.0.6] - 2024-05-22
 ### Changed
 - Update Spriteshape package to 2D Common package 9.0.5 dependency.

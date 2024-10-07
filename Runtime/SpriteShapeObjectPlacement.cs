@@ -7,12 +7,16 @@ namespace UnityEngine.U2D
 
     /// <summary>
     /// SpriteShape Object placement Modes.
-    /// Auto : Allows editing the transform of the Object while keeping it on the surface of the spline.
-    /// Manual : Allows mo0vement strictly with the Ratio and Start, End points.
     /// </summary>
     public enum SpriteShapeObjectPlacementMode
     {
+        /// <summary>
+        /// Allows editing the transform of the Object while keeping it on the surface of the spline.
+        /// </summary>
         Auto,
+        /// <summary>
+        /// Allows movement strictly with the Ratio and Start, End points.
+        /// </summary>
         Manual
     };
 

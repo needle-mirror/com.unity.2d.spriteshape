@@ -84,7 +84,7 @@ namespace UnityEngine.U2D
         /// </summary>
         /// <param name="index">Index at which a control point will be inserted.</param>
         /// <param name="point">Position of the control point.</param>
-        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentException">Index is not valid.</exception>
         public void InsertPointAt(int index, Vector3 point)
         {
             if (!IsPositionValid(index, index, point))
@@ -106,7 +106,7 @@ namespace UnityEngine.U2D
         /// Get position of control point at index.
         /// </summary>
         /// <param name="index">Index of control point.</param>
-        /// <returns></returns>
+        /// <returns>Position at the specifiedx Index.</returns>
         public Vector3 GetPosition(int index)
         {
             return m_ControlPoints[index].position;
@@ -117,7 +117,7 @@ namespace UnityEngine.U2D
         /// </summary>
         /// <param name="index">Index of control point.</param>
         /// <param name="point">Position of control point.</param>
-        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ArgumentException">Index is not valid.</exception>
         public void SetPosition(int index, Vector3 point)
         {
             if (!IsPositionValid(index, index + 1, point))

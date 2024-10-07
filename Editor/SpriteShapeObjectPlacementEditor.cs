@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.U2D;
 
+/// <summary>
+/// Inspector for SpriteShapeObjectPlacement Component.
+/// </summary>
 [CustomEditor(typeof(SpriteShapeObjectPlacement))]
 [CanEditMultipleObjects]
 public class SpriteShapeObjectPlacementEditor : Editor
@@ -26,6 +29,9 @@ public class SpriteShapeObjectPlacementEditor : Editor
         m_ModeObject = serializedObject.FindProperty("m_Mode");
     }
 
+    /// <summary>
+    /// Handle On Inspector.
+    /// </summary>
     public override void OnInspectorGUI()
     {
         serializedObject.Update();
