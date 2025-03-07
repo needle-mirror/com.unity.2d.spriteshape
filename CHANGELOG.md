@@ -1,5 +1,9 @@
 # Changelog
 
+## [10.1.0] - 2025-03-07
+### Changed
+- Update minimum Unity version.
+
 ## [10.0.7] - 2024-10-07
 ### Fixed
 - DANB-731 "System.IndexOutOfRangeException" is thrown when increasing Sprite Shape Mesh size beyond limits
