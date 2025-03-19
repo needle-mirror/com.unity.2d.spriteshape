@@ -1,11 +1,19 @@
 # Changelog
 
+## [9.1.0] - 2025-03-19
+
+### Changed
+- Update Unity minimum version.
+
+### Fixed
+- DANB-422 Fix case where Sprite Shape is not filled when "Closed Sprite Shape" is enabled and "Detail" is set to "High Quality"
+
 ## [9.0.5] - 2024-09-25
 ### Fixed
 - DANB-730 "System.IndexOutOfRangeException" is thrown when increasing Sprite Shape Mesh size beyond limits
 
 ## [9.0.4] - 2024-06-25
-- ### Fixed
+### Fixed
 - DANB-604 Fix case where Spriteshape vertex array exceeds limit even though it has not reached 64K.
 
 ## [9.0.3] - 2024-05-06

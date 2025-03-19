@@ -1205,7 +1205,7 @@ namespace UnityEngine.U2D
             NativeArray<float2> ov = new NativeArray<float2>(tessPointCount * 4, label);
             NativeArray<int> oi = new NativeArray<int>(tessPointCount * 4, label);
             NativeArray<int2> oe = new NativeArray<int2>(tessPointCount * 4, label);
-            UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, in points, in edges, ref ov, out var ovc, ref oi, out var oic, ref oe, out var oec);
+            UnityEngine.U2D.Common.UTess.ModuleHandle.Tessellate(label, in points, in edges, ref ov, out var ovc, ref oi, out var oic, ref oe, out var oec, false);
             ovc = ovc < maxCount ? ovc : maxCount;
             oic = oic < maxCount ? oic : maxCount;
 
