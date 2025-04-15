@@ -1,5 +1,12 @@
 # Changelog
 
+## [7.1.0] - 2025-04-15
+### Fixed
+- DANB-422 Fix case where Sprite Shape is not filled when "Closed Sprite Shape" is enabled and "Detail" is set to "High Quality"
+
+### Changed
+- Update Unity minimum version.
+
 ## [7.0.7] - 2023-02-27
 ### Fixed
 - DANB-283  Fix case where BezierUtility.BezierPoint function parameters are not in the right order
