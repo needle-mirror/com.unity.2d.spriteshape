@@ -1,5 +1,9 @@
 # Changelog
 
+## [11.0.0] - 2025-05-13
+### Changed
+- Update minimum Unity version.
+
 ## [10.1.0] - 2025-03-07
 ### Changed
 - Update minimum Unity version.
@@ -104,7 +108,7 @@
 - Add actionable console log when encounter vertex count limit exception
 - Improved estimation of vertices required for geometry to minimize memory alloction.
 - Added user preferences for Controlpoint/Tangent/Spline color.
-- Added support for Global Grid Snapping. 
+- Added support for Global Grid Snapping.
 
 ### Changed
 - Remove dependency to path package
@@ -152,7 +156,7 @@
 ### Fixed
 - 1294930 Exception thrown continuously on creating Range in the preset of Sprite Shape when Undo/Redo operation is performed earlier
 - 1303998 Enabling Fill Tessellation on controller and setting the profile's fill offset to negative causes errors
-- 1293760 Sprite Shape generates Edge Colliders with deformed corners     
+- 1293760 Sprite Shape generates Edge Colliders with deformed corners
 - 1305867 Sprite shape edge collider has a gap at end point if optimise collider is disabled
 - 1286378 Sprite Shape incorrect normal generation
 
@@ -169,7 +173,7 @@
 ## [6.0.0-pre.1] - 2020-10-30
 ### Changed
 - Version bump for Unity 2021.1
-- Height is interpolated linearly between control points that are both linear and smoothly if otherwise.  
+- Height is interpolated linearly between control points that are both linear and smoothly if otherwise.
 
 ## [5.1.0] - 2020-09-24
 ### Added

@@ -4,10 +4,7 @@ The __Sprite Shape Controller__ component is automatically attached to the GameO
 
 ## Property Settings - Default
 
-The default component settings below are displayed when Edit Spline is not enabled.
-
-![Sprite Shape Controller property settings](images/SpriteShapeController_propUpdate.png)
-
+The default component settings below are displayed when **Edit Spline** is not enabled.
 
 | __Property__                                                 | __Function__                                                 |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |

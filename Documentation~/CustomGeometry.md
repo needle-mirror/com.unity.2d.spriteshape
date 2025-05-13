@@ -1,7 +1,4 @@
 # Generating Custom Geometry
-
-![](images/2D_SpriteShape_CustomGeometry.png)<br/>
-
 The **Custom Geometry** feature is found in the [Sprite Shape Controller](SSController.md). It allows you to use a custom script to generate or modify Sprite Shape geometry. The custom script is written as a [ScriptableObject](https://docs.unity3d.com/Manual/class-ScriptableObject.html) and is reusable.
 
 ## API Examples

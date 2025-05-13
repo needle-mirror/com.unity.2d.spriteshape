@@ -1,14 +1,12 @@
 # Fill Tessellation (C# Job)
 
-![](images/spriteshape-filltess-example.png)<br/>Example of a Sprite Shape: the blue area is the inner fill geometry, while the green area is the edge geometry.
+![Example of a Sprite Shape in the Scene window. It shows a freeform shape with a blue interior framed by green tiled edge geometry.](images/spriteshape-filltess-example.png)<br/>Example of a Sprite Shape: the blue area is the inner fill geometry, while the green area is the edge geometry.
 
 The geometry of a Sprite Shape is made up of its outer edge (for both [Open](SSProfile.md#open-shape) and [Closed Shapes](SSProfile.md#closed-shape) and its inner fill (only for Closed Shapes). Both edge and fill geometry are always generated in a [C# Job](https://docs.unity3d.com/Manual/JobSystemOverview.html) which provides performance benefits and avoids potential performance loss from garbage collection (refer to [Understanding Automatic Memory Management](https://docs.unity3d.com/Manual/UnderstandingAutomaticMemoryManagement.html) for more information). Running C# Job also gains additional performance if the [Burst](https://docs.unity3d.com/Packages/com.unity.burst@latest) package is installed in the same Project.
 
 If **Fill Tessellation (C# Job)** is disabled, the fill geometry is generated in the main thread using [LibNess.NET](https://github.com/speps/LibTessDotNet) instead (see [What is multithreading?](https://docs.unity3d.com/Manual/JobSystemMultithreading.html) for more information).
 
 ## Requirements
-![](images/spriteshape-filltess-option.png)<br/>The **Fill Tessellation (C# Job)** option in the Sprite Shape Controller Inspector window
-
 To enable **Fill Tessellation (C# Job)**, select a Sprite Shape and then select the  **Fill Tessellation (C# Job)** checkbox in its Inspector window; clear the checkbox to disable the feature. The Sprite Shape must also fulfill the following requirements for this feature to work:
 
 1. The Sprite Shape must not have any duplicate points or points that are too close to each other. Duplicate points can occur if you drag a point over another point.
