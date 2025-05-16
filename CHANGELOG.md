@@ -1,8 +1,9 @@
 # Changelog
 
-## [11.0.0] - 2025-05-13
+## [12.0.0] - 2025-05-16
 ### Changed
 - Update minimum Unity version.
+- Added support code for PolySpatial.
 
 ## [10.1.0] - 2025-03-07
 ### Changed

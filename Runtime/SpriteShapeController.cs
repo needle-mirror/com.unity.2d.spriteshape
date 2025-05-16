@@ -4,6 +4,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Profiling;
+using UnityEngine.U2D.Common;
 #if UNITY_EDITOR
 using UnityEditor.U2D;
 #endif
@@ -45,6 +46,7 @@ namespace UnityEngine.U2D
         bool m_DynamicOcclusionLocal;
         bool m_DynamicOcclusionOverriden;
         bool m_TessellationNeedsFallback = false;
+        bool m_WaitForBake = false;
 
         // Hash Check.
         int m_ActiveSplineHash = 0;
@@ -371,6 +373,16 @@ namespace UnityEngine.U2D
             }
         }
 
+        /// <summary>
+        /// Force the controller to wait for the bake job to complete. Normally
+        /// the controller just starts the job and returns immediately. Setting this
+        /// to true will for the job to complete before returning, impacting performance.
+        /// </summary>
+        public bool WaitForBake
+        {
+            get => m_WaitForBake;
+            set => m_WaitForBake = value;
+        }
 #endregion
 
 #region EventHandles.
@@ -604,7 +616,6 @@ namespace UnityEngine.U2D
             }
             return false;
         }
-
         void OnBecameInvisible()
         {
             InitBounds();
@@ -617,7 +628,9 @@ namespace UnityEngine.U2D
 
         void OnWillRenderObject()
         {
-            BakeMesh();
+            var jh = BakeMesh();
+            if (m_WaitForBake)
+                jh.Complete();
         }
 
         /// <summary>
@@ -900,7 +913,12 @@ namespace UnityEngine.U2D
             {
                 if (spriteShapeGeometryCache)
                     if (spriteShapeGeometryCache.maxArrayCount != 0)
+                    {
+#if ENABLE_SPRITESHAPE_POLYSPATIAL_SERIALIZATION
+                        InternalEngineBridge.MarkDirty(this);
+#endif
                         return spriteShapeGeometryCache.Upload(spriteShapeRenderer, this);
+                    }
             }
             maxArrayCount = spriteShapeCreator.GetVertexArrayCount(this);
 
@@ -952,6 +970,9 @@ namespace UnityEngine.U2D
 #endif
 
                 JobHandle.ScheduleBatchedJobs();
+#if ENABLE_SPRITESHAPE_POLYSPATIAL_SERIALIZATION
+                InternalEngineBridge.MarkDirty(this);
+#endif
             }
 
             if (m_DynamicOcclusionOverriden)
