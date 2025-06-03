@@ -1,5 +1,9 @@
 # Changelog
 
+## [9.1.1] - 2025-06-03
+### Fixed
+- DANB-243 Fix case where Sprite Shape is invisible when spawned at runtime
+
 ## [9.1.0] - 2025-03-19
 
 ### Changed

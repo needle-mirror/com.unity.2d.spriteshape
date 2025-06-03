@@ -419,6 +419,7 @@ namespace UnityEngine.U2D
                 Bounds bounds = new Bounds(spline.GetPosition(0), Vector3.zero);
                 for (int i = 1; i < pointCount; ++i)
                     bounds.Encapsulate(spline.GetPosition(i));
+                bounds.size = bounds.size * 2.0f;
                 bounds.Encapsulate(spriteShapeRenderer.localBounds);
                 spriteShapeRenderer.SetLocalAABB(bounds);
                 return bounds;
@@ -426,6 +427,11 @@ namespace UnityEngine.U2D
             return new Bounds();
         }
 
+        void OnBecameInvisible()
+        {
+            InitBounds();
+        }
+        
         /// <summary>
         /// Refresh SpriteShape Hash so its force generated again on the next frame if its visible.
         /// </summary>
