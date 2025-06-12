@@ -1,5 +1,9 @@
 # Changelog
 
+## [12.0.1] - 2025-06-12
+### Added
+- UUM-104210 Added option to disable Auto-Update which avoids runtime cost to check for Changes.
+
 ## [12.0.0] - 2025-05-16
 ### Changed
 - Update minimum Unity version.

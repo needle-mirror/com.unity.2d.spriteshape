@@ -46,6 +46,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent cornerThresholdDetail = new GUIContent("Corner Threshold", "Corner angle threshold below which corners wont be placed.");
             public static readonly GUIContent colliderOffset = new GUIContent("Offset", "Extrude collider distance.");
             public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider", "Update Collider as you edit SpriteShape");
+            public static readonly GUIContent updateGeometryLabel = new GUIContent("Update Geometry", "Update Geometry as you edit SpriteShape");
             public static readonly GUIContent shadowDetail = new GUIContent("Detail", "Tessellation Quality on the Shadow.");
             public static readonly GUIContent shadowOffset = new GUIContent("Offset", "Extrude shadow distance.");
             public static readonly GUIContent updateShadowLabel = new GUIContent("Update Shadow", "Update Shadow as you edit SpriteShape");
@@ -68,6 +69,7 @@ namespace UnityEditor.U2D
         private SerializedProperty m_FillPixelPerUnitProp;
         private SerializedProperty m_CornerAngleThresholdProp;
 
+        private SerializedProperty m_GeometryAutoUpdate;
         private SerializedProperty m_ColliderAutoUpdate;
         private SerializedProperty m_ColliderDetailProp;
         private SerializedProperty m_ColliderOffsetProp;
@@ -131,6 +133,7 @@ namespace UnityEditor.U2D
             m_FillPixelPerUnitProp = serializedObject.FindProperty("m_FillPixelPerUnit");
             m_CornerAngleThresholdProp = serializedObject.FindProperty("m_CornerAngleThreshold");
 
+            m_GeometryAutoUpdate = serializedObject.FindProperty("m_UpdateGeometry");
             m_ColliderAutoUpdate = serializedObject.FindProperty("m_UpdateCollider");
             m_ShadowAutoUpdate = serializedObject.FindProperty("m_UpdateShadow");
             m_ColliderDetailProp = serializedObject.FindProperty("m_ColliderDetail");
@@ -498,6 +501,7 @@ namespace UnityEditor.U2D
             DrawHeader(Contents.fillLabel);
             EditorGUILayout.PropertyField(m_UTess2DGeometryProp, Contents.uTess2DLabel);
             EditorGUILayout.PropertyField(m_StretchUVProp, Contents.stretchUVLabel);
+            EditorGUILayout.PropertyField(m_GeometryAutoUpdate, Contents.updateGeometryLabel);
 
             if (ShouldShowStretchOption())
             {

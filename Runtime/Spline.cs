@@ -9,8 +9,8 @@ namespace UnityEngine.U2D
         public float height;
         public uint spriteIndex;
         public int cornerMode;
-    };    
-    
+    };
+
     /// <summary>
     /// Spline contains control points used to define curve/outline for generating SpriteShape geometry.
     /// </summary>
@@ -23,6 +23,8 @@ namespace UnityEngine.U2D
         private bool m_IsOpenEnded;
         [SerializeField]
         private List<SplineControlPoint> m_ControlPoints = new List<SplineControlPoint>();
+        // Set/Get Changed on Runtime
+        private int m_DirtyIndex = 0;
 
         /// <summary>
         /// Get/Set Spline's shape to open ended or closed.
@@ -36,7 +38,11 @@ namespace UnityEngine.U2D
 
                 return m_IsOpenEnded;
             }
-            set { m_IsOpenEnded = value; }
+            set
+            {
+                m_IsOpenEnded = value;
+                m_DirtyIndex++;
+            }
         }
 
         private bool IsPositionValid(int index, int next, Vector3 point)
@@ -44,7 +50,7 @@ namespace UnityEngine.U2D
             int pointCount = GetPointCount();
             if (isOpenEnded && (index == 0 || index == pointCount))
                 return true;
-            
+
             int prev = (index == 0) ? (pointCount - 1) : (index - 1);
             if (prev >= 0)
             {
@@ -68,6 +74,7 @@ namespace UnityEngine.U2D
         public void Clear()
         {
             m_ControlPoints.Clear();
+            m_DirtyIndex++;
         }
 
         /// <summary>
@@ -90,6 +97,7 @@ namespace UnityEngine.U2D
             if (!IsPositionValid(index, index, point))
                 throw new ArgumentException(KErrorMessage);
             m_ControlPoints.Insert(index, new SplineControlPoint { position = point, height = 1.0f, cornerMode = Corner.Automatic });
+            m_DirtyIndex++;
         }
 
         /// <summary>
@@ -99,7 +107,10 @@ namespace UnityEngine.U2D
         public void RemovePointAt(int index)
         {
             if (m_ControlPoints.Count > 2)
+            {
                 m_ControlPoints.RemoveAt(index);
+                m_DirtyIndex++;
+            }
         }
 
         /// <summary>
@@ -125,6 +136,7 @@ namespace UnityEngine.U2D
             SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.position = point;
             m_ControlPoints[index] = newPoint;
+            m_DirtyIndex++;
         }
 
         /// <summary>
@@ -157,6 +169,7 @@ namespace UnityEngine.U2D
             SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.leftTangent = tangent;
             m_ControlPoints[index] = newPoint;
+            m_DirtyIndex++;
         }
 
         /// <summary>
@@ -189,6 +202,7 @@ namespace UnityEngine.U2D
             SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.rightTangent = tangent;
             m_ControlPoints[index] = newPoint;
+            m_DirtyIndex++;
         }
 
         /// <summary>
@@ -211,6 +225,7 @@ namespace UnityEngine.U2D
             SplineControlPoint newPoint = m_ControlPoints[index];
             newPoint.mode = mode;
             m_ControlPoints[index] = newPoint;
+            m_DirtyIndex++;
         }
 
         /// <summary>
@@ -231,6 +246,7 @@ namespace UnityEngine.U2D
         public void SetHeight(int index, float value)
         {
             m_ControlPoints[index].height = value;
+            m_DirtyIndex++;
         }
 
         /// <summary>
@@ -251,10 +267,11 @@ namespace UnityEngine.U2D
         public void SetSpriteIndex(int index, int value)
         {
             m_ControlPoints[index].spriteIndex = value;
+            m_DirtyIndex++;
         }
 
         /// <summary>
-        /// Test if a corner mode is enabled at control point.  
+        /// Test if a corner mode is enabled at control point.
         /// </summary>
         /// <param name="index">Index of control point.</param>
         /// <returns>True if a valid corner mode is set.</returns>
@@ -272,14 +289,16 @@ namespace UnityEngine.U2D
         {
             m_ControlPoints[index].corner = value;
             m_ControlPoints[index].cornerMode = value ? Corner.Automatic : Corner.Disable;
+            m_DirtyIndex++;
         }
 
         internal void SetCornerMode(int index, Corner value)
         {
             m_ControlPoints[index].corner = (value != Corner.Disable);
             m_ControlPoints[index].cornerMode = value;
+            m_DirtyIndex++;
         }
-        
+
         internal Corner GetCornerMode(int index)
         {
             if (m_ControlPoints[index].cornerMode == Corner.Disable)
@@ -292,6 +311,11 @@ namespace UnityEngine.U2D
                 }
             }
             return m_ControlPoints[index].cornerMode;
+        }
+
+        internal int GetChangeIndex()
+        {
+            return m_DirtyIndex;
         }
 
         /// <summary>
@@ -313,6 +337,6 @@ namespace UnityEngine.U2D
 
                 return hashCode;
             }
-        }        
+        }
     }
 }

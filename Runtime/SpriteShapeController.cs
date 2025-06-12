@@ -96,6 +96,8 @@ namespace UnityEngine.U2D
         float m_ShadowOffset = 0.5f;
         [SerializeField]
         float m_BoundsScale = 2.0f;
+        [SerializeField]
+        bool m_UpdateGeometry = true;
 
         [SerializeField]
         SpriteShapeGeometryCreator m_Creator;
@@ -383,6 +385,22 @@ namespace UnityEngine.U2D
             get => m_WaitForBake;
             set => m_WaitForBake = value;
         }
+
+        /// <summary>Auto update Geometry. If disabled, will not automatically generate geometry on changes</summary>
+        internal bool autoUpdateGeometry
+        {
+            get { return m_UpdateGeometry; }
+            set
+            {
+                if (value != m_UpdateGeometry)
+                {
+                    if (value == false)
+                        BakeMesh();
+                    m_UpdateGeometry = value;
+                }
+            }
+        }
+
 #endregion
 
 #region EventHandles.
@@ -479,7 +497,10 @@ namespace UnityEngine.U2D
                 spriteShapeRenderer.SetLocalAABB(bounds);
                 return bounds;
             }
-            return new Bounds();
+            // No Spline at all. Use reasonable default.
+            Bounds defaultBounds = new Bounds(gameObject.transform.position, Vector3.one);
+            spriteShapeRenderer.bounds = defaultBounds;
+            return defaultBounds;
         }
 
         /// <summary>
@@ -590,7 +611,12 @@ namespace UnityEngine.U2D
             unchecked
             {
                 // Spline.
-                int hashCode = (int)2166136261 ^ spline.GetHashCode();
+                int hashCode = (int)2166136261;
+#if UNITY_EDITOR
+                hashCode = hashCode * 16777619 ^ spline.GetHashCode();
+#else
+                hashCode = hashCode * 16777619 ^ spline.GetChangeIndex();
+#endif
 
                 // Local Stuff.
                 hashCode = hashCode * 16777619 ^ (m_UTess2D ? 1 : 0);
@@ -616,6 +642,7 @@ namespace UnityEngine.U2D
             }
             return false;
         }
+
         void OnBecameInvisible()
         {
             InitBounds();
@@ -628,9 +655,12 @@ namespace UnityEngine.U2D
 
         void OnWillRenderObject()
         {
-            var jh = BakeMesh();
-            if (m_WaitForBake)
-                jh.Complete();
+            if (autoUpdateGeometry || 0 == m_ActiveSplineHash)
+            {
+                var jh = BakeMesh();
+                if (m_WaitForBake)
+                    jh.Complete();
+            }
         }
 
         /// <summary>

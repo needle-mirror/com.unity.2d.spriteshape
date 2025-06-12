@@ -368,21 +368,21 @@ namespace UnityEditor.U2D.SpriteShapeInternal
             UnregisterShortcuts();
         }
 
-        [Shortcut("SpriteShape Editing/Cycle Tangent Mode", typeof(InternalEditorBridge.ShortcutContext), KeyCode.M)]
+        [Shortcut("Sprite Shape Editing/Cycle Tangent Mode", typeof(InternalEditorBridge.ShortcutContext), KeyCode.M)]
         private static void ShortcutCycleTangentMode(ShortcutArguments args)
         {
             if (args.context == m_ShortcutContext)
                 (m_ShortcutContext.context as SpriteShapeEditorTool).CycleTangentMode();
         }
 
-        [Shortcut("SpriteShape Editing/Cycle Variant", typeof(InternalEditorBridge.ShortcutContext), KeyCode.N)]
+        [Shortcut("Sprite Shape Editing/Cycle Variant", typeof(InternalEditorBridge.ShortcutContext), KeyCode.N)]
         private static void ShortcutCycleSpriteIndex(ShortcutArguments args)
         {
             if (args.context == m_ShortcutContext)
                 (m_ShortcutContext.context as SpriteShapeEditorTool).CycleSpriteIndex();
         }
 
-        [Shortcut("SpriteShape Editing/Mirror Tangent", typeof(InternalEditorBridge.ShortcutContext), KeyCode.B)]
+        [Shortcut("Sprite Shape Editing/Mirror Tangent", typeof(InternalEditorBridge.ShortcutContext), KeyCode.B)]
         private static void ShortcutCycleMirrorTangent(ShortcutArguments args)
         {
             if (args.context == m_ShortcutContext)
