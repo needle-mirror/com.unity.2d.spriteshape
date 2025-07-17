@@ -1,5 +1,15 @@
 # Changelog
 
+## [13.0.0] - 2025-07-17
+
+### Changed
+- Update minimum Unity version.
+- Updated Spriteshape extras to use new InputSystem.
+
+### Fixed
+- UUM-108688 Fix Sprite Shape Profile Asset icon which was low quality and blurry in Project window
+- Use EditorUtility.EntityIdToObject instead of EditorUtility.InstanceIDToObject which is deprecated. (DANB-1042)
+
 ## [12.0.1] - 2025-06-12
 ### Added
 - UUM-104210 Added option to disable Auto-Update which avoids runtime cost to check for Changes.

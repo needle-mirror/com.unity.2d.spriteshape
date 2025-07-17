@@ -11,7 +11,7 @@ namespace UnityEditor.U2D.SpriteShape
     {
         const int k_SpriteShapeAssetMenuPriority = 9;
         static internal Action<int, ProjectWindowCallback.EndNameEditAction, string, Texture2D, string> StartNewAssetNameEditingDelegate = ProjectWindowUtil.StartNameEditingIfProjectWindowExists;
-        
+
         [MenuItem("Assets/Create/2D/Sprite Shape Profile", priority = k_SpriteShapeAssetMenuPriority)]
         static void MenuItem_AssetsCreate2DSpriteShapeProfile(MenuCommand menuCommand)
         {
@@ -23,7 +23,7 @@ namespace UnityEditor.U2D.SpriteShape
             else
                 CreateAssetObject<UnityEngine.U2D.SpriteShape>(null);
         }
-        
+
         static public T CreateAssetObject<T>(T obj) where T : UnityEngine.Object
         {
             var assetSelectionPath = AssetDatabase.GetAssetPath(Selection.activeObject);
@@ -56,7 +56,7 @@ namespace UnityEditor.U2D.SpriteShape
             StartNewAssetNameEditing(resourceFile, destName, icon, instanceId);
             return Selection.activeObject as T;
         }
-        
+
         static private void StartNewAssetNameEditing(string source, string dest, Texture2D icon, int instanceId)
         {
             CreateAssetEndNameEditAction action = ScriptableObject.CreateInstance<CreateAssetEndNameEditAction>();
@@ -77,10 +77,10 @@ namespace UnityEditor.U2D.SpriteShape
                 }
                 else
                 {
-                    var obj = EditorUtility.InstanceIDToObject(instanceId);
+                    var obj = EditorUtility.EntityIdToObject(instanceId);
                     AssetDatabase.CreateAsset(obj, uniqueName);
                 }
-                
+
             }
         }
     }

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.U2D;
+using UnityEngine.InputSystem;
 
 // Dynamic modification of spline to follow the path of mouse movement.
 // This script is just a simplified demo to demonstrate the idea.
@@ -57,12 +58,12 @@ namespace SpriteShapeExtras
         // Update is called once per frame
         void Update()
         {
-            var mp = Input.mousePosition;
+            Vector3 mp = Mouse.current.position.value;
             mp.z = 10.0f;
             mp = Camera.main.ScreenToWorldPoint(mp);
             var dt = Mathf.Abs((mp - lastPosition).magnitude);
             var md = (minimumDistance > 1.0f) ? minimumDistance : 1.0f;
-            if (Input.GetMouseButton(0) && dt > md)
+            if (Mouse.current.leftButton.isPressed && dt > md)
             {
                 var spriteShapeController = gameObject.GetComponent<SpriteShapeController>();
                 var spline = spriteShapeController.spline;

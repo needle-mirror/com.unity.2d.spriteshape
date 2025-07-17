@@ -1,7 +1,7 @@
 {
   "name": "com.unity.2d.spriteshape",
-  "version": "12.0.1",
-  "unity": "6000.2",
+  "version": "13.0.0",
+  "unity": "6000.3",
   "displayName": "2D SpriteShape",
   "description": "SpriteShape Runtime & Editor Package contains the tooling and the runtime component that allows you to create very organic looking spline based 2D worlds. It comes with intuitive configurator and a highly performant renderer.",
   "keywords": [
@@ -15,7 +15,7 @@
   "category": "2D",
   "dependencies": {
     "com.unity.mathematics": "1.1.0",
-    "com.unity.2d.common": "11.0.1",
+    "com.unity.2d.common": "12.0.0",
     "com.unity.modules.physics2d": "1.0.0"
   },
   "samples": [
@@ -31,20 +31,20 @@
     }
   ],
   "relatedPackages": {
-    "com.unity.2d.spriteshape.tests": "12.0.1",
-    "com.unity.2d.common.tests": "11.0.1"
+    "com.unity.2d.spriteshape.tests": "13.0.0",
+    "com.unity.2d.common.tests": "12.0.0"
   },
-  "unityRelease": "0a10",
+  "unityRelease": "0a2",
   "_upm": {
-    "changelog": "### Added\n- UUM-104210 Added option to disable Auto-Update which avoids runtime cost to check for Changes."
+    "changelog": "### Changed\n- Update minimum Unity version.\n- Updated Spriteshape extras to use new InputSystem.\n\n### Fixed\n- UUM-108688 Fix Sprite Shape Profile Asset icon which was low quality and blurry in Project window\n- Use EditorUtility.EntityIdToObject instead of EditorUtility.InstanceIDToObject which is deprecated. (DANB-1042)"
   },
   "upmCi": {
-    "footprint": "046361cb0f594492f37cf8c597d5578ddd298a6a"
+    "footprint": "144a26c8b683e248b84fa5708539ca30d13052c5"
   },
-  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@12.0/manual/index.html",
+  "documentationUrl": "https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@13.0/manual/index.html",
   "repository": {
     "url": "https://github.cds.internal.unity3d.com/unity/2d.git",
     "type": "git",
-    "revision": "b0c25ab984f22def61409df195e4e0b210863e0d"
+    "revision": "1ef60d478f22a420064f300ba7c3b3d6d3536dc3"
   }
 }
