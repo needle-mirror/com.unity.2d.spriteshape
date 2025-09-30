@@ -102,7 +102,7 @@ namespace UnityEditor.U2D
             set
             {
                 m_PreviewAngle = value;
-                SessionState.SetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), value);
+                SessionState.SetFloat("SpriteShape/PreviewAngle/" + target.GetEntityId(), value);
             }
         }
 
@@ -139,7 +139,7 @@ namespace UnityEditor.U2D
             if (targets == null || targets.Length == 0)
                 return;
 
-            m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetInstanceID(), m_PreviewAngle);
+            m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetEntityId(), m_PreviewAngle);
 
             m_FillTextureProp = this.serializedObject.FindProperty("m_FillTexture");
             m_UseSpriteBordersProp = serializedObject.FindProperty("m_UseSpriteBorders");

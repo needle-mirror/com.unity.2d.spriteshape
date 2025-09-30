@@ -1,5 +1,9 @@
 # Changelog
 
+## [14.0.0] - 2025-09-30
+### Changed
+- Update Unity min version for package.
+
 ## [13.0.0] - 2025-07-17
 
 ### Changed

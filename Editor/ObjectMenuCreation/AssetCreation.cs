@@ -48,7 +48,7 @@ namespace UnityEditor.U2D.SpriteShape
             else
             {
                 obj = ObjectFactory.CreateInstance<T>();
-                instanceId = obj.GetInstanceID();
+                instanceId = obj.GetEntityId();
                 fileName = "Sprite Shape Profile.asset";
             }
             destName = AssetDatabase.GenerateUniqueAssetPath(System.IO.Path.Combine(path, fileName));

@@ -36,6 +36,6 @@ namespace UnityEngine.U2D
         /// Get Versioning so we can check if geometry needs to be generated.
         /// </summary>
         /// <returns>Version of Generator.</returns>
-        public virtual int GetVersion() => GetInstanceID();
+        public virtual int GetVersion() => GetEntityId();
     }
 };

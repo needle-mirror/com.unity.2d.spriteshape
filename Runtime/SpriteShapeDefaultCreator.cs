@@ -68,7 +68,7 @@ namespace UnityEngine.U2D
             int versionHash = 1;
             unchecked
             {
-                hashCode = (int)2166136261 ^ GetInstanceID();
+                hashCode = (int)2166136261 ^ GetEntityId();
                 hashCode = hashCode * 16777619 ^ versionHash;
             }
             return hashCode;
