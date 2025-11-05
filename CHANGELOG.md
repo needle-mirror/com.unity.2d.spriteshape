@@ -1,5 +1,9 @@
 # Changelog
 
+## [12.0.2] - 2025-11-05
+### Changed
+- Updated Spriteshape extras to use new InputSystem.
+
 ## [12.0.1] - 2025-06-12
 ### Added
 - UUM-104210 Added option to disable Auto-Update which avoids runtime cost to check for Changes.
