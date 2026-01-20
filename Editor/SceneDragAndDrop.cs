@@ -14,7 +14,7 @@ namespace UnityEditor.U2D
         {
 #if UNITY_2019_1_OR_NEWER
             SceneView.duringSceneGui += OnSceneGUI;
-            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
+            EditorApplication.hierarchyWindowItemByEntityIdOnGUI += OnHierarchyGUI;
 #else
             SceneView.onSceneGUIDelegate += OnSceneGUI;
 #endif
@@ -50,7 +50,7 @@ namespace UnityEditor.U2D
             return go;
         }
 
-        static void OnHierarchyGUI(int instanceID, Rect rect)
+        static void OnHierarchyGUI(EntityId entityId, Rect rect)
         {
             HandleSceneDrag(null, Event.current, DragAndDrop.objectReferences, null);
         }

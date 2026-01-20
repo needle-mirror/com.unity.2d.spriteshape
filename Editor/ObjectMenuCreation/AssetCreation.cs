@@ -10,7 +10,7 @@ namespace UnityEditor.U2D.SpriteShape
     internal static class AssetCreation
     {
         const int k_SpriteShapeAssetMenuPriority = 9;
-        static internal Action<int, ProjectWindowCallback.EndNameEditAction, string, Texture2D, string> StartNewAssetNameEditingDelegate = ProjectWindowUtil.StartNameEditingIfProjectWindowExists;
+        static internal Action<EntityId, ProjectWindowCallback.AssetCreationEndAction, string, Texture2D, string> StartNewAssetNameEditingDelegate = ProjectWindowUtil.StartNameEditingIfProjectWindowExists;
 
         [MenuItem("Assets/Create/2D/Sprite Shape Profile", priority = k_SpriteShapeAssetMenuPriority)]
         static void MenuItem_AssetsCreate2DSpriteShapeProfile(MenuCommand menuCommand)
@@ -38,7 +38,7 @@ namespace UnityEditor.U2D.SpriteShape
 
             string resourceFile = "";
             string destName = "";
-            int instanceId = 0;
+            EntityId entityId = default;
             string fileName = "";
             if (obj != null)
             {
@@ -48,36 +48,36 @@ namespace UnityEditor.U2D.SpriteShape
             else
             {
                 obj = ObjectFactory.CreateInstance<T>();
-                instanceId = obj.GetEntityId();
+                entityId = obj.GetEntityId();
                 fileName = "Sprite Shape Profile.asset";
             }
             destName = AssetDatabase.GenerateUniqueAssetPath(System.IO.Path.Combine(path, fileName));
             var icon = AssetPreview.GetMiniThumbnail(obj);
-            StartNewAssetNameEditing(resourceFile, destName, icon, instanceId);
+            StartNewAssetNameEditing(resourceFile, destName, icon, entityId);
             return Selection.activeObject as T;
         }
 
-        static private void StartNewAssetNameEditing(string source, string dest, Texture2D icon, int instanceId)
+        static private void StartNewAssetNameEditing(string source, string dest, Texture2D icon, EntityId entityId)
         {
             CreateAssetEndNameEditAction action = ScriptableObject.CreateInstance<CreateAssetEndNameEditAction>();
-            StartNewAssetNameEditingDelegate(instanceId, action, dest, icon, source);
+            StartNewAssetNameEditingDelegate(entityId, action, dest, icon, source);
         }
 
-        internal class CreateAssetEndNameEditAction : ProjectWindowCallback.EndNameEditAction
+        internal class CreateAssetEndNameEditAction : ProjectWindowCallback.AssetCreationEndAction
         {
-            public override void Action(int instanceId, string pathName, string resourceFile)
+            public override void Action(EntityId entityId, string pathName, string resourceFile)
             {
                 var uniqueName = AssetDatabase.GenerateUniqueAssetPath(pathName);
                 // ProjectWindowUtil.StartNameEditingIfProjectWindowExists(int instanceID, EndNameEditAction endAction, string pathName, Texture2D icon, string resourceFile)
                 // will reset the instanceId to Int32.MaxValue - 1 if its 0. Looks like a new trunk change ?
-                var validInstanceId = (instanceId != 0 && instanceId != InternalEditorBridge.GetAssetCreationInstanceID_ForNonExistingAssets());
+                var validInstanceId = (entityId != EntityId.None && entityId != InternalEditorBridge.GetAssetCreationInstanceID_ForNonExistingAssets());
                 if (!validInstanceId && !string.IsNullOrEmpty(resourceFile))
                 {
                     AssetDatabase.CopyAsset(resourceFile, uniqueName);
                 }
                 else
                 {
-                    var obj = EditorUtility.EntityIdToObject(instanceId);
+                    var obj = EditorUtility.EntityIdToObject(entityId);
                     AssetDatabase.CreateAsset(obj, uniqueName);
                 }
 
