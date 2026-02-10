@@ -32,7 +32,9 @@
 */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 
 namespace Unity.SpriteShape.External
 {
@@ -44,6 +46,12 @@ namespace LibTessDotNet
         internal MeshUtils.Vertex _vHead;
         internal MeshUtils.Face _fHead;
         internal MeshUtils.Edge _eHead, _eHeadSym;
+
+        [RuntimeInitializeOnLoadMethod]
+        static void InitializeStack()
+        {
+            _stack = new Stack<Mesh>();
+        }
 
         public Mesh()
         {
@@ -450,45 +458,45 @@ namespace LibTessDotNet
             {
                 e = f._anEdge;
                 do {
-                    Debug.Assert(e._Sym != e);
-                    Debug.Assert(e._Sym._Sym == e);
-                    Debug.Assert(e._Lnext._Onext._Sym == e);
-                    Debug.Assert(e._Onext._Sym._Lnext == e);
-                    Debug.Assert(e._Lface == f);
+                    UnityEngine.Debug.Assert(e._Sym != e);
+                    UnityEngine.Debug.Assert(e._Sym._Sym == e);
+                    UnityEngine.Debug.Assert(e._Lnext._Onext._Sym == e);
+                    UnityEngine.Debug.Assert(e._Onext._Sym._Lnext == e);
+                    UnityEngine.Debug.Assert(e._Lface == f);
                     e = e._Lnext;
                 } while (e != f._anEdge);
             }
-            Debug.Assert(f._prev == fPrev && f._anEdge == null);
+                UnityEngine.Debug.Assert(f._prev == fPrev && f._anEdge == null);
 
             MeshUtils.Vertex vPrev = _vHead, v;
             for (vPrev = _vHead; (v = vPrev._next) != _vHead; vPrev = v)
             {
-                Debug.Assert(v._prev == vPrev);
+                UnityEngine.Debug.Assert(v._prev == vPrev);
                 e = v._anEdge;
                 do
                 {
-                    Debug.Assert(e._Sym != e);
-                    Debug.Assert(e._Sym._Sym == e);
-                    Debug.Assert(e._Lnext._Onext._Sym == e);
-                    Debug.Assert(e._Onext._Sym._Lnext == e);
-                    Debug.Assert(e._Org == v);
+                    UnityEngine.Debug.Assert(e._Sym != e);
+                    UnityEngine.Debug.Assert(e._Sym._Sym == e);
+                    UnityEngine.Debug.Assert(e._Lnext._Onext._Sym == e);
+                    UnityEngine.Debug.Assert(e._Onext._Sym._Lnext == e);
+                    UnityEngine.Debug.Assert(e._Org == v);
                     e = e._Onext;
                 } while (e != v._anEdge);
             }
-            Debug.Assert(v._prev == vPrev && v._anEdge == null);
+            UnityEngine.Debug.Assert(v._prev == vPrev && v._anEdge == null);
 
             MeshUtils.Edge ePrev = _eHead;
             for (ePrev = _eHead; (e = ePrev._next) != _eHead; ePrev = e)
             {
-                Debug.Assert(e._Sym._next == ePrev._Sym);
-                Debug.Assert(e._Sym != e);
-                Debug.Assert(e._Sym._Sym == e);
-                Debug.Assert(e._Org != null);
-                Debug.Assert(e._Dst != null);
-                Debug.Assert(e._Lnext._Onext._Sym == e);
-                Debug.Assert(e._Onext._Sym._Lnext == e);
+                UnityEngine.Debug.Assert(e._Sym._next == ePrev._Sym);
+                UnityEngine.Debug.Assert(e._Sym != e);
+                UnityEngine.Debug.Assert(e._Sym._Sym == e);
+                UnityEngine.Debug.Assert(e._Org != null);
+                UnityEngine.Debug.Assert(e._Dst != null);
+                UnityEngine.Debug.Assert(e._Lnext._Onext._Sym == e);
+                UnityEngine.Debug.Assert(e._Onext._Sym._Lnext == e);
             }
-            Debug.Assert(e._Sym._next == ePrev._Sym
+            UnityEngine.Debug.Assert(e._Sym._next == ePrev._Sym
                 && e._Sym == _eHeadSym
                 && e._Sym._Sym == e
                 && e._Org == null && e._Dst == null

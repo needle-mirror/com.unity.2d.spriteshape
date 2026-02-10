@@ -1,8 +1,10 @@
 # Changelog
 
+## [15.0.1] - 2026-02-10
+### Fixed
+- Fix (Case UUM-131007) Ensure spriteshape supports Fast Enter Play Mode
+
 ## [15.0.0] - 2026-01-20
-
-
 ### Changed
 - Update Unity min version for package.
 

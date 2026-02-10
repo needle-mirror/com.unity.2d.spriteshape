@@ -98,7 +98,7 @@ Adjust which Sprite is displayed when two or more intersect by adjusting their _
 
 ### Continuous Mirrored Point Mode
 
-In __Continuous Mirrored Point Mode__, tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the angle between the tangents is always maintained at 180 degrees although their lengths from the can vary.
+In __Continuous Mirrored Point Mode__, tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the angle between the tangents is always maintained at 180 degrees although their lengths can vary.
 
 Press __B__ to mirror the length of the last edited tangent onto the opposite tangent.
 

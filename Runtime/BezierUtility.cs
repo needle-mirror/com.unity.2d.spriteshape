@@ -9,7 +9,6 @@ namespace UnityEngine.U2D
     /// </summary>
     public static class BezierUtility
     {
-        static Vector3[] s_TempPoints = new Vector3[3];
         
         /// <summary>
         /// Get the BezierPoint position between two control points.
@@ -129,6 +128,8 @@ namespace UnityEngine.U2D
 
         private static Vector3 ClosestPointOnCurveIterative(Vector3 point, Vector3 startPosition, Vector3 endPosition, Vector3 startTangent, Vector3 endTangent, float sqrError, ref float startT, ref float endT)
         {
+            NativeArray<Vector3> tempPoints = new NativeArray<Vector3>(3, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
             while ((startPosition - endPosition).sqrMagnitude > sqrError)
             {
                 Vector3 startToEnd = endPosition - startPosition;
@@ -159,17 +160,17 @@ namespace UnityEngine.U2D
                     out leftStartPosition, out leftEndPosition, out leftStartTangent, out leftEndTangent,
                     out rightStartPosition, out rightEndPosition, out rightStartTangent, out rightEndTangent);
 
-                s_TempPoints[0] = leftStartPosition;
-                s_TempPoints[1] = leftStartTangent;
-                s_TempPoints[2] = leftEndTangent;
+                tempPoints[0] = leftStartPosition;
+                tempPoints[1] = leftStartTangent;
+                tempPoints[2] = leftEndTangent;
 
-                float sqrDistanceLeft = SqrDistanceToPolyLine(point, s_TempPoints);
+                float sqrDistanceLeft = SqrDistanceToPolyLine(point, tempPoints);
 
-                s_TempPoints[0] = rightEndPosition;
-                s_TempPoints[1] = rightEndTangent;
-                s_TempPoints[2] = rightStartTangent;
+                tempPoints[0] = rightEndPosition;
+                tempPoints[1] = rightEndTangent;
+                tempPoints[2] = rightStartTangent;
 
-                float sqrDistanceRight = SqrDistanceToPolyLine(point, s_TempPoints);
+                float sqrDistanceRight = SqrDistanceToPolyLine(point, tempPoints);
 
                 if (sqrDistanceLeft < sqrDistanceRight)
                 {
@@ -242,7 +243,7 @@ namespace UnityEngine.U2D
             return segmentStart + segment * t;
         }
 
-        private static float SqrDistanceToPolyLine(Vector3 point, Vector3[] points)
+        private static float SqrDistanceToPolyLine(Vector3 point, NativeArray<Vector3> points)
         {
             float minDistance = float.MaxValue;
 

@@ -34,6 +34,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEngine;
 
 namespace Unity.SpriteShape.External
 {
@@ -87,7 +88,7 @@ namespace LibTessDotNet
         public static void Normalize(ref Vec3 v)
         {
             var len = v.X * v.X + v.Y * v.Y + v.Z * v.Z;
-            Debug.Assert(len >= 0.0f);
+            UnityEngine.Debug.Assert(len >= 0.0f);
             len = 1.0f / (Real)Math.Sqrt(len);
             v.X *= len;
             v.Y *= len;
@@ -112,34 +113,34 @@ namespace LibTessDotNet
     {
         public const int Undef = ~0;
 
-            public abstract class Pooled<T> where T : Pooled<T>, new()
+        public abstract class Pooled<T> where T : Pooled<T>, new()
+        {
+            internal static Stack<T> _stack;
+            public abstract void Reset();
+            public virtual void OnFree() { }
+
+            public static T Create()
             {
-                private static Stack<T> _stack;
-                public abstract void Reset();
-                public virtual void OnFree() { }
-
-                public static T Create()
+                if (_stack != null && _stack.Count > 0)
                 {
-                    if (_stack != null && _stack.Count > 0)
-                    {
-                        return _stack.Pop();
-                    }
-                    return new T();
+                    return _stack.Pop();
                 }
-
-                public void Free()
-                {
-                    OnFree();
-                    Reset();
-                    if (_stack == null)
-                    {
-                        _stack = new Stack<T>();
-                    }
-                    _stack.Push((T)this);
-                }
+                return new T();
             }
 
-            public class Vertex : Pooled<Vertex>
+            public void Free()
+            {
+                OnFree();
+                Reset();
+                if (_stack == null)
+                {
+                    _stack = new Stack<T>();
+                }
+                _stack.Push((T)this);
+            }
+        }
+
+        public class Vertex : Pooled<Vertex>
         {
             internal Vertex _prev, _next;
             internal Edge _anEdge;
@@ -149,6 +150,12 @@ namespace LibTessDotNet
             internal PQHandle _pqHandle;
             internal int _n;
             internal object _data;
+
+            [RuntimeInitializeOnLoadMethod]
+            static void InitializeStack()
+            {
+                _stack = new Stack<Vertex>();
+            }
 
             public override void Reset()
             {
@@ -171,6 +178,12 @@ namespace LibTessDotNet
             internal Face _trail;
             internal int _n;
             internal bool _marked, _inside;
+
+            [RuntimeInitializeOnLoadMethod]
+            static void InitializeStack()
+            {
+                _stack = new Stack<Face>();
+            }
 
             internal int VertsCount
             {
@@ -226,6 +239,12 @@ namespace LibTessDotNet
             internal Tess.ActiveRegion _activeRegion;
             internal int _winding;
 
+            [RuntimeInitializeOnLoadMethod]
+            static void InitializeStack()
+            {
+                _stack = new Stack<Edge>();
+            }
+
             internal Face _Rface { get { return _Sym._Lface; } set { _Sym._Lface = value; } }
             internal Vertex _Dst { get { return _Sym._Org; }  set { _Sym._Org = value; } }
 
@@ -262,7 +281,7 @@ namespace LibTessDotNet
         /// </summary>
         public static Edge MakeEdge(Edge eNext)
         {
-            Debug.Assert(eNext != null);
+            UnityEngine.Debug.Assert(eNext != null);
 
             var pair = EdgePair.Create();
             var e = pair._e;

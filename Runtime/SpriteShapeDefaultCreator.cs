@@ -45,15 +45,21 @@ namespace UnityEngine.U2D
 
         static SpriteShapeDefaultCreator creator;
 
+        [RuntimeInitializeOnLoadMethod]
+        static void InitializeCreator()
+        {
+            if (creator != null)
+                Object.DestroyImmediate(creator);
+            creator = ScriptableObject.CreateInstance<SpriteShapeDefaultCreator>();
+            creator.hideFlags = HideFlags.DontSave;
+        }
+
         internal static SpriteShapeDefaultCreator defaultInstance
         {
             get
             {
-                if (null == creator)
-                {
-                    creator = ScriptableObject.CreateInstance<SpriteShapeDefaultCreator>();
-                    creator.hideFlags = HideFlags.DontSave;
-                }
+                if (creator == null)
+                    InitializeCreator();
                 return creator;
             }
         }
