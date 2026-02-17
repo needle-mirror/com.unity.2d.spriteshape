@@ -1,5 +1,6 @@
 # Changelog
 
+## [15.0.2] - 2026-02-17
 ## [15.0.1] - 2026-02-10
 ### Fixed
 - Fix (Case UUM-131007) Ensure spriteshape supports Fast Enter Play Mode

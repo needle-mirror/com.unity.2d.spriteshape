@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor;
 
@@ -10,7 +10,7 @@ namespace UnityEditor.U2D
         {
             if (importedAssets.Length > 0)
             {
-                GameObject[] allGOs = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+                GameObject[] allGOs = UnityEngine.Object.FindObjectsByType<GameObject>();
                 foreach (GameObject go in allGOs)
                 {
                     if (!go.activeInHierarchy)
