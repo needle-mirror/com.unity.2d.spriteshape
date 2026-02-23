@@ -5,7 +5,7 @@ using Unity.Mathematics;
 namespace UnityEngine.U2D
 {
     /// <summary>
-    /// Custom Post Processing after geometry is generated. 
+    /// Custom Post Processing after geometry is generated.
     /// </summary>
     public abstract class SpriteShapeGeometryModifier : ScriptableObject
     {
@@ -30,6 +30,6 @@ namespace UnityEngine.U2D
         /// Get Versioning so we can check if geometry needs to be generated.
         /// </summary>
         /// <returns>Version of Modifier.</returns>
-        public virtual int GetVersion() => GetEntityId();
+        public virtual int GetVersion() => GetEntityId().GetHashCode();
     }
 };

@@ -1,5 +1,9 @@
 # Changelog
 
+## [14.0.1] - 2026-02-23
+### Changed
+ - Replace Entityid from InstanceID to eliminate implicit cast (DANB-1206)
+
 ## [14.0.0] - 2025-09-30
 ### Changed
 - Update Unity min version for package.

@@ -54,7 +54,7 @@ namespace UnityEngine.U2D
                     creator = ScriptableObject.CreateInstance<SpriteShapeDefaultCreator>();
                     creator.hideFlags = HideFlags.DontSave;
                 }
-                return creator;                
+                return creator;
             }
         }
 
@@ -64,11 +64,11 @@ namespace UnityEngine.U2D
         /// </summary>
         public override int GetVersion()
         {
-            int hashCode = 0;            
+            int hashCode = 0;
             int versionHash = 1;
             unchecked
             {
-                hashCode = (int)2166136261 ^ GetEntityId();
+                hashCode = (int)2166136261 ^ GetEntityId().GetHashCode();
                 hashCode = hashCode * 16777619 ^ versionHash;
             }
             return hashCode;
