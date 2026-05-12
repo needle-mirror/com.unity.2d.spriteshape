@@ -302,7 +302,7 @@ namespace UnityEngine.U2D
     /// <summary>
     /// SpriteShape contains the parameters that define how SpriteShape geometry is generated from a Spline.
     /// </summary>
-    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@latest/index.html?subfolder=/manual/SSProfile.html")]
+    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@15.0/manual/SSProfile.html")]
     public class SpriteShape : ScriptableObject
     {
         /// <summary>List of AngleRanges. </summary>

@@ -1,6 +1,13 @@
 # Changelog
 
+## [15.0.3] - 2026-05-12
+### Changed
+- Align online documentation URLs: package docs to @15.0; Unity Manual/Script Reference links to Unity 6000.5.
+
 ## [15.0.2] - 2026-02-17
+### Changed
+- Version bump
+
 ## [15.0.1] - 2026-02-10
 ### Fixed
 - Fix (Case UUM-131007) Ensure spriteshape supports Fast Enter Play Mode
