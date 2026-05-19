@@ -1,12 +1,13 @@
 # Changelog
 
-## [15.0.3] - 2026-05-12
-### Changed
-- Align online documentation URLs: package docs to @15.0; Unity Manual/Script Reference links to Unity 6000.5.
+## [16.0.0] - 2026-05-19
+### Fixed
+- Fix (UUM-132580) "Element Inspector" Overlay has inconsistent Sprite Variants preview size control slider
+- Fix (UUM-134689) "GetControlID" Warning is thrown when undoing the deletion of Sprite Shape Profile
 
 ## [15.0.2] - 2026-02-17
 ### Changed
-- Version bump
+- Version bump for Unity 6000.5
 
 ## [15.0.1] - 2026-02-10
 ### Fixed

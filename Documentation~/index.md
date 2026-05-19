@@ -16,9 +16,9 @@ Sprite Shapes comprise of two parts - the [Sprite Shape Profile](SSProfile.md) A
 
 ## Importing Sprites for Sprite Shapes
 
-When importing Sprites, use the following [property settings](https://docs.unity3d.com/6000.5/Documentation/Manual/class-TextureImporter-type-and-shape.html) to ensure that the Sprites are compatible for use with Sprite Shape:
+When importing Sprites, use the following [property settings](https://docs.unity3d.com/Manual/TextureTypes.html#Sprite) to ensure that the Sprites are compatible for use with Sprite Shape:
 
-1. [Texture Type](https://docs.unity3d.com/6000.5/Documentation/Manual/texture-type-sprite.html) - Set this to ‘Sprite (2D and UI)’. Other Texture types are not supported for Sprite Shapes.
+1. [Texture Type](https://docs.unity3d.com/Manual/TextureTypes.html#Sprite) - Set this to ‘Sprite (2D and UI)’. Other Texture types are not supported for Sprite Shapes.
 2. **Sprite Mode** - Set this to ‘Single’ if the Texture contains only a single Sprite.
 3. __Mesh Type__ - This must be set to __Full Rect__ for the Sprite to be used with Sprite Shape.
 
@@ -32,7 +32,7 @@ Create __Sprite Shapes__ with the following steps:
    - [Open Shape](SSProfile.md#open-shape)
    - [Closed Shape](SSProfile.md#closed-shape)
 2. Edit the outline of the Sprite Shape with the [Sprite Shape Controller](SSController.md) component settings.
-3. Enable [Physics 2D](https://docs.unity3d.com/6000.5/Documentation/Manual/class-Physics2DSettings.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
+3. Enable [Physics 2D](https://docs.unity3d.com/Manual/class-Physics2DManager.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
 
 To further customize the shape and outline of a __Sprite Shape__:
 

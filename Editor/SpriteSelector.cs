@@ -292,7 +292,7 @@ namespace UnityEditor.U2D
                 Styles.localGrid = new GUIStyle(Styles.gridList);
             }
             // 64, 56, 36, 28
-            int[] actualSizes = new int[] {0, 64, 48, 32, 24};
+            int[] actualSizes = new int[] {0, 24, 32, 48, 64};
             int clamped = Math.Min(imageSize, 4);
             int actualSize = actualSizes[clamped];
             Styles.localGrid.fixedWidth = actualSize;

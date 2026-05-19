@@ -18,7 +18,7 @@ namespace UnityEngine.U2D
     [ExecuteInEditMode]
     [RequireComponent(typeof(SpriteShapeRenderer))]
     [DisallowMultipleComponent]
-    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@15.0/manual/SSController.html")]
+    [HelpURLAttribute("https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@latest/index.html?subfolder=/manual/SSController.html")]
     public class SpriteShapeController : MonoBehaviour
     {
         // Internal Dataset.
