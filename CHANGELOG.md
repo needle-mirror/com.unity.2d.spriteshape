@@ -1,5 +1,9 @@
 # Changelog
 
+## [10.1.1] - 2026-07-22
+### Changed
+- Align online documentation URLs: package docs to @10.1; Unity Manual/Script Reference links to Unity 6000.0.
+
 ## [10.1.0] - 2025-03-07
 ### Changed
 - Update minimum Unity version.

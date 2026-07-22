@@ -6,27 +6,23 @@ The __Sprite Shape__ is a flexible and powerful world building Asset that featur
 
 The following are examples of Sprite Shapes used to construct different parts of various levels.
 
-![](images/2D_SpriteShape_1.png)
+![This image shows a level created with the Sprite Shape tool. This shows a 2D side-scrolling platform level with multiple platforms made of tiled red brick sprites. The platforms are all of different lengths. The background is made of tiled purple bricks made to resemble castle walls. The different level elements are curved to show that their geometry follows the spline of the Sprite Shape tool.](images/2D_SpriteShape_1.png)
 
-![](images/2D_SpriteShape_2.png)
+![This image shows a level created with the Sprite Shape tool. This shows a 2D side-scrolling platform with purple rounded geometry of random shapes. The random shapes make up both the floor and ceiling of a platforming level, with a character sprite to the left.](images/2D_SpriteShape_2.png)
 
-![](images/2D_SpriteShape_3.png)
-
-
+![This image shows a level created with the Sprite Shape tool. This shows a 2D side-scrolling platform level with its floor made of tiled grass and rock tiles. Trees and plants decorate the level, which are made of tiled sprites with the Sprite Shape tool.](images/2D_SpriteShape_3.png)
 
 Sprite Shapes comprise of two parts - the [Sprite Shape Profile](SSProfile.md) Asset, and the [Sprite Shape Controller](SSController.md) component. The Sprite Shape Profile contains the angle settings and Sprites used by the Sprite Shape, and you edit the Sprite Shape's outline with the Sprite Shape Controller component.
 
 ## Importing Sprites for Sprite Shapes
 
-When importing Sprites, use the following [property settings](https://docs.unity3d.com/Manual/TextureTypes.html#Sprite) to ensure that the Sprites are compatible for use with Sprite Shape:
+When importing Sprites, use the following [property settings](https://docs.unity3d.com/6000.0/Documentation/Manual/class-TextureImporter-type-and-shape.html) to ensure that the Sprites are compatible for use with Sprite Shape:
 
-1. [Texture Type](https://docs.unity3d.com/Manual/TextureTypes.html#Sprite) - Set this to ‘Sprite (2D and UI)’. Other Texture types are not supported for Sprite Shapes.
+1. [Texture Type](https://docs.unity3d.com/6000.0/Documentation/Manual/texture-type-sprite.html) - Set this to ‘Sprite (2D and UI)’. Other Texture types are not supported for Sprite Shapes.
 2. **Sprite Mode** - Set this to ‘Single’ if the Texture contains only a single Sprite.
 3. __Mesh Type__ - This must be set to __Full Rect__ for the Sprite to be used with Sprite Shape.
 
 In addition, if the Sprites used for the Sprite Shape are part of a Sprite Atlas, disable both **Allow Rotation** and **Tight Packing** options under the Sprite Atlas’ properties so that the Sprites can be used by the Sprite Shape.
-
-![](images/SpriteAtlas_properties.png)
 
 ## Creating a Sprite Shape general workflow
 
@@ -36,7 +32,7 @@ Create __Sprite Shapes__ with the following steps:
    - [Open Shape](SSProfile.md#open-shape)
    - [Closed Shape](SSProfile.md#closed-shape)
 2. Edit the outline of the Sprite Shape with the [Sprite Shape Controller](SSController.md) component settings.
-3. Enable [Physics 2D](https://docs.unity3d.com/Manual/class-Physics2DManager.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
+3. Enable [Physics 2D](https://docs.unity3d.com/6000.0/Documentation/Manual/class-Physics2DSettings.html) interactions for your Sprite Shapes by attaching a [Collider](SSCollision.md) component.
 
 To further customize the shape and outline of a __Sprite Shape__:
 
