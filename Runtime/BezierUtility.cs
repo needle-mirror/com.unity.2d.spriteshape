@@ -25,6 +25,7 @@ namespace UnityEngine.U2D
             float st3 = 3.0f * s * t;
             return (s * s * s * startPosition) + (st3 * s * startRightTangent) + (st3 * t * endLeftTangent) + (t * t * t * endPosition);
         }
+
         internal static float GetSpritePixelWidth(Sprite sprite)
         {
             float4 meta = new float4(sprite.pixelsPerUnit, sprite.pivot.y / sprite.textureRect.height, sprite.rect.width, sprite.rect.height);

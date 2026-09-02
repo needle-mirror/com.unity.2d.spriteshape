@@ -1,5 +1,14 @@
 # Changelog
 
+## [17.0.0] - 2026-09-02
+### Changed
+- Improved Geometry Generator Performance.
+- (D2D-7882) Move Update Geometry checkbox to Spline section
+
+### Fixed
+- Fix (UUM-140369) "FindObjectsSortMode" and "Object.FindObjectsByType" obsolete warnings are thrown when installing the "Sprite Shape Samples"
+- Fix (UUM-133979) Fix Unusual Overrides on default project asset
+
 ## [16.0.0] - 2026-05-19
 ### Fixed
 - Fix (UUM-132580) "Element Inspector" Overlay has inconsistent Sprite Variants preview size control slider

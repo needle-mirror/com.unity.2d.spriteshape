@@ -83,7 +83,6 @@ namespace UnityEditor.U2D
     {
         const int k_SpriteShapeEventElementCount = 2;
         ISpriteShapeAnalyticsStorage m_AnalyticsStorage;
-        
         SpriteShapeAnalyticsEvents m_EventBus = null;
 
         internal SpriteShapeAnalyticsEvents eventBus

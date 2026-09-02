@@ -454,6 +454,7 @@ namespace UnityEditor.U2D
             serializedObject.Update();
             EditorGUILayout.PropertyField(m_AdaptiveUVProp, Contents.adaptiveUVLabel);
             EditorGUILayout.PropertyField(m_EnableTangentsProp, Contents.enableTangentsLabel);
+            EditorGUILayout.PropertyField(m_GeometryAutoUpdate, Contents.updateGeometryLabel);
 
             // Cache Geometry is only editable for Scene Objects or when in Prefab Isolation Mode.
             {
@@ -501,7 +502,6 @@ namespace UnityEditor.U2D
             DrawHeader(Contents.fillLabel);
             EditorGUILayout.PropertyField(m_UTess2DGeometryProp, Contents.uTess2DLabel);
             EditorGUILayout.PropertyField(m_StretchUVProp, Contents.stretchUVLabel);
-            EditorGUILayout.PropertyField(m_GeometryAutoUpdate, Contents.updateGeometryLabel);
 
             if (ShouldShowStretchOption())
             {

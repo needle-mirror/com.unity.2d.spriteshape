@@ -1,4 +1,5 @@
 * [Overview](index.md)
+* [What's new](whats-new.md)
 * [Sprite Shape Profile](SSProfile.md)
 * [Sprite Shape Controller](SSController.md)
   * [Fill Tessellation in a C# Job](FillTessellation.md)

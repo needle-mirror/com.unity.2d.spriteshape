@@ -18,7 +18,7 @@ namespace SpriteShapeExtras
         {
 
             // Loop all invisible SpriteShapeRenderers and generate geometry.
-            SpriteShapeRenderer[] spriteShapeRenderers = (SpriteShapeRenderer[])GameObject.FindObjectsByType<SpriteShapeRenderer>(FindObjectsSortMode.None);
+            SpriteShapeRenderer[] spriteShapeRenderers = (SpriteShapeRenderer[])GameObject.FindObjectsByType<SpriteShapeRenderer>();
             CommandBuffer rc = new CommandBuffer();
             rc.GetTemporaryRT(0, 256, 256, 0);
             rc.SetRenderTarget(0);

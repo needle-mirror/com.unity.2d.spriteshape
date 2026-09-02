@@ -44,9 +44,12 @@ namespace UnityEngine.U2D
 
         // Renderer Stuff.
         bool m_DynamicOcclusionLocal;
-        bool m_DynamicOcclusionOverriden;
         bool m_TessellationNeedsFallback = false;
         bool m_WaitForBake = false;
+
+#if !UNITY_EDITOR
+        bool m_DynamicOcclusionOverriden = false;
+#endif
 
         // Hash Check.
         int m_ActiveSplineHash = 0;
@@ -180,7 +183,13 @@ namespace UnityEngine.U2D
             get
             {
                 if (m_Creator == null)
-                    m_Creator = SpriteShapeDefaultCreator.defaultInstance;
+                {
+#if UNITY_EDITOR
+                    m_Creator = UnityEditor.AssetDatabase.LoadAssetAtPath<ScriptableObject>("Packages/com.unity.2d.spriteshape/Runtime/DefaultSpriteShapeCreator.asset") as SpriteShapeGeometryCreator;
+                    if (m_Creator == null)
+#endif
+                        m_Creator = SpriteShapeDefaultCreator.defaultInstance;
+                }
                 return m_Creator;
             }
             set
@@ -425,9 +434,14 @@ namespace UnityEngine.U2D
 
         void OnEnable()
         {
-            m_DynamicOcclusionOverriden = true;
-            m_DynamicOcclusionLocal = spriteShapeRenderer.allowOcclusionWhenDynamic;
-            spriteShapeRenderer.allowOcclusionWhenDynamic = false;
+#if !UNITY_EDITOR
+            if (false == m_DynamicOcclusionOverriden)
+            {
+                m_DynamicOcclusionOverriden = true;
+                m_DynamicOcclusionLocal = spriteShapeRenderer.allowOcclusionWhenDynamic;
+                spriteShapeRenderer.allowOcclusionWhenDynamic = false;
+            }
+#endif
             InitBounds();
             UpdateSpriteData();
         }
@@ -508,10 +522,12 @@ namespace UnityEngine.U2D
         /// </summary>
         public void RefreshSpriteShape()
         {
+            // This is only needed for Playmode.
             m_ActiveSplineHash = 0;
         }
 
         // Ensure Neighbor points are not too close to each other.
+        // FIX for SpatialAccel tests: Reduced distance tolerance and added closed-loop check
         bool ValidateSpline()
         {
             int pointCount = spline.GetPointCount();
@@ -523,6 +539,16 @@ namespace UnityEngine.U2D
                 if (vec.sqrMagnitude < s_DistanceTolerance)
                 {
                     Debug.LogWarningFormat(gameObject, "[SpriteShape] Control points {0} & {1} are too close. SpriteShape will not be generated for < {2} >.", i, i + 1, gameObject.name);
+                    return false;
+                }
+            }
+            // For closed shapes, also check wrap-around (last point to first point)
+            if (!spline.isOpenEnded && pointCount >= 2)
+            {
+                var vec = spline.GetPosition(pointCount - 1) - spline.GetPosition(0);
+                if (vec.sqrMagnitude < s_DistanceTolerance)
+                {
+                    Debug.LogWarningFormat(gameObject, "[SpriteShape] Control points {0} & {1} are too close. SpriteShape will not be generated for < {2} >.", pointCount - 1, 0, gameObject.name);
                     return false;
                 }
             }
@@ -1005,11 +1031,13 @@ namespace UnityEngine.U2D
 #endif
             }
 
+#if !UNITY_EDITOR
             if (m_DynamicOcclusionOverriden)
             {
                 spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
                 m_DynamicOcclusionOverriden = false;
             }
+#endif
             return jobHandle;
         }
 

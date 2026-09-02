@@ -68,7 +68,7 @@ Shader "Hidden/InternalSpritesInspector"
             sampler2D _MainTex;
             sampler2D _GUIClipTexture;
 
-            fixed4 frag(v2f IN) : COLOR
+            fixed4 frag(v2f IN) : SV_Target
             {
                 fixed4 col = tex2D(_MainTex, IN.texcoord);
                 fixed alpha = col.a;
