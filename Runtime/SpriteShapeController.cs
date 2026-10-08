@@ -438,8 +438,10 @@ namespace UnityEngine.U2D
             if (false == m_DynamicOcclusionOverriden)
             {
                 m_DynamicOcclusionOverriden = true;
+                #pragma warning disable CS0618
                 m_DynamicOcclusionLocal = spriteShapeRenderer.allowOcclusionWhenDynamic;
                 spriteShapeRenderer.allowOcclusionWhenDynamic = false;
+                #pragma warning restore CS0618
             }
 #endif
             InitBounds();
@@ -1034,7 +1036,9 @@ namespace UnityEngine.U2D
 #if !UNITY_EDITOR
             if (m_DynamicOcclusionOverriden)
             {
+                #pragma warning disable CS0618
                 spriteShapeRenderer.allowOcclusionWhenDynamic = m_DynamicOcclusionLocal;
+                #pragma warning restore CS0618
                 m_DynamicOcclusionOverriden = false;
             }
 #endif

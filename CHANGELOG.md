@@ -1,5 +1,9 @@
 # Changelog
 
+## [17.0.1] - 2026-10-08
+### Fixed
+- Added correct .buginfo file.
+
 ## [17.0.0] - 2026-09-02
 ### Changed
 - Improved Geometry Generator Performance.
