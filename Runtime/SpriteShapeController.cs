@@ -54,6 +54,13 @@ namespace UnityEngine.U2D
         // Hash Check.
         int m_ActiveSplineHash = 0;
         int m_ActiveSpriteShapeHash = 0;
+
+        int m_CachedChangeHash = -1;
+        int m_CachedForChangeIndex = -1;
+
+        EdgeCollider2D m_ActiveEdgeCollider;
+        PolygonCollider2D m_ActivePolygonCollider;
+
         int m_MaxArrayCount = 0;
         JobHandle m_JobHandle;
         SpriteShapeParameters m_ActiveShapeParameters;
@@ -125,7 +132,7 @@ namespace UnityEngine.U2D
         internal bool geometryCached
         {
             get { return m_GeometryCached; }
-            set { m_GeometryCached = value; }
+            set { m_GeometryCached = value; InvalidateChangeHash(); }
         }
 
         internal int splineHashCode
@@ -195,7 +202,10 @@ namespace UnityEngine.U2D
             set
             {
                 if (value != null)
+                {
                     m_Creator = value;
+                    InvalidateChangeHash();
+                }
             }
         }
 
@@ -215,7 +225,7 @@ namespace UnityEngine.U2D
         public bool worldSpaceUVs
         {
             get { return m_WorldSpaceUV; }
-            set { m_WorldSpaceUV = value; }
+            set { m_WorldSpaceUV = value; InvalidateChangeHash(); }
         }
 
         /// <summary>Defines pixel per unit for fill geometry UV generation. </summary>
@@ -229,49 +239,49 @@ namespace UnityEngine.U2D
         public bool enableTangents
         {
             get { return m_EnableTangents; }
-            set { m_EnableTangents = value; }
+            set { m_EnableTangents = value; InvalidateChangeHash(); }
         }
 
         /// <summary>Stretch tiling for inner fill geometry UV generation. </summary>
         public float stretchTiling
         {
             get { return m_StretchTiling; }
-            set { m_StretchTiling = value; }
+            set { m_StretchTiling = value; InvalidateChangeHash(); }
         }
 
         /// <summary>Level of detail for generated geometry. </summary>
         public int splineDetail
         {
             get { return m_SplineDetail; }
-            set { m_SplineDetail = Mathf.Max(0, value); }
+            set { m_SplineDetail = Mathf.Max(0, value); InvalidateChangeHash(); }
         }
 
         /// <summary>Level of detail for geometry generated for colliders. </summary>
         public int colliderDetail
         {
             get { return m_ColliderDetail; }
-            set { m_ColliderDetail = Mathf.Max(0, value); }
+            set { m_ColliderDetail = Mathf.Max(0, value); InvalidateChangeHash(); }
         }
 
         /// <summary>Offset for colliders. </summary>
         public float colliderOffset
         {
             get { return m_ColliderOffset; }
-            set { m_ColliderOffset = value; }
+            set { m_ColliderOffset = value; InvalidateChangeHash(); }
         }
 
         /// <summary>Angle threshold within which corners are enabled. </summary>
         public float cornerAngleThreshold
         {
             get { return m_CornerAngleThreshold; }
-            set { m_CornerAngleThreshold = value; }
+            set { m_CornerAngleThreshold = value; InvalidateChangeHash(); }
         }
 
         /// <summary>Auto update colliders on any change to SpriteShape geometry. </summary>
         public bool autoUpdateCollider
         {
             get { return m_UpdateCollider; }
-            set { m_UpdateCollider = value; }
+            set { m_UpdateCollider = value; InvalidateChangeHash(); }
         }
 
         /// <summary>Optimize generated collider geometry. </summary>
@@ -354,19 +364,19 @@ namespace UnityEngine.U2D
         internal bool updateShadow
         {
             get { return m_UpdateShadow; }
-            set { m_UpdateShadow = value; }
+            set { m_UpdateShadow = value; InvalidateChangeHash(); }
         }
 
         internal int shadowDetail
         {
             get { return m_ShadowDetail; }
-            set { m_ShadowDetail = value; }
+            set { m_ShadowDetail = value; InvalidateChangeHash(); }
         }
 
         internal float shadowOffset
         {
             get { return m_ShadowOffset; }
-            set { m_ShadowOffset = value; }
+            set { m_ShadowOffset = value; InvalidateChangeHash(); }
         }
 
         internal List<Vector2> shadowSegment
@@ -387,7 +397,7 @@ namespace UnityEngine.U2D
         /// <summary>
         /// Force the controller to wait for the bake job to complete. Normally
         /// the controller just starts the job and returns immediately. Setting this
-        /// to true will for the job to complete before returning, impacting performance.
+        /// to true will wait for the job to complete before returning, impacting performance.
         /// </summary>
         public bool WaitForBake
         {
@@ -454,9 +464,16 @@ namespace UnityEngine.U2D
             DisposeInternal();
         }
 
-        void OnDestroy()
+        void OnValidate()
         {
+            m_Spline?.MarkDirty();
+            InvalidateChangeHash();
+        }
 
+        void OnDidApplyAnimationProperties()
+        {
+            m_Spline?.MarkDirty();
+            InvalidateChangeHash();
         }
 
         void Reset()
@@ -481,6 +498,9 @@ namespace UnityEngine.U2D
             spline.InsertPointAt(1, Vector2.left + Vector2.up);
             spline.InsertPointAt(2, Vector2.right + Vector2.up);
             spline.InsertPointAt(3, Vector2.right + Vector2.down);
+
+            // The settings above were written straight to the fields, bypassing the setters.
+            InvalidateChangeHash();
         }
 
         static void SmartDestroy(UnityEngine.Object o)
@@ -526,6 +546,7 @@ namespace UnityEngine.U2D
         {
             // This is only needed for Playmode.
             m_ActiveSplineHash = 0;
+            InvalidateChangeHash();
         }
 
         // Ensure Neighbor points are not too close to each other.
@@ -625,50 +646,71 @@ namespace UnityEngine.U2D
             unchecked
             {
                 hashCode = (int)2166136261 ^ spriteShapeCreator.GetVersion();
-                foreach (var mod in m_Modifiers)
+                for (int i = 0; i < m_Modifiers.Count; ++i)
+                {
+                    var mod = m_Modifiers[i];
                     if (null != mod)
                         hashCode = hashCode * 16777619 ^ mod.GetVersion();
+                }
             }
 
             return hashCode;
 
         }
 
-        bool HasSplineDataChanged()
+        internal void InvalidateChangeHash()
         {
-            unchecked
+            m_CachedForChangeIndex = -1;
+        }
+
+        internal int GetSplineDataHashCode()
+        {
+            var changeIndex = spline.GetChangeIndex();
+
+            // Everything except the custom scripts only changes through a Spline mutator (bumping
+            // the change index) or a setter/OnValidate (resetting m_CachedForChangeIndex to -1), so
+            // that part of the fold is cached across calls.
+            if (m_CachedForChangeIndex != changeIndex)
             {
-                // Spline.
-                int hashCode = (int)2166136261;
-#if UNITY_EDITOR
-                hashCode = hashCode * 16777619 ^ spline.GetHashCode();
-#else
-                hashCode = hashCode * 16777619 ^ spline.GetChangeIndex();
-#endif
-
-                // Local Stuff.
-                hashCode = hashCode * 16777619 ^ (m_UTess2D ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_WorldSpaceUV ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_EnableTangents ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_GeometryCached ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_UpdateShadow ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_UpdateCollider ? 1 : 0);
-                hashCode = hashCode * 16777619 ^ (m_StretchTiling.GetHashCode());
-                hashCode = hashCode * 16777619 ^ (m_ColliderOffset.GetHashCode());
-                hashCode = hashCode * 16777619 ^ (m_ColliderDetail.GetHashCode());
-                hashCode = hashCode * 16777619 ^ (m_ShadowOffset.GetHashCode());
-                hashCode = hashCode * 16777619 ^ (m_ShadowDetail.GetHashCode());
-                hashCode = hashCode * 16777619 ^ (GetCustomScriptHashCode());
-                hashCode = hashCode * 16777619 ^ (edgeCollider == null ? 0 : 1);
-                hashCode = hashCode * 16777619 ^ (polygonCollider == null ? 0 : 1);
-
-                if (splineHashCode != hashCode)
+                unchecked
                 {
-                    m_ActiveSplineHash = hashCode;
-                    return true;
+                    int cacheable = (int)2166136261;
+                    cacheable = cacheable * 16777619 ^ changeIndex;
+
+                    // Local Stuff.
+                    cacheable = cacheable * 16777619 ^ (m_UTess2D ? 1 : 0);
+                    cacheable = cacheable * 16777619 ^ (m_WorldSpaceUV ? 1 : 0);
+                    cacheable = cacheable * 16777619 ^ (m_EnableTangents ? 1 : 0);
+                    cacheable = cacheable * 16777619 ^ (m_GeometryCached ? 1 : 0);
+                    cacheable = cacheable * 16777619 ^ (m_UpdateShadow ? 1 : 0);
+                    cacheable = cacheable * 16777619 ^ (m_UpdateCollider ? 1 : 0);
+                    cacheable = cacheable * 16777619 ^ (m_StretchTiling.GetHashCode());
+                    cacheable = cacheable * 16777619 ^ (m_ColliderOffset.GetHashCode());
+                    cacheable = cacheable * 16777619 ^ (m_ColliderDetail.GetHashCode());
+                    cacheable = cacheable * 16777619 ^ (m_ShadowOffset.GetHashCode());
+                    cacheable = cacheable * 16777619 ^ (m_ShadowDetail.GetHashCode());
+                    cacheable = cacheable * 16777619 ^ (m_SplineDetail.GetHashCode());
+                    cacheable = cacheable * 16777619 ^ (m_CornerAngleThreshold.GetHashCode());
+
+                    m_CachedChangeHash = cacheable;
+                    m_CachedForChangeIndex = changeIndex;
                 }
             }
-            return false;
+
+            unchecked
+            {
+                var hashCode = m_CachedChangeHash * 16777619 ^ GetCustomScriptHashCode();
+                return (0 == hashCode) ? 1 : hashCode;
+            }
+        }
+
+        bool HasSplineDataChanged()
+        {
+            var hashCode = GetSplineDataHashCode();
+            if (splineHashCode == hashCode)
+                return false;
+            m_ActiveSplineHash = hashCode;
+            return true;
         }
 
         void OnBecameInvisible()
@@ -679,6 +721,9 @@ namespace UnityEngine.U2D
         void LateUpdate()
         {
             BakeCollider();
+
+            if (autoUpdateCollider)
+                TryUpdateColliders();
         }
 
         void OnWillRenderObject()
@@ -1094,8 +1139,11 @@ namespace UnityEngine.U2D
 
             if (m_ColliderData.IsCreated)
             {
-                if ((autoUpdateCollider && hasCollider))
+                if (autoUpdateCollider)
                 {
+                    m_ActiveEdgeCollider = null;
+                    m_ActivePolygonCollider = null;
+
                     int maxCount = short.MaxValue - 1;
                     float2 last = (float2)0;
 
@@ -1117,13 +1165,7 @@ namespace UnityEngine.U2D
                         m_ColliderSegment.Add(new Vector2(now.x, now.y));
                     }
 
-                    if (autoUpdateCollider)
-                    {
-                        if (edgeCollider != null)
-                            edgeCollider.points = m_ColliderSegment.ToArray();
-                        if (polygonCollider != null)
-                            polygonCollider.points = m_ColliderSegment.ToArray();
-                    }
+                    TryUpdateColliders();
 #if UNITY_EDITOR
                     UnityEditor.SceneView.RepaintAll();
 #endif
@@ -1164,6 +1206,25 @@ namespace UnityEngine.U2D
             }
         }
 
+        void TryUpdateColliders()
+        {
+            var edge = edgeCollider;
+            if (!ReferenceEquals(edge, m_ActiveEdgeCollider))
+            {
+                if (edge != null)
+                    edge.points = m_ColliderSegment.ToArray();
+                m_ActiveEdgeCollider = edge;
+            }
+
+            var polygon = polygonCollider;
+            if (!ReferenceEquals(polygon, m_ActivePolygonCollider))
+            {
+                if (polygon != null)
+                    polygon.points = m_ColliderSegment.ToArray();
+                m_ActivePolygonCollider = polygon;
+            }
+        }
+
         internal void BakeMeshForced()
         {
             if (spriteShapeRenderer != null)
@@ -1187,6 +1248,7 @@ namespace UnityEngine.U2D
         internal void ForceShadowShapeUpdate(bool forceUpdate)
         {
             m_UpdateShadow = forceUpdate;
+            InvalidateChangeHash();
         }
 
         internal NativeArray<float2> GetShadowShapeData()

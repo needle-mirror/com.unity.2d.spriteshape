@@ -1,9 +1,19 @@
 # Changelog
 
+
+## [17.0.2] - 2026-11-03
+### Changed
+- Spline hash is now cached and only recomputed when the Spline is modified. Added Spline Detail and Corner Threshold and removed Collider Components from hash calculations.
+
+### Fixed
+- Added correct .buginfo file.
+- Fix (D2D-8371) A collider added to a SpriteShape that is not rendered never received the shape's outline.
+- Fix (D2D-8373) A collider replaced with one of the same type while the SpriteShapeController was disabled never received the shape's outline.
+
 ## [17.0.1] - 2026-10-08
 ### Fixed
 - Added correct .buginfo file.
-
+- 
 ## [17.0.0] - 2026-09-02
 ### Changed
 - Improved Geometry Generator Performance.

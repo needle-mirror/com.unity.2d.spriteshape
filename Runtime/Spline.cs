@@ -318,6 +318,11 @@ namespace UnityEngine.U2D
             return m_DirtyIndex;
         }
 
+        internal void MarkDirty()
+        {
+            m_DirtyIndex++;
+        }
+
         /// <summary>
         /// Get hash code for this Spline to test for changes.
         /// </summary>
