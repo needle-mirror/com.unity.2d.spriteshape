@@ -2,7 +2,7 @@
 
 ## Overview
 
-The __Sprite Shape__ is a flexible and powerful world building Asset that features Sprite tiling along a shape's outline that automatically deforms and swaps Sprites based on the angle of the outline.  Additionally, you can assign a Fill texture to a Sprite Shape to create filled shapes with tiled textures as backgrounds or other large level-building props.
+The __Sprite Shape__ is a flexible and powerful world-building asset that features sprite tiling along a shape's outline that automatically deforms and swaps sprites based on the angle of the outline. Additionally, you can assign a Fill Sprite to a Sprite Shape Profile to create filled shapes with tiled sprites as backgrounds or other large level-building props.
 
 The following are examples of Sprite Shapes used to construct different parts of various levels.
 

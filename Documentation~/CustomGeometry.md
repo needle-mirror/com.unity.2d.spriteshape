@@ -2,7 +2,7 @@
 The **Custom Geometry** feature is found in the [Sprite Shape Controller](SSController.md). It allows you to use a custom script to generate or modify Sprite Shape geometry. The custom script is written as a [ScriptableObject](https://docs.unity3d.com/Manual/class-ScriptableObject.html) and is reusable.
 
 ## API Examples
-###Generating new geometry
+### Generate new geometry
 To generate new geometry, refer to the following example code.
 
 ```c#
@@ -20,7 +20,7 @@ public abstract JobHandle MakeCreatorJob(SpriteShapeController spriteShapeContro
 
 **Note:** The default generator script that ships with the Sprite Shape package is itself written as a `SpriteShapeGeometryCreator` (refer to `Runtime/SpriteShapeDefaultCreator.cs`). Any custom `SpriteShapeGeometryCreator` set through the script or Inspector will override this default Object.
 
-###Modifying existing geometry
+### Modify existing geometry
 To modify generated geometry, refer to the following example code.
 
 ```c#
@@ -41,7 +41,34 @@ public abstract class SpriteShapeGeometryModifier : ScriptableObject
 
 
 
+## Sprite indices on generated segments
+
+`SpriteShapeSegment.spriteIndex` is an index into the Sprite array that `SpriteShapeController` passes to the `SpriteShapeRenderer`. The array has the following order:
+
+1. The Fill Sprite, when `SpriteShape.fillSprite` is set. It always occupies index 0.
+2. The edge sprites, in Angle Range order.
+3. The corner sprites.
+
+If the Profile has a Fill Sprite, the index of each edge and corner sprite shifts by one. If your custom `SpriteShapeGeometryCreator` computes segment sprite indices, account for this shift:
+
+```c#
+// The Fill Sprite occupies the first slot, if there is one.
+var fillSpriteIndex = sc.spriteShape != null && sc.spriteShape.fillSprite != null ? 0 : -1;
+var spriteIndexOffset = fillSpriteIndex >= 0 ? 1 : 0;
+
+// The Fill area segment.
+seg.spriteIndex = fillSpriteIndex;
+
+// An edge or corner segment.
+seg.spriteIndex = edgeOrCornerSpriteIndex + spriteIndexOffset;
+```
+
+If a Profile has a deprecated Fill Texture and no Fill Sprite, the Fill area segment keeps `spriteIndex = -1`, and the `SpriteShapeRenderer` draws it from `SpriteShapeParameters.fillTexture` instead.
+
 ## Examples by usage
+
+The following examples set `spriteIndex` to 0, which is the Fill Sprite if the Profile has one, and the first edge sprite otherwise.
+
 Creating a simple quad with the size of the Bounds with `SpriteShapeGeometryCreator`:
 
 ```c#

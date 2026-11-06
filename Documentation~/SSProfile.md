@@ -1,6 +1,6 @@
 # Sprite Shape Profile
 
-The __Sprite Shape Profile__ contains the settings that determine which Sprites that appear on a Sprite Shape at specific Angle Ranges, as well as other display settings. You can use the same Profile for multiple __Sprite Shapes__ in a Scene.
+The __Sprite Shape Profile__ contains the settings that determine which sprites appear on a Sprite Shape at specific Angle Ranges, as well as other display settings. You can use the same Profile for multiple __Sprite Shapes__ in a Scene.
 
 Create a Sprite Shape Profile from the Editor main menu (menu: __Assets > Create > Sprite Shape Profile__), and select from the two available options: [Open Shape](#open-shape) and [Closed Shape](#closed-shape).
 
@@ -9,8 +9,9 @@ Create a Sprite Shape Profile from the Editor main menu (menu: __Assets > Create
 | **Control Points**                                           | -                                                            |
 | **Use Sprite Borders**                                       | Enable to draw the **Sprite Borders** of a Sprite at the Control Point. Define the **Sprite Borders** in the **Sprite Editor**. |
 | **Fill**                                                     | -                                                            |
-| **Texture**                                                  | Set the Texture to be used as a Fill to this field. Has no effect if the **Open Ended** property in the **Sprite Shape Controller** settings is enabled. |
-| **Offset**                                                   | Determines the border offset at the edges of the Fill texture. |
+| **Sprite**                                                   | Assign the sprite that fills the enclosed area of the Sprite Shape. The sprite must cover its entire texture and must not be packed into a Sprite Atlas. Set the **Wrap Mode** of its texture to **Repeat** so that Unity can tile the sprite across the Fill area. Unity also applies any [secondary textures](https://docs.unity3d.com/Manual/SpriteEditor-SecondaryTextures.html) on the sprite to the Fill area. This property has no effect if you enable **Open Ended** in the **Sprite Shape Controller**. |
+| **Texture (Deprecated)**                                     | Displays the Fill Texture that this Profile renders from, as read only. Assign a Fill Sprite to replace it. This property is visible only if Unity can't automatically upgrade the Fill Texture of the Profile to a Fill Sprite. Refer to [Upgrade a Fill Texture](#upgrade-a-fill-texture). |
+| **Offset**                                                   | Determines the border offset at the edges of the Fill Sprite. |
 | ![Angle Range tool](images/v1.1-AngleRange.png)**Angle Ranges (tool)** | Use this tool to create Angle Ranges and assign Sprites to those ranges. |
 | **Start (degrees)**                                          | Enter the starting angle for the selected Angle Range in degrees. |
 | **End (degrees)**                                            | Enter the ending angle for the selected Angle Range in degrees. |
@@ -18,6 +19,16 @@ Create a Sprite Shape Profile from the Editor main menu (menu: __Assets > Create
 | **Sprites**                                                  | List of Sprites assigned to the selected Angle Range. Displays a list of all Sprites assigned to the selected Angle Range. The order of Sprites in the list determines their **Sprite Variant** number, starting from zero at the top of the list. The first Sprite at the top of the list is the Sprite displayed by default at a Control Point. |
 | **Corners**                                                  | -                                                            |
 | **(All Corner options)**                                     | Assign specific Sprites to be displayed on the Sprite Shape at the respective corners. |
+
+## Upgrade a Fill Texture
+
+A Fill Sprite defines the Fill area. Profiles from earlier versions of the package use a Fill Texture instead. When Unity imports one of these Profiles, or you open it in the **Inspector** window, Unity automatically upgrades it and replaces the Fill Texture with the sprite of that texture.
+
+Unity upgrades a Profile only if its Fill Texture is imported as a single sprite that covers the whole texture. In any other case, Unity can't determine which sprite to use. If the texture has **Texture Type** set to **Default**, or **Sprite Mode** set to **Multiple**, the Profile keeps rendering from its Fill Texture, and the **Inspector** window shows the texture as read only with a warning. To complete the upgrade, re-import the texture as a single sprite that covers the whole texture, set its **Wrap Mode** to **Repeat**, and assign the sprite to the **Sprite** field.
+
+A Profile that still uses a Fill Texture renders the same way as in earlier versions of the package, but Unity doesn't apply secondary textures to its Fill area.
+
+In scripts, use `SpriteShape.fillSprite`. `SpriteShape.fillTexture` is deprecated. Reading it returns the texture of the Fill Sprite if one is set, and assigning it sets a Fill Texture and clears the Fill Sprite.
 
 ## Open Shape
 Use the __Open Shape__ preset Profile to create Shapes made from a single edge outline with tiled Sprites along its edge. This preset is ideal for creating level elements such as platforms.
@@ -27,7 +38,7 @@ Use the __Open Shape__ preset Profile to create Shapes made from a single edge o
 Drag the Open Shape Profile into the Scene view to automatically generate a Sprite Shape with __Open Ended__ enabled in its __Sprite Shape Controller__ settings.
 
 ## Closed Shape
-Use the __Closed Shape__ preset Profile to create Shapes that encompass an enclosed area. The Closed Sprite Shape can display and tile a Fill texture in the enclosed area, if a Fill texture is set in its Profile settings. Use this preset to create large solid filled Shapes that are ideal for backgrounds or large platforms.
+Use the __Closed Shape__ preset Profile to create Shapes that encompass an enclosed area. A Closed Shape displays and tiles a Fill Sprite in the enclosed area if you assign a Fill Sprite in its Profile. Use this preset to create large solid filled Shapes that are ideal for backgrounds or large platforms.
 
 Drag the Closed Shape Profile into the Scene view to automatically generate a Sprite Shape with __Open Ended__ disabled in its __Sprite Shape Controller__ settings. The Closed Shape Profile's preset Angle Ranges create a square Sprite Shape by default.
 

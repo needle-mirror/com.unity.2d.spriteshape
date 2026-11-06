@@ -10,6 +10,9 @@ namespace UnityEditor.U2D
         {
             if (importedAssets.Length > 0)
             {
+                // Upgrade outside of the import callback so that saving the asset does not re-enter it.
+                EditorApplication.delayCall += () => SpriteShapeUpgrader.UpgradeAssetsAtPaths(importedAssets);
+
                 GameObject[] allGOs = UnityEngine.Object.FindObjectsByType<GameObject>();
                 foreach (GameObject go in allGOs)
                 {

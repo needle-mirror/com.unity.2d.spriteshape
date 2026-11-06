@@ -14,7 +14,8 @@ namespace UnityEditor.U2D
     {
         private static class Contents
         {
-            public static readonly GUIContent fillTextureLabel = new GUIContent("Texture", "Fill texture used for Shape Fill.");
+            public static readonly GUIContent fillSpriteLabel = new GUIContent("Sprite", "Fill Sprite used for Shape Fill.");
+            public static readonly GUIContent legacyFillTextureLabel = new GUIContent("Texture (Deprecated)", "Fill Texture this SpriteShape was authored with. Assign a Fill Sprite to replace it.");
             public static readonly GUIContent fillScaleLabel = new GUIContent("Offset", "Determines Border Offset for Shape.");
             public static readonly GUIContent useSpriteBorderLabel = new GUIContent("Use Sprite Borders", "Draw Sprite Borders on discontinuities");
             public static readonly GUIContent cornerTypeLabel = new GUIContent("Corner Type", "Corner type sprite used.");
@@ -26,7 +27,10 @@ namespace UnityEditor.U2D
             public static readonly GUIContent angleRangesLabel = new GUIContent("Angle Ranges");
             public static readonly GUIContent spritesLabel = new GUIContent("Sprites");
             public static readonly GUIContent angleRangeLabel = new GUIContent("Angle Range ({0})");
-            public static readonly GUIContent wrapModeErrorLabel = new GUIContent("Fill texture must have wrap modes set to Repeat. Please re-import.");
+            public static readonly GUIContent wrapModeErrorLabel = new GUIContent("The Fill Sprite Texture must have wrap modes set to Repeat. Please re-import.");
+            public static readonly GUIContent packedFillSpriteErrorLabel = new GUIContent("The Fill Sprite is packed in a Sprite Atlas and cannot be properly tiled across the Fill Area. Please exclude it from packing.");
+            public static readonly GUIContent fullRectFillSpriteErrorLabel = new GUIContent("The Fill Sprite must cover its entire Texture to be properly tiled across the Fill Area.");
+            public static readonly GUIContent legacyFillTextureErrorLabel = new GUIContent("This SpriteShape still uses a Fill Texture. Assign a Fill Sprite so that secondary Textures are applied to the Fill Area. A Fill Texture can only be upgraded automatically when it is imported as a single full rect Sprite.");
             public static readonly GUIContent createRangeButtonLabel = new GUIContent("Create Range");
             public static readonly Color proBackgroundColor = new Color32(49, 77, 121, 255);
             public static readonly Color proBackgroundRangeColor = new Color32(25, 25, 25, 128);
@@ -37,6 +41,7 @@ namespace UnityEditor.U2D
             public static readonly Color defaultBackgroundColor = new Color32(64, 92, 136, 255);
         }
 
+        private SerializedProperty m_FillSpriteProp;
         private SerializedProperty m_FillTextureProp;
         private SerializedProperty m_AngleRangesProp;
         private SerializedProperty m_CornerSpritesProp;
@@ -141,6 +146,12 @@ namespace UnityEditor.U2D
 
             m_PreviewAngle = SessionState.GetFloat("SpriteShape/PreviewAngle/" + target.GetEntityId(), m_PreviewAngle);
 
+            // Give assets authored with a Fill Texture a chance to upgrade, including ones whose Texture
+            // was re-imported as a Sprite after an earlier upgrade attempt could not find one.
+            foreach (var t in targets)
+                SpriteShapeUpgrader.UpgradeAndSave(t as UnityEngine.U2D.SpriteShape);
+
+            m_FillSpriteProp = this.serializedObject.FindProperty("m_FillSprite");
             m_FillTextureProp = this.serializedObject.FindProperty("m_FillTexture");
             m_UseSpriteBordersProp = serializedObject.FindProperty("m_UseSpriteBorders");
             m_AngleRangesProp = this.serializedObject.FindProperty("m_Angles");
@@ -279,6 +290,77 @@ namespace UnityEditor.U2D
             return index;
         }
 
+        // Texture shown in the Fill Area preview. Resolved from the Fill Sprite, falling back to the legacy
+        // Fill Texture so that an asset that could not be upgraded still previews what it renders.
+        Texture previewFillTexture
+        {
+            get
+            {
+                var fillSprite = m_FillSpriteProp.objectReferenceValue as Sprite;
+                if (fillSprite != null)
+                    return fillSprite.texture;
+                return m_FillTextureProp.objectReferenceValue as Texture;
+            }
+        }
+
+        // A Sprite is imported with a Tight mesh, which tiles poorly and can leave rendering artifacts.
+        static bool IsTightMeshSprite(Sprite sprite)
+        {
+            if (sprite == null)
+                return false;
+
+            var assetPath = AssetDatabase.GetAssetPath(sprite);
+            var importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
+            if (importer == null)
+                return false;
+
+            var textureSettings = new TextureImporterSettings();
+            importer.ReadTextureSettings(textureSettings);
+            return textureSettings.spriteMeshType == SpriteMeshType.Tight;
+        }
+
+        void DoFillSpriteWarningsGUI()
+        {
+            var fillSprite = m_FillSpriteProp.objectReferenceValue as Sprite;
+
+            if (fillSprite != null)
+            {
+                // A packed Sprite reports the Atlas as its Texture, so it can neither be tiled nor measured.
+                if (fillSprite.packed)
+                {
+                    EditorGUILayout.HelpBox(Contents.packedFillSpriteErrorLabel.text, MessageType.Warning);
+                }
+                else
+                {
+                    var texture = fillSprite.texture;
+                    if (texture != null)
+                    {
+                        if (fillSprite.rect != new Rect(0, 0, texture.width, texture.height))
+                            EditorGUILayout.HelpBox(Contents.fullRectFillSpriteErrorLabel.text, MessageType.Warning);
+
+                        if (texture.wrapModeU != TextureWrapMode.Repeat || texture.wrapModeV != TextureWrapMode.Repeat)
+                            EditorGUILayout.HelpBox(Contents.wrapModeErrorLabel.text, MessageType.Warning);
+                    }
+                }
+
+                return;
+            }
+
+            // No Fill Sprite, but the asset carries a Fill Texture that could not be upgraded automatically.
+            // It is shown read only so that the source of the rendered Fill Area stays discoverable.
+            if (m_FillTextureProp.objectReferenceValue != null)
+            {
+                EditorGUILayout.HelpBox(Contents.legacyFillTextureErrorLabel.text, MessageType.Warning);
+
+                using (new EditorGUI.DisabledScope(true))
+                    EditorGUILayout.PropertyField(m_FillTextureProp, Contents.legacyFillTextureLabel);
+
+                var fillTexture = m_FillTextureProp.objectReferenceValue as Texture2D;
+                if (fillTexture.wrapModeU != TextureWrapMode.Repeat || fillTexture.wrapModeV != TextureWrapMode.Repeat)
+                    EditorGUILayout.HelpBox(Contents.wrapModeErrorLabel.text, MessageType.Warning);
+            }
+        }
+
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -290,16 +372,10 @@ namespace UnityEditor.U2D
 
             EditorGUILayout.Space();
             DrawHeader(Contents.fillLabel);
-            EditorGUILayout.PropertyField(m_FillTextureProp, Contents.fillTextureLabel);
+            EditorGUILayout.PropertyField(m_FillSpriteProp, Contents.fillSpriteLabel);
             EditorGUILayout.Slider(m_FillOffsetProp, -0.5f, 0.5f, Contents.fillScaleLabel);
 
-
-            if (m_FillTextureProp.objectReferenceValue != null)
-            {
-                var fillTex = m_FillTextureProp.objectReferenceValue as Texture2D;
-                if (fillTex.wrapModeU != TextureWrapMode.Repeat || fillTex.wrapModeV != TextureWrapMode.Repeat)
-                    EditorGUILayout.HelpBox(Contents.wrapModeErrorLabel.text, MessageType.Warning);
-            }
+            DoFillSpriteWarningsGUI();
 
             EditorGUILayout.Space();
             DrawHeader(Contents.angleRangesLabel);
@@ -316,23 +392,16 @@ namespace UnityEditor.U2D
 
             HashSet<Sprite> tightMeshSprites = new HashSet<Sprite>();
 
+            if (IsTightMeshSprite(m_FillSpriteProp.objectReferenceValue as Sprite))
+                tightMeshSprites.Add(m_FillSpriteProp.objectReferenceValue as Sprite);
+
             for (int i = 0; i < angleRanges.Count; ++i)
             {
                 AngleRange angleRange = angleRanges[i];
                 foreach (Sprite sprite in angleRange.sprites)
                 {
-                    if (sprite != null)
-                    {
-                        string assetPath = AssetDatabase.GetAssetPath(sprite);
-                        TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-                        if (importer != null)
-                        { 
-                            TextureImporterSettings textureSettings = new TextureImporterSettings();
-                            importer.ReadTextureSettings(textureSettings);
-                            if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
-                                tightMeshSprites.Add(sprite);
-                        }
-                    }
+                    if (IsTightMeshSprite(sprite))
+                        tightMeshSprites.Add(sprite);
                 }
             }
 
@@ -348,18 +417,8 @@ namespace UnityEditor.U2D
                 m_CornerSprite.objectReferenceValue = EditorGUILayout.ObjectField(new GUIContent(m_CornerType.enumDisplayNames[m_CornerType.intValue]), m_CornerSprite.objectReferenceValue, typeof(Sprite), false, GUILayout.Height(18.0f) );
 
                 var sprite = m_CornerSprite.objectReferenceValue as Sprite;
-                if (sprite != null)
-                {
-                    string assetPath = AssetDatabase.GetAssetPath(sprite);
-                    TextureImporter importer = AssetImporter.GetAtPath(assetPath) as TextureImporter;
-                    if (importer != null)
-                    { 
-                        TextureImporterSettings textureSettings = new TextureImporterSettings();
-                        importer.ReadTextureSettings(textureSettings);
-                        if (textureSettings.spriteMeshType == SpriteMeshType.Tight)
-                            tightMeshSprites.Add(sprite);
-                    }
-                }
+                if (IsTightMeshSprite(sprite))
+                    tightMeshSprites.Add(sprite);
             }
 
 
@@ -555,7 +614,7 @@ namespace UnityEditor.U2D
             {
                 {   //Draw fill texture and sprite preview
                     SpriteShapeHandleUtility.DrawTextureArc(
-                        m_FillTextureProp.objectReferenceValue as Texture, 100.0f,
+                        previewFillTexture, 100.0f,
                         rect.center, Vector3.forward, Quaternion.AngleAxis(m_PreviewAngle, Vector3.forward) * Vector3.right, 180f,
                         radius - AngleRangeGUI.kRangeWidth);
 

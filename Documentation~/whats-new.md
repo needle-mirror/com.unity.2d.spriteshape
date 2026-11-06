@@ -1,8 +1,18 @@
 # What's new in the 2D Sprite Shape package
 
-Discover new features and performance improvements in the latest updates to 2D Sprite Shape.
+Version 18.0.0 adds Fill Sprite support, so Unity applies secondary textures to the Fill area of a Sprite Shape Profile.
 
-For more information and for fixes in other versions, refer to the [changelog](../changelog/CHANGELOG.html).
+Discover new features and performance improvements in the latest update to 2D Sprite Shape.
+
+For a full list of changes and updates in each version, refer to the [2D Sprite Shape changelog](../changelog/CHANGELOG.html).
+
+## Version 18.0.0
+
+### Use a sprite to fill a Sprite Shape Profile
+
+A Fill Sprite now defines the Fill area of a [Sprite Shape Profile](SSProfile.md), instead of a Fill Texture. Unity applies the secondary textures of the Fill Sprite to the Fill area, so a filled shape can use normal maps and mask textures in the same way as the sprites along its edge.
+
+Unity automatically upgrades existing Profiles if their Fill Texture is imported as a single sprite that covers the whole texture. Profiles that Unity can't upgrade keep rendering unchanged. `SpriteShape.fillTexture` is deprecated. Use `SpriteShape.fillSprite` instead. Refer to [Upgrade a Fill Texture](SSProfile.md#upgrade-a-fill-texture).
 
 ## Version 12.0.1
 

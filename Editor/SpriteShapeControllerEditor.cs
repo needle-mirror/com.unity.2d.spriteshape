@@ -28,7 +28,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent colliderLabel = new GUIContent("Collider");
             public static readonly GUIContent shadowLabel = new GUIContent("Shadow");
             public static readonly GUIContent customGeometryLabel = new GUIContent("Custom Geometry");
-            public static readonly GUIContent fillPixelPerUnitLabel = new GUIContent("Pixel Per Unit", "Pixel Per Unit for fill texture.");
+            public static readonly GUIContent fillPixelPerUnitLabel = new GUIContent("Pixels Per Unit", "Pixels Per Unit for fill texture.");
             public static readonly GUIContent spriteShapeProfile = new GUIContent("Profile", "The SpriteShape Profile to render");
             public static readonly GUIContent materialLabel = new GUIContent("Material", "Material to be used by SpriteRenderer");
             public static readonly GUIContent colorLabel = new GUIContent("Color", "Rendering color for the Sprite graphic");

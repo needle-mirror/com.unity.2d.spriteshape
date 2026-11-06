@@ -47,6 +47,7 @@ namespace UnityEngine.U2D
             public int4 splineData;             // x : StrtechUV. y : splineDetail z : Shadow On/Off w: Collider On/Off
             public float4 curveData;            // x : ColliderPivot y : BorderPivot z : AngleThreshold w : ShadowPivot.
             public float4 fillData;             // x : fillScale  y : fillScale.x W z : fillScale.y H w: 0.
+            public int4 fillSpriteData;         // x : Fill Sprite index, -1 when the Fill Area uses the legacy Fill Texture. y : offset applied to edge and corner Sprite indices. z, w : 0.
         }
 
         struct JobSpriteInfo
@@ -369,6 +370,20 @@ namespace UnityEngine.U2D
         private bool hasSpriteBorder
         {
             get { return m_ShapeParams.shapeData.z == 1; }
+        }
+
+        // Index of the Fill Sprite in the renderer Sprite array. -1 when the Fill Area is rendered from
+        // the legacy Fill Texture carried in SpriteShapeParameters.
+        private int fillSpriteIndex
+        {
+            get { return m_ShapeParams.fillSpriteData.x; }
+        }
+
+        // Offset that maps an edge or corner Sprite index onto the renderer Sprite array. The Fill Sprite
+        // occupies the first slot when it is set, which pushes every other Sprite along by one.
+        private int spriteIndexOffset
+        {
+            get { return m_ShapeParams.fillSpriteData.y; }
         }
 
         #endregion
@@ -702,6 +717,8 @@ namespace UnityEngine.U2D
                 fy = (float)shapeParams.fillTexture.height * (1.0f / (float)shapeParams.fillScale);
             }
             m_ShapeParams.fillData = new float4(shapeParams.fillScale, fx, fy, 0);
+            // Defaults to the legacy Fill Texture path. Prepare overrides this when a Fill Sprite is set.
+            m_ShapeParams.fillSpriteData = new int4(-1, 0, 0, 0);
             unsafe
             {
                 UnsafeUtility.MemClear(m_GeomArray.GetUnsafePtr(), m_GeomArray.Length * UnsafeUtility.SizeOf<SpriteShapeSegment>());
@@ -1307,7 +1324,9 @@ namespace UnityEngine.U2D
             geom.vertexCount = 0;
             geom.geomIndex = 0;
             geom.indexCount = 0;
-            geom.spriteIndex = -1;
+            // A Fill Sprite makes the Fill Area a regular Sprite segment, which is what gets its secondary
+            // Textures bound. Without one the segment stays at -1 and renders from the legacy Fill Texture.
+            geom.spriteIndex = fillSpriteIndex;
             m_GeomArray[0] = geom;
 
             // Fill Geometry. Check if Fill Texture and Fill Scale is Valid.
@@ -1323,7 +1342,7 @@ namespace UnityEngine.U2D
 
         [BurstCompile]
         // Tess
-        static unsafe void UTessellator(ref SpriteShapeSegment geom, int maxCount, float2* tessPoints, int tessPointCount, ushort* indices, ref int iCount, byte* vertices, int stride, ref int vCount, Unity.Collections.Allocator label)
+        internal static unsafe void UTessellator(ref SpriteShapeSegment geom, int maxCount, float2* tessPoints, int tessPointCount, ushort* indices, ref int iCount, byte* vertices, int stride, ref int vCount, Unity.Collections.Allocator label)
         {
             NativeArray<int2> edges = new NativeArray<int2>(tessPointCount - 1, label);
             NativeArray<float2> points = new NativeArray<float2>(tessPointCount - 1, label);
@@ -2055,7 +2074,7 @@ namespace UnityEngine.U2D
                 geom.geomIndex = i + 1;
                 geom.indexCount = m_IndexDataCount - m_ActiveIndexCount;
                 geom.vertexCount = m_VertexDataCount - m_ActiveVertexCount;
-                geom.spriteIndex = isi.sgInfo.z;
+                geom.spriteIndex = isi.sgInfo.z + spriteIndexOffset;
                 m_GeomArray[i + 1] = geom;
 
                 // Exit
@@ -2563,7 +2582,7 @@ namespace UnityEngine.U2D
                     geom.geomIndex = m_GeomArrayCount;
                     geom.indexCount = ic;
                     geom.vertexCount = vc;
-                    geom.spriteIndex = m_SpriteInfos.Length + (corner - 1);
+                    geom.spriteIndex = m_SpriteInfos.Length + (corner - 1) + spriteIndexOffset;
                     m_GeomArray[m_GeomArrayCount++] = geom;
                 }
             }
@@ -2873,11 +2892,19 @@ namespace UnityEngine.U2D
 
         #region Entry, Exit Points.
 
+        // The Fill Sprite, when set, occupies the first slot of the renderer Sprite array. Every edge and
+        // corner Sprite index is then shifted by one to account for it.
+        void PrepareFillSprite(int index)
+        {
+            m_ShapeParams.fillSpriteData = new int4(index, index >= 0 ? 1 : 0, 0, 0);
+        }
+
         [Obsolete]
         public void Prepare(UnityEngine.U2D.SpriteShapeController controller, SpriteShapeParameters shapeParams, int maxArrayCount, NativeArray<ShapeControlPoint> shapePoints, NativeArray<SpriteShapeMetaData> metaData, AngleRangeInfo[] angleRanges, Sprite[] segmentSprites, Sprite[] cornerSprites)
         {
             // Prepare Inputs.
             PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail, controller.updateShadow, controller.shadowOffset, controller.shadowDetail);
+            PrepareFillSprite(controller.fillSpriteIndex);
             PrepareSprites(segmentSprites, cornerSprites);
             PrepareAngleRanges(angleRanges);
             NativeArray<SplinePointMetaData> newMetaData = new NativeArray<SplinePointMetaData>(metaData.Length, Allocator.Temp);
@@ -2903,6 +2930,7 @@ namespace UnityEngine.U2D
             SetResult(SpriteShapeGeneratorResult.Success);
 
             PrepareInput(shapeParams, maxArrayCount, shapePoints, controller.optimizeGeometry, controller.autoUpdateCollider, controller.optimizeCollider, controller.colliderOffset, controller.colliderDetail, controller.updateShadow, controller.shadowOffset, controller.shadowDetail);
+            PrepareFillSprite(controller.fillSpriteIndex);
             PrepareSprites(segmentSprites, cornerSprites);
             PrepareAngleRanges(angleRanges);
             PrepareControlPoints(shapePoints, metaData);
@@ -2919,11 +2947,11 @@ namespace UnityEngine.U2D
             var posArray = m_PosArray;
             var uv0Array = m_Uv0Array;
 
-            for (short i = 0; i < vertexArrayCount; ++i)
+            for (int i = 0; i < vertexArrayCount; ++i)
             {
                 var posI = posArray[i];
                 var uvI = uv0Array[i];
-                for (short j = (short)(i + 1); j < vertexArrayCount; ++j)
+                for (int j = (i + 1); j < vertexArrayCount; ++j)
                 {
                     var posJ = posArray[j];
                     var uvJ = uv0Array[j];
@@ -2984,5 +3012,302 @@ namespace UnityEngine.U2D
 
         #endregion
 
+    }
+
+    /// <summary>
+    /// Packs the geometry SpriteShapeGenerator (and any SpriteShapeGeometryModifier) staged
+    /// into the engine owned buffers that a UnifiedRenderData write session reserved.
+    /// </summary>
+    /// <remarks>
+    /// This is the pass that used to run on the main thread inside SpriteShapeRenderer:
+    /// staged segments are grouped into one entry per unique Sprite, the entries are ordered
+    /// fill first and then by Sprite index, and the draw list is built by merging adjacent
+    /// entries that bind the same Texture. It can leave the main thread only because both the
+    /// Sprite and its Texture arrive as EntityIds resolved before the job is scheduled, so
+    /// nothing here dereferences a Sprite.
+    /// </remarks>
+#if ENABLE_SPRITESHAPE_BURST
+    [BurstCompile]
+#endif
+    internal struct SpriteShapeUnifiedRenderDataJob : IJob
+    {
+        // Staged geometry, in generation order: segment 0 is the fill, then one segment per
+        // spline segment, then one per corner type. Index values are local to their own
+        // segment, which is why the copy below rebases every one of them.
+        public NativeArray<SpriteShapeSegment> segments;
+        public NativeArray<ushort> indices;
+        public NativeSlice<Vector3> positions;
+        public NativeSlice<Vector2> texCoords;
+        public NativeSlice<Vector4> tangents;
+
+        // Both indexed by SpriteShapeSegment.spriteIndex and resolved on the main thread.
+        // Ids rather than Sprites is the entire point: grouping and draw range merging become
+        // integer compares that are legal inside a job.
+        [ReadOnly]
+        [DeallocateOnJobCompletion]
+        public NativeArray<EntityId> spriteIds;
+        [ReadOnly]
+        [DeallocateOnJobCompletion]
+        public NativeArray<EntityId> textureIds;
+
+        // The window UnifiedRenderData.BeginWrite() opened. Nothing closes it here: the
+        // renderer syncs this job and calls EndWrite() at prepare time.
+        public UnifiedRenderDataWriter writer;
+
+        // Non zero when the session declared a Tangent channel. Writing to a channel the
+        // session did not declare throws, so the copy is told rather than probing the slice.
+        public int writeTangents;
+
+        // Per entry shader state, chosen on the main thread. The colour is neutral; the renderer
+        // applies its own tint at draw time.
+        public Vector4 spriteProps;
+        public Vector4 spriteColor;
+
+        public void Execute()
+        {
+            var segmentCount = segments.Length;
+            if (0 == segmentCount)
+            {
+                writer.vertexCount = 0;
+                writer.indexCount = 0;
+                writer.entryCount = 0;
+                writer.drawRangeCount = 0;
+                return;
+            }
+
+            // Where each staged segment starts in the staged buffers. Accumulated over every
+            // segment, drawable or not, because the generator wrote them back to back.
+            var segmentVertex = new NativeArray<int>(segmentCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            var segmentIndex = new NativeArray<int>(segmentCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
+            // One slot per group; there can never be more groups than segments.
+            var groupSprite = new NativeArray<int>(segmentCount, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+
+            // Group 0 is the fill whether or not it tessellated to anything. SpriteShapeRenderer
+            // splits the fill material from the edge material positionally at entry and draw
+            // range 0, and that is a precondition the engine cannot enforce for us.
+            var groupCount = 1;
+            groupSprite[0] = segments[0].spriteIndex;
+
+            var stagedVertex = 0;
+            var stagedIndex = 0;
+            for (var segment = 0; segment < segmentCount; ++segment)
+            {
+                var geom = segments[segment];
+                segmentVertex[segment] = stagedVertex;
+                segmentIndex[segment] = stagedIndex;
+                stagedVertex += geom.vertexCount;
+                stagedIndex += geom.indexCount;
+
+                // Segment 0 is already group 0, and an index-less segment would only add
+                // vertices that nothing references.
+                if (0 == segment || geom.vertexCount <= 0 || geom.indexCount <= 0)
+                    continue;
+
+                // Searched from 1 so that an edge is never folded into the fill.
+                var group = 1;
+                while (group < groupCount && groupSprite[group] != geom.spriteIndex)
+                    ++group;
+                if (group == groupCount)
+                    groupSprite[groupCount++] = geom.spriteIndex;
+            }
+
+            // Fill first, then by SPRITE index. Never by Texture: the renderer derives its
+            // material split and its texture slots from the entry order, so ordering by
+            // Texture would decouple the two. Insertion sort because groupCount is the number
+            // of distinct Sprites on a single shape.
+            for (var i = 2; i < groupCount; ++i)
+            {
+                var sprite = groupSprite[i];
+                var j = i - 1;
+                while (j >= 1 && groupSprite[j] > sprite)
+                {
+                    groupSprite[j + 1] = groupSprite[j];
+                    --j;
+                }
+                groupSprite[j + 1] = sprite;
+            }
+
+            // Hoisted: every one of these accessors revalidates the session's safety handle.
+            var destinationPositions = writer.positions;
+            var destinationTexCoords = writer.texCoords;
+            var destinationTangents = writer.tangents;
+            var destinationIndices = writer.indices;
+            var destinationEntries = writer.entries;
+            var destinationRanges = writer.drawRanges;
+
+            var vertexCapacity = writer.vertexCapacity;
+            var indexCapacity = writer.indexCapacity;
+            var entryCapacity = writer.entryCapacity;
+
+            var shapeMin = float3.zero;
+            var shapeMax = float3.zero;
+            var hasShapeBounds = false;
+
+            var vertexCursor = 0;
+            var indexCursor = 0;
+            var entryCount = 0;
+
+            for (var group = 0; group < groupCount && entryCount < entryCapacity; ++group)
+            {
+                var firstVertex = vertexCursor;
+                var firstIndex = indexCursor;
+                var groupMin = float3.zero;
+                var groupMax = float3.zero;
+                var hasGroupBounds = false;
+
+                for (var segment = 0; segment < segmentCount; ++segment)
+                {
+                    var geom = segments[segment];
+                    if (geom.vertexCount <= 0 || geom.indexCount <= 0)
+                        continue;
+
+                    // The fill is segment 0 and nothing else, so an edge that happens to carry
+                    // the fill's Sprite index still lands in its own group.
+                    if (0 == group)
+                    {
+                        if (0 != segment)
+                            continue;
+                    }
+                    else if (0 == segment || geom.spriteIndex != groupSprite[group])
+                    {
+                        continue;
+                    }
+
+                    // The session reserved a conservative bound, so this should never bite.
+                    // Dropping the overflow keeps the entries contiguous, which EndWrite()
+                    // asserts on, instead of writing past the reservation.
+                    if (vertexCursor + geom.vertexCount > vertexCapacity || indexCursor + geom.indexCount > indexCapacity)
+                        continue;
+
+                    var sourceVertex = segmentVertex[segment];
+                    var sourceIndex = segmentIndex[segment];
+
+                    for (var v = 0; v < geom.vertexCount; ++v)
+                    {
+                        var position = positions[sourceVertex + v];
+                        destinationPositions[vertexCursor + v] = position;
+                        destinationTexCoords[vertexCursor + v] = texCoords[sourceVertex + v];
+
+                        var point = new float3(position.x, position.y, position.z);
+                        groupMin = hasGroupBounds ? math.min(groupMin, point) : point;
+                        groupMax = hasGroupBounds ? math.max(groupMax, point) : point;
+                        hasGroupBounds = true;
+                    }
+
+                    if (0 != writeTangents)
+                    {
+                        for (var v = 0; v < geom.vertexCount; ++v)
+                            destinationTangents[vertexCursor + v] = tangents[sourceVertex + v];
+                    }
+
+                    // Staged indices are local to their segment and the destination wants them
+                    // absolute, so the rebase is the running cursor and nothing else.
+                    for (var i = 0; i < geom.indexCount; ++i)
+                        destinationIndices[indexCursor + i] = (uint)(vertexCursor + indices[sourceIndex + i]);
+
+                    vertexCursor += geom.vertexCount;
+                    indexCursor += geom.indexCount;
+                }
+
+                if (hasGroupBounds)
+                {
+                    shapeMin = hasShapeBounds ? math.min(shapeMin, groupMin) : groupMin;
+                    shapeMax = hasShapeBounds ? math.max(shapeMax, groupMax) : groupMax;
+                    hasShapeBounds = true;
+                }
+
+                destinationEntries[entryCount++] = new SpriteBatchEntry
+                {
+                    spriteId = ResolveSprite(groupSprite[group]),
+                    instances = 1,
+                    vertexOffset = firstVertex,
+                    vertexCount = vertexCursor - firstVertex,
+                    indexOffset = firstIndex,
+                    indexCount = indexCursor - firstIndex,
+                    bounds = MakeBounds(groupMin, groupMax),
+                    spriteProps = spriteProps,
+                    spriteColor = spriteColor
+                };
+            }
+
+            // The fill entry is kept even when the fill tessellated to nothing, and an empty
+            // entry would otherwise contribute a zero sized box at the origin to the aggregate
+            // bounds the renderer derives from the entries.
+            if (entryCount > 0 && hasShapeBounds && 0 == destinationEntries[0].vertexCount)
+            {
+                var fill = destinationEntries[0];
+                fill.bounds = MakeBounds(shapeMin, shapeMax);
+                destinationEntries[0] = fill;
+            }
+
+            var rangeCount = 0;
+            if (entryCount > 0)
+            {
+                // Range 0 is the fill and never merges with anything: the fill draws with
+                // material 0 and every other range with material 1.
+                destinationRanges[rangeCount++] = MakeRange(destinationEntries[0], 0);
+
+                var openTexture = EntityId.None;
+                var hasOpenRange = false;
+                for (var entry = 1; entry < entryCount; ++entry)
+                {
+                    var record = destinationEntries[entry];
+                    var texture = ResolveTexture(groupSprite[entry]);
+
+                    if (hasOpenRange && texture == openTexture)
+                    {
+                        var open = destinationRanges[rangeCount - 1];
+                        open.indexCount += record.indexCount;
+                        open.vertexCount += record.vertexCount;
+                        destinationRanges[rangeCount - 1] = open;
+                        continue;
+                    }
+
+                    destinationRanges[rangeCount++] = MakeRange(record, entry);
+                    openTexture = texture;
+                    hasOpenRange = true;
+                }
+            }
+
+            writer.vertexCount = vertexCursor;
+            writer.indexCount = indexCursor;
+            writer.entryCount = entryCount;
+            writer.drawRangeCount = rangeCount;
+
+            segmentVertex.Dispose();
+            segmentIndex.Dispose();
+            groupSprite.Dispose();
+        }
+
+        // EntityId.None for the legacy fill, which has no Sprite at all and falls back to the
+        // renderer's Fill Texture, or to white when there is not one.
+        EntityId ResolveSprite(int spriteIndex)
+        {
+            return (spriteIndex >= 0 && spriteIndex < spriteIds.Length) ? spriteIds[spriteIndex] : EntityId.None;
+        }
+
+        EntityId ResolveTexture(int spriteIndex)
+        {
+            return (spriteIndex >= 0 && spriteIndex < textureIds.Length) ? textureIds[spriteIndex] : EntityId.None;
+        }
+
+        static Bounds MakeBounds(float3 min, float3 max)
+        {
+            var center = (min + max) * 0.5f;
+            var size = max - min;
+            return new Bounds(new Vector3(center.x, center.y, center.z), new Vector3(size.x, size.y, size.z));
+        }
+
+        static DrawRange MakeRange(SpriteBatchEntry entry, int entityIndex)
+        {
+            var range = new DrawRange();
+            range.firstIndex = entry.indexOffset;
+            range.indexCount = entry.indexCount;
+            range.firstVertex = entry.vertexOffset;
+            range.vertexCount = entry.vertexCount;
+            range.entityIndex = entityIndex;
+            return range;
+        }
     }
 };

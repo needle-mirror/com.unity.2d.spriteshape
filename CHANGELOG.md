@@ -1,8 +1,27 @@
 # Changelog
 
-## [17.0.1] - 2026-10-08
+## [18.0.0] - 2026-11-06
+### Added
+- Added `SpriteShapeController.physicsShapeChanged`, raised when `physicsShapeData` holds a new outline, so a component that builds its own collision from the shape can rebuild without polling.
+- Added `SpriteShapeController.physicsShapeData`, the outline the last bake produced, so a component can build its own collision from the shape.
+- Added profiler markers for the `SpriteShapeController` per-frame path: `SpriteShapeController.LateUpdate` and `SpriteShapeController.BakeCollider`.
+- Added Fill Sprite support to Sprite Shape Profiles (`SpriteShape.fillSprite`). A Fill Sprite defines the Fill area, and Unity applies its secondary textures to the Fill area.
+
+### Changed
+- Changed the spline hash so that Unity caches it and recomputes it only when the spline is modified.
+- Changed the spline hash so that it includes Spline Detail and Corner Threshold and excludes Collider Components.
+- Changed Sprite Shape Profiles that use a Fill Texture so that Unity upgrades them to a Fill Sprite when it imports them or you open them in the **Inspector** window. Unity upgrades a Profile only if its Fill Texture is imported as a single sprite that covers the whole texture. Otherwise, the Profile keeps rendering from its Fill Texture, and the **Inspector** window shows the texture as read only with a warning.
+- Changed the **Inspector** window for Sprite Shape Profiles so that it accepts only a Fill Sprite. The **Inspector** window displays a warning if Unity can't tile the sprite across the Fill area, because the sprite is packed into a Sprite Atlas, doesn't cover its whole texture, or the **Wrap Mode** of its texture isn't set to **Repeat**.
+- Moved the Fill Sprite to the first slot of the sprite array that `SpriteShapeController` passes to the `SpriteShapeRenderer`, which shifts edge and corner sprite indices by one. If a custom `SpriteShapeGeometryCreator` computes `SpriteShapeSegment.spriteIndex`, update it to account for this shift. Refer to [Generating Custom Geometry](https://docs.unity3d.com/Packages/com.unity.2d.spriteshape@18.0/manual/CustomGeometry.html).
+- Changed cached Sprite Shape geometry from earlier package versions so that Unity re-bakes it instead of uploading it, because the Fill area segment now carries the index of the Fill Sprite.
+
 ### Fixed
-- Added correct .buginfo file.
+- Fixed a collider added to a Sprite Shape that isn't rendered so that it now receives the outline of the shape.
+- Fixed a collider replaced with one of the same type while the controller is disabled so that it now receives the outline of the shape.
+- Fixed `SpriteShape` so that it no longer allocates managed memory every time it updates its `EdgeCollider2D` or `PolygonCollider2D`.
+
+### Deprecated
+- `SpriteShape.fillTexture` is deprecated and will be removed in a future release. Use `SpriteShape.fillSprite` instead. Reading `fillTexture` returns the texture of the Fill Sprite if one is set, and assigning it sets a Fill Texture and clears the Fill Sprite.
 
 ## [17.0.0] - 2026-09-02
 ### Changed

@@ -312,11 +312,47 @@ namespace UnityEngine.U2D
             set { m_Angles = value; }
         }
 
-        /// <summary>Fill Texture to be used for inner geometry in case of closed shapes. The Texture wrap mode should be set to Repeat. </summary>
+        /// <summary>Sprite that fills the enclosed area of a closed shape.</summary>
+        /// <remarks>The Sprite must cover its entire Texture and must not be packed into a Sprite Atlas. Set the wrap mode of its Texture to <see cref="TextureWrapMode.Repeat"/> so that Unity can tile the Sprite across the Fill area.</remarks>
+        public Sprite fillSprite
+        {
+            get { return m_FillSprite; }
+            set { m_FillSprite = value; }
+        }
+
+        /// <summary>Texture that fills the enclosed area of a closed shape.</summary>
+        /// <remarks>Set the wrap mode of the Texture to <see cref="TextureWrapMode.Repeat"/> so that Unity can tile it across the Fill area.</remarks>
+        [Obsolete("SpriteShape.fillTexture is deprecated and will be removed in a future release. Use SpriteShape.fillSprite instead.", false)]
         public Texture2D fillTexture
         {
+            get { return resolvedFillTexture; }
+            set
+            {
+                m_FillTexture = value;
+                m_FillSprite = null;
+            }
+        }
+
+        /// <summary>
+        /// Texture used to render the Fill Area. Resolved from fillSprite when set, else from the
+        /// legacy serialized fillTexture so that assets authored before fillSprite keep rendering.
+        /// </summary>
+        internal Texture2D resolvedFillTexture
+        {
+            get { return m_FillSprite != null ? m_FillSprite.texture : m_FillTexture; }
+        }
+
+        /// <summary>Legacy serialized Fill Texture, without any fillSprite resolution. Used by asset upgrade. </summary>
+        internal Texture2D legacyFillTexture
+        {
             get { return m_FillTexture; }
-            set { m_FillTexture = value; }
+        }
+
+        /// <summary>Serialized version of this asset, used to drive one-time upgrades. </summary>
+        internal int version
+        {
+            get { return m_Version; }
+            set { m_Version = value; }
         }
 
         /// <summary>Sprites to be used for corners. </summary>
@@ -340,10 +376,18 @@ namespace UnityEngine.U2D
             set { m_UseSpriteBorders = value; }
         }
 
+        // Asset version before fillSprite was introduced. Assets at this version still carry m_FillTexture only.
+        internal const int k_VersionFillTexture = 0;
+        // Asset version where the Fill Area is authored as a Sprite.
+        internal const int k_VersionFillSprite = 1;
+
         [SerializeField]
         List<AngleRange> m_Angles = new List<AngleRange>();
+        // Kept serialized for backwards compatibility with assets authored before m_FillSprite. Do not remove.
         [SerializeField]
         Texture2D m_FillTexture;
+        [SerializeField]
+        Sprite m_FillSprite;
         [SerializeField]
         List<CornerSprite> m_CornerSprites = new List<CornerSprite>();
         [SerializeField]
@@ -351,6 +395,8 @@ namespace UnityEngine.U2D
 
         [SerializeField]
         bool m_UseSpriteBorders = true;
+        [SerializeField]
+        int m_Version = k_VersionFillTexture;
         
 #if UNITY_EDITOR        
         internal static event Action<SpriteShape> onReset = null;
@@ -387,6 +433,8 @@ namespace UnityEngine.U2D
         {
             m_Angles.Clear();
             ResetCornerList();
+            // Newly created assets are authored with fillSprite and need no upgrade.
+            m_Version = k_VersionFillSprite;
 #if UNITY_EDITOR
             onReset?.Invoke(this);
 #endif            
@@ -399,6 +447,9 @@ namespace UnityEngine.U2D
             unchecked
             {
                 int hashCode = (int)2166136261;
+
+                if (spriteShape.fillSprite)
+                    hashCode = hashCode * 16777619 ^ spriteShape.fillSprite.GetHashCode();
 
                 hashCode = hashCode * 16777619 ^ spriteShape.angleRanges.Count;
 

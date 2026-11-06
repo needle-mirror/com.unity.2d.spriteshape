@@ -19,11 +19,11 @@ The default component settings below are displayed when **Edit Spline** is not e
 | __Corner Threshold__                                         | Use this slider to set the threshold of when a point is considered a corner of the Sprite Shape, where the value is the angle between adjacent edges and angles at the. A point is considered a corner at the threshold value and lower. The default value is 30 degrees. Set a custom value to override this default value. |
 | __Fill__                                                     | -                                                            |
 | __Fill Tessellation (C# Job)__                               | Generate fill geometry in C# Job.                            |
-| __Stretch UV__                                               | Enable this setting to have Unity stretch the UV of the Fill texture across the Full Rect of the Sprite Shape. |
+| __Stretch UV__                                               | Enable this setting to have Unity stretch the UV of the Fill Sprite across the Full Rect of the Sprite Shape. |
 | __Custom Geometry Creator__                                  | Set the Scriptable Object that generates custom geometry. By default a built-in generator is set when created. |
 | __Custom Geometry Modifier__                                  | Set a list of Scriptable Objects that modifies generated geometry. |
-| __Pixels Per Unit (only available when Stretch UV is disabled)__ | This values affect the appearance of the Fill texture of the Sprite Shape. This value affects the scale of the Fill texture, with higher values reducing the size of the texture. The default value is 100. |
-| __World Space UV (only available when Stretch UV is disabled)__ | Enable to apply the Fill texture according to the World Space UV, instead of per GameObject UV. |
+| __Pixels Per Unit__ | This value affects the scale of the Fill Sprite, with higher values reducing the size of the sprite. The default value is 100. This property is available only when **Stretch UV** is disabled. |
+| __Worldspace UV__ | Enable to apply the Fill Sprite according to the world space UV, instead of per-GameObject UV. This property is available only when **Stretch UV** is disabled. |
 
 ### With Edit Spline enabled and a Control Point selected
 
