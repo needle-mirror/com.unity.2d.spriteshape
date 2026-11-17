@@ -1,5 +1,9 @@
 # Changelog
 
+## [18.0.1] - 2026-11-17
+### Added
+- Added `PhysicsAreaSpriteShape`, a 2D Physics Core component that builds polygons or chain segments from a SpriteShapeController's spline and rebuilds them when the controller reports a change. Available when the `com.unity.2d.physics` package is installed.
+
 ## [18.0.0] - 2026-11-06
 ### Added
 - Added `SpriteShapeController.physicsShapeChanged`, raised when `physicsShapeData` holds a new outline, so a component that builds its own collision from the shape can rebuild without polling.

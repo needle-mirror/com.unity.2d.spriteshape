@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+#if ENABLE_SPRITESHAPE_PHYSICS
+using Unity.U2D.Physics;
+#endif
 using UnityEngine;
 using UnityEngine.U2D;
 using UnityEditor;
@@ -25,7 +28,7 @@ namespace UnityEditor.U2D
             public static readonly GUIContent splineLabel = new GUIContent("Spline");
             public static readonly string editSplineLabel = "Edit Spline";
             public static readonly GUIContent fillLabel = new GUIContent("Fill");
-            public static readonly GUIContent colliderLabel = new GUIContent("Collider");
+            public static readonly GUIContent colliderLabel = new GUIContent("Collision");
             public static readonly GUIContent shadowLabel = new GUIContent("Shadow");
             public static readonly GUIContent customGeometryLabel = new GUIContent("Custom Geometry");
             public static readonly GUIContent fillPixelPerUnitLabel = new GUIContent("Pixels Per Unit", "Pixels Per Unit for fill texture.");
@@ -42,10 +45,10 @@ namespace UnityEditor.U2D
             public static readonly GUIContent worldUVLabel = new GUIContent("Worldspace UV", "Generate UV for world space.");
             public static readonly GUIContent stretchUVLabel = new GUIContent("Stretch UV", "Stretch the Fill UV to full Rect.");
             public static readonly GUIContent stretchTilingLabel = new GUIContent("Stretch Tiling", "Stretch Tiling Count.");
-            public static readonly GUIContent colliderDetail = new GUIContent("Detail", "Tessellation Quality on the collider.");
+            public static readonly GUIContent colliderDetail = new GUIContent("Detail", "Tessellation Quality on the collision shape.");
             public static readonly GUIContent cornerThresholdDetail = new GUIContent("Corner Threshold", "Corner angle threshold below which corners wont be placed.");
             public static readonly GUIContent colliderOffset = new GUIContent("Offset", "Extrude collider distance.");
-            public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collider", "Update Collider as you edit SpriteShape");
+            public static readonly GUIContent updateColliderLabel = new GUIContent("Update Collision", "Update Collider, or Physics Area as you edit SpriteShape");
             public static readonly GUIContent updateGeometryLabel = new GUIContent("Update Geometry", "Update Geometry as you edit SpriteShape");
             public static readonly GUIContent shadowDetail = new GUIContent("Detail", "Tessellation Quality on the Shadow.");
             public static readonly GUIContent shadowOffset = new GUIContent("Offset", "Extrude shadow distance.");
@@ -519,7 +522,11 @@ namespace UnityEditor.U2D
             EditorGUILayout.PropertyField(m_CreatorProp, Contents.creatorLabel);
             EditorGUILayout.PropertyField(m_ModifierListProp, Contents.modifiersLabel);
 
-            if (m_SpriteShapeController.gameObject.GetComponent<PolygonCollider2D>() != null || m_SpriteShapeController.gameObject.GetComponent<EdgeCollider2D>() != null)
+            var showColliderSettings = m_SpriteShapeController.hasCollider;
+#if ENABLE_SPRITESHAPE_PHYSICS
+            showColliderSettings |= m_SpriteShapeController.GetComponent<PhysicsAreaSpriteShape>() != null;
+#endif
+            if (showColliderSettings)
             {
                 EditorGUILayout.Space();
                 DrawHeader(Contents.colliderLabel);

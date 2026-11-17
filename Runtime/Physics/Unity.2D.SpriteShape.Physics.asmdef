@@ -1,0 +1,27 @@
+{
+    "name": "Unity.2D.SpriteShape.Physics",
+    "rootNamespace": "",
+    "references": [
+        "Unity.2D.SpriteShape.Runtime",
+        "Unity.U2D.Physics",
+        "Unity.Collections",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENABLE_SPRITESHAPE_PHYSICS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.2d.physics",
+            "expression": "2.0.0",
+            "define": "ENABLE_SPRITESHAPE_PHYSICS"
+        }
+    ],
+    "noEngineReferences": false
+}

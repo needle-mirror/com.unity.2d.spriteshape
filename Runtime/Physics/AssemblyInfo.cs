@@ -1,0 +1,4 @@
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Unity.2D.SpriteShape.Editor")]
+[assembly: InternalsVisibleTo("Unity.2D.SpriteShape.Physics.RuntimeTests")]

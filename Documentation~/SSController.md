@@ -1,114 +1,100 @@
-# Sprite Shape Controller
+# Sprite Shape Controller component reference
 
-The __Sprite Shape Controller__ component is automatically attached to the GameObject created when a [Sprite Shape Profile](SSProfile.md) is dragged into the Scene. You edit the shape of the Sprite Shape's outline through the Controller's settings. The Controller displays different settings depending on different conditions.
+Explore the properties to edit the outline, fill, and collision settings of a sprite shape.
 
-## Property Settings - Default
+Unity adds the Sprite Shape Controller component to the GameObject it creates when you drag a [Sprite Shape Profile](SSProfile.md) into a scene. The **Inspector** window shows different settings depending on which components the GameObject has. To move, add, and remove the control points of the spline, refer to [Edit the spline of a sprite shape](sprite-shape-edit-spline.md).
 
-The default component settings below are displayed when **Edit Spline** is not enabled.
+## Sprite Shape Controller component properties
 
-| __Property__                                                 | __Function__                                                 |
-| ------------------------------------------------------------ | ------------------------------------------------------------ |
-| __Profile__                                                  | Select the __Sprite Shape Profile__ used by this Sprite Shape. |
-| __Edit Spline__                                              | Enable ![](images/PropertyImage1.png) to make the Control Points of the Sprite Shape visible and editable. |
-| __Spline__                                                   | -                                                            |
-| __Detail__                                                   | Select the tessellation quality of the rendered Sprite Shape mesh. High/Medium/Low Quality options available. |
-| __Open Ended__                                               | Disable to connect both ends of the Sprite Shape together to form an enclosed Shape. Enable to leave both ends of the Sprite Shape unconnected. |
-| __Adaptive UV__                                              | Enabled by default. When enabled, Unity attempts to seamlessly tile the Sprites along the Sprite Shape path by deforming the Sprites to between Control Points. Disable this property to tile Sprites with no deformation and at  their exact width. Sprites may appear cutoff if the space between Control Points is shorter than the width of the Sprite. |
-| __Enable Tangents__                                          | Enable this property if there are features which require tangent calculations, such as when utilizing the Shaders with the [2D Universal Render Pipeline](https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@9.0/manual/2d-index.html). |
-| __Cache Geometry__ | Generates and saves the geometry of the sprite shape while you edit the spline, then at runtime uses the saved geometry instead of regenerating. This property is available only when you select **Edit Spline**. | 
-| __Corner Threshold__                                         | Use this slider to set the threshold of when a point is considered a corner of the Sprite Shape, where the value is the angle between adjacent edges and angles at the. A point is considered a corner at the threshold value and lower. The default value is 30 degrees. Set a custom value to override this default value. |
-| __Fill__                                                     | -                                                            |
-| __Fill Tessellation (C# Job)__                               | Generate fill geometry in C# Job.                            |
-| __Stretch UV__                                               | Enable this setting to have Unity stretch the UV of the Fill Sprite across the Full Rect of the Sprite Shape. |
-| __Custom Geometry Creator__                                  | Set the Scriptable Object that generates custom geometry. By default a built-in generator is set when created. |
-| __Custom Geometry Modifier__                                  | Set a list of Scriptable Objects that modifies generated geometry. |
-| __Pixels Per Unit__ | This value affects the scale of the Fill Sprite, with higher values reducing the size of the sprite. The default value is 100. This property is available only when **Stretch UV** is disabled. |
-| __Worldspace UV__ | Enable to apply the Fill Sprite according to the world space UV, instead of per-GameObject UV. This property is available only when **Stretch UV** is disabled. |
+The Sprite Shape Controller component contains the following properties.
 
-### With Edit Spline enabled and a Control Point selected
+| **Property** | **Description** |
+| :--- | :--- |
+| **Profile** | Sets the Sprite Shape Profile that this sprite shape uses. |
+| **Edit Spline** | ![Edit Spline icon](images/PropertyImage1.png) Makes the control points of the sprite shape visible and editable in the **Scene** view. For more information, refer to [Edit the spline of a sprite shape](sprite-shape-edit-spline.md). |
 
-Enable __Edit Spline__ in the Controller settings to make Control Points on the Sprite Shape visible and editable. Selecting a Control Point enables the following additional Controller settings.
+### Spline
 
-![With a Control Point selected](images/SpriteShape_InspectorOverlay.png)<br/>A: Global snap toggle
+The **Spline** section contains the following properties.
 
-| __Point__                                               | -                                                            |
-| ------------------------------------------------------- | ------------------------------------------------------------ |
-| __Tangent Mode__                                        | Select one of three __Point Modes__ to change the way tangents on Control Points are edited. |
-| ![](images/2D_SpriteShape_7.png)__Linear__              | No curve is formed between the Control Point and its neighboring points. |
-| ![](images/2D_SpriteShape_8.png)__Continuous Mirrored__ | Two tangents appear on opposite sides of the Control Point, and the spline between the Control Point and its neighbors becomes curved. Adjust the tangents to change the shape of the curve. The angle between the two tangents is always 180 degrees in this mode. |
-| ![](images/2D_SpriteShape_9.png)__Broken Mirrored__     | Two tangents appear on opposite sides of the Control Point, and the spline between the Control Point and its neighbors becomes curved. Adjust the tangents to change the shape of the curve. The length and angle of the tangents can be adjusted independently in this mood. |
-| __Position__                                            | The local x and y coordinates of a selected Control Point.   |
-| __Height__                                              | Increase or decrease the height of Sprites at the Control Point by a factor of 0.1 to 4. |
-| __Corner__                                              | Sets whether Corner Sprites are rendered at Control Points. Set to __Automatic__ by default. |
-| &nbsp;&nbsp;__Disabled__                                | A Sprite is not rendered at the selected Control Point.      |
-| &nbsp;&nbsp; __Automatic__                              | The Control Point displays the assigned Corner Sprite, if both it and its neighbors are in __Linear Point Mode__. |
-| &nbsp;&nbsp;__Stretched__                               | The Corner Sprite at the selected Control Point is connected to its adjacent neighbors, stretching the Sprite. See the [list of required criteria](#stretched-corners) below to use this feature. |
-| __Sprite Variant__                                      | Select the __Sprite Variant__ from the visual Variant selector. Press __N__ to cycle through all available Variants for the Control Point. |
-| __Global snapping__                                             | When [Edit Spline](#editing-the-spline) is enabled, select the **Global Snap** icon (see **A** in screenshot above) to toggle Grid Snapping on or off. |
+| **Property** | **Description** |
+| :--- | :--- |
+| **Detail** | Sets the tessellation quality of the rendered sprite shape mesh. The options are **High Quality**, **Medium Quality**, and **Low Quality**. |
+| **Bounds Scale** | Scales the bounding box of the sprite shape geometry, so that Unity doesn't cull the sprite shape when a script changes the spline at runtime. |
+| **Open Ended** | Leaves both ends of the sprite shape unconnected. Disable it to connect both ends and form a closed shape. |
+| **Adaptive UV** | Tiles the sprites seamlessly along the spline by deforming them to fit between control points. Enabled by default. Disable it to tile the sprites at their exact width, with no deformation. When disabled, a sprite might appear cut off if the space between two control points is shorter than the width of the sprite. |
+| **Enable Tangents** | Generates tangents for the sprite shape geometry. Enable it for features that need tangent data, such as [2D lights in URP](https://docs.unity3d.com/Manual/urp/2d-index.html). |
+| **Update Geometry** | Updates the sprite shape geometry while you edit the sprite shape. Disable it when the sprite shape is static, so that Unity doesn't check for geometry changes each frame. This reduces runtime overhead. |
+| **Cache Geometry** | Generates and saves the geometry of the sprite shape while you edit the spline, and uses the saved geometry at runtime instead of generating it again. This property is available only when you select a single GameObject in the scene and **Edit Spline** is active. |
+| **Corner Threshold** | Sets how far, in degrees, the angle at a control point can differ from 90 degrees for Unity to treat the control point as a corner. For example, with the default of 30 degrees, a control point is a corner when the angle between its two edges is from 60 to 120 degrees. The range is 0 to 90 degrees. |
 
-### Stretched Corners
+### Fill
 
-This feature allows the Sprite Shape to form corners with stretched Sprites between adjacent edges between the corner point and its neighbors. Select the Stretched option from the __Corner__ dropdown menu, and ensure the following criteria are met:
+The **Fill** section contains the following properties.
 
-1. Both the selected and adjacent points have the same __Height__.
-2. Sprites rendered at the Corner point and its neighboring points must have the same Sprite pivot position.
+| **Property** | **Description** |
+| :--- | :--- |
+| **Fill Tessellation (C# Job)** | Generates the fill geometry with the [job system](xref:um-job-system). Edge geometry always uses the job system. For more information, refer to [Fill Tessellation in a C# Job](FillTessellation.md). |
+| **Stretch UV** | Stretches the UV coordinates of the Fill Sprite across the full rectangle of the sprite shape. |
+| **Stretch Tiling** | Sets the tiling count of the Fill Sprite when Unity stretches it across the sprite shape. This property is available only when **Stretch UV** is enabled. |
+| **Pixels Per Unit** | Sets the scale of the Fill Sprite. Higher values make the sprite smaller. The default is 100. This property is available only when **Stretch UV** is disabled. |
+| **Worldspace UV** | Applies the Fill Sprite with world space UV coordinates, instead of UV coordinates for each GameObject. This property is available only when **Stretch UV** is disabled. |
 
-### Additional Collider settings
+### Custom Geometry
 
-Add either the __Polygon Collider 2D__ or __Edge Collider 2D__ component to the __Sprite Shape__ to enable additional __Collider__ settings in the __Sprite Shape Controller__. Refer to [Enabling Collision](SSCollision.md) for more details about enabling Colliders with Sprite Shapes. Colliders are always optimized by cleaning up extra control points that are colinear.
+The **Custom Geometry** section contains the following properties. For more information, refer to [Generating Custom Geometry](CustomGeometry.md).
 
-![Collider settings](images/2019_3_SSController_collider.png)
+| **Property** | **Description** |
+| :--- | :--- |
+| **Creator** | Sets the ScriptableObject that generates custom geometry. By default, Unity sets a built-in generator. |
+| **Modifier** | Sets a list of ScriptableObjects that modify the generated geometry. |
 
-| Collider              | -                                                            |
-| --------------------- | ------------------------------------------------------------ |
-| __Update Collider__   | Enabled by Default. Enable this option to have the Collider mesh be updated to the Sprite Shape's current shape as the Sprite Shape is edited. Disable if you are editing the Collider mesh separately from the Sprite Shape and to use a custom Collider mesh. |
-| __Offset__            | Select the amount to extrude the Collider mesh towards the edge of the Sprite Shape. The range is from -0.5 to 0.5, starting at 0 by default. |
-| __Detail__            | Sets the tessellation quality of the rendered Collider. High/Medium/Low Quality options available. |
+### Collision
 
+The **Collision** section appears when the GameObject has a Polygon Collider 2D, Edge Collider 2D, or Physics Area Sprite Shape component. For more information, refer to [Add a collider to a sprite shape](SSCollision.md) and [Add physics areas to sprite shapes](physics-area-sprite-shape-landing.md). Unity always optimizes colliders by removing extra control points that are collinear.
 
+The **Collision** section contains the following properties.
 
-## Editing the Spline
+| **Property** | **Description** |
+| :--- | :--- |
+| **Update Collision** | Updates the collider, or the shapes of the Physics Area Sprite Shape component, to match the sprite shape as you edit it. Enabled by default. Disable it to edit the collider shape separately from the sprite shape. When disabled, **Offset** and **Detail** are hidden. |
+| **Offset** | Sets how far to extrude the collider mesh toward the edge of the sprite shape. The range is from -0.5 to 0.5. The default is 0. |
+| **Detail** | Sets the tessellation quality of the collider. The options are **High Quality**, **Medium Quality**, and **Low Quality**. |
 
-To edit the mesh outline of the __Sprite Shape__, click the __Edit Spline__ button to make the Shape's spline and its __Control Points__ become visible and editable.
+### Shadow
 
-![Edit Spline enabled](images/UpdatedEditSpline_2019-3.png)
+The **Shadow** section appears when Unity generates a shadow shape from the sprite shape, and contains the following properties.
 
-When __Edit Spline__ is enabled, move the Control Points of the Sprite Shape to adjust its overall shape and size. Add additional Control Points by clicking on the spline in between Control Points. Press the __Del/Delete__ key to remove the currently selected Control Point.
+| **Property** | **Description** |
+| :--- | :--- |
+| **Detail** | Sets the tessellation quality of the shadow shape. The options are **High Quality**, **Medium Quality**, and **Low Quality**. |
 
-![Control Point added to spline](images/2D_SpriteShape_032.png)
+## Element Inspector overlay properties
 
-With a Control Point selected, cycle through the __Point Modes __by pressing the __M__ key. To change the __Mode__ of multiple Control Points at once, ensure that all selected Control Points are the same __Mode__ first before cycling or selecting another __Mode__.
+When **Edit Spline** is enabled and you select one or more control points, the **Element Inspector** overlay appears in the **Scene** view.
 
-To change the Sprite Variant currently displayed at a selected Control Point, press the __N__ key to cycle through all available Variants.
+![The Scene view with a sprite shape in spline editing mode. A control point is selected, and the Element Inspector overlay in the lower-right corner shows the Tangent Mode, Position, Height, Corner, and Sprite Variant properties.](images/SpriteShape_InspectorOverlay.png)
 
-All shortcut keys can be rebound under the Shortcut menu (menu: __Edit > Shortcuts... > SpriteShape Editing__).
+The **Element Inspector** overlay contains the following properties.
 
-## Point Modes
+| **Property** | **Description** |
+| :--- | :--- |
+| **Tangent Mode** | Sets how the tangents of the selected control point shape the spline. For more information, refer to [Set the tangent mode of a control point](sprite-shape-edit-spline.md#set-the-tangent-mode-of-a-control-point). The following options are available:<ul><li>![Linear tangent mode icon](images/2D_SpriteShape_7.png) **Linear**: The control point has no tangents, so the spline between it and its neighboring control points is straight.</li><li>![Continuous Mirrored tangent mode icon](images/2D_SpriteShape_8.png) **Continuous Mirrored**: The control point has two tangents on opposite sides that curve the spline. The angle between the two tangents is always 180 degrees.</li><li>![Broken Mirrored tangent mode icon](images/2D_SpriteShape_9.png) **Broken Mirrored**: The control point has two tangents on opposite sides that curve the spline. You can change the length and angle of each tangent separately.</li></ul> |
+| **Position** | Sets the local x and y coordinates of the selected control point. |
+| **Height** | Sets the height of the sprites at the control point, as a factor from 0.1 to 4. |
+| **Corner** | Sets whether Unity renders a corner sprite at the control point. The default is **Automatic**. The following options are available:<ul><li>**Disabled**: Doesn't render a corner sprite at the control point.</li><li>**Automatic**: Renders the assigned corner sprite if the control point and its neighbors all use **Linear** mode.</li><li>**Stretched**: Stretches the corner sprite between the adjacent edges. For the requirements, refer to [Stretched corners](#stretched-corners).</li></ul> |
+| **Sprite Variant** | Sets the sprite variant that the control point displays. Press **N** to cycle through the available variants. |
 
-When a Control Point is selected, its __Point Mode__ can be one of three modes- __Linear__, __Mirrored__, and __Non-Mirrored__.
+### Stretched corners
 
-The __Point Mode__ determines the behavior of the tangents that are used to adjust the spline between Control Points. Each Control Point can be set to a specific Point Mode and contain its own settings.
+To stretch the corner sprite between the adjacent edges at a control point, set **Corner** to **Stretched**. The control point and its neighbors must meet the following requirements:
 
-### Linear Point Mode
+- The selected and adjacent control points have the same **Height**.
+- The sprites at the corner control point and its neighbors have the same pivot position.
 
-In __Linear Point Mode__, there are no tangents to control the curve between the Control Point and its neighbors, curves are not formed between Control Points and Sprites may overlap if they intersect.
+## Additional resources
 
-Adjust which Sprite is displayed when two or more intersect by adjusting their __Order__ value in the [Sprite Shape Profile's](SSProfile.md) __Angle Range__ settings.
-
-![Linear Point Mode](images/2D_SpriteShape_034.png)
-
-### Continuous Mirrored Point Mode
-
-In __Continuous Mirrored Point Mode__, tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the angle between the tangents is always maintained at 180 degrees although their lengths can vary.
-
-Press __B__ to mirror the length of the last edited tangent onto the opposite tangent.
-
-![Mirrored Point Mode](images/2D_SpriteShape_033.png)
-
-### Broken Mirrored Point Mode
-
-In __Broken Mirrored Point Mode__,  tangents appear on both sides of the selected Control Point to create a curve between the Control Point and its neighbors. Adjust the shape of the curve with the tangents. In this mode, the length and angle of each tangent can be adjusted independently.
-
-Press __B__ to mirror the length of the last edited tangent onto the opposite tangent. In this mode, pressing __B__ also causes the angle of the opposite tangent to become exactly 180 degrees from the last edited tangent.
-
-![Non-Mirrored Mode](images/2D_SpriteShape_036.png)
+- [Add a collider to a sprite shape](SSCollision.md)
+- [Add physics areas to sprite shapes](physics-area-sprite-shape-landing.md)
+- [Edit the spline of a sprite shape](sprite-shape-edit-spline.md)
+- [Sprite Shape Profile](SSProfile.md)
